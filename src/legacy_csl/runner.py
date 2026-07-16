@@ -145,6 +145,11 @@ def analyze(config: Config) -> list[dict[str, object]]:
     dataset = load_dataset(
         config.paths.data_root, "U" if config.mode == "single-csl" else "A"
     )
+    other_dataset = (
+        load_dataset(config.paths.data_root, "B")
+        if config.mode == "inter-csl"
+        else None
+    )
     for experiment_id in range(config.run.experiments):
         directory = root / f"exp{experiment_id:03}"
         state = load_state(directory, "U" if config.mode == "single-csl" else "A")
@@ -156,6 +161,7 @@ def analyze(config: Config) -> list[dict[str, object]]:
                 state,
                 dataset,
                 other_state=other,
+                other_dataset=other_dataset,
                 history=_load_history(directory / "analysis" / "history.csv"),
             )
         )
@@ -327,7 +333,14 @@ def _learn_inter(
         model_b.step(accepted_b)
         proposal_b = model_b.draw_words()
         row: dict[str, object] = {"iteration": iteration + 1}
-        row.update(category_metrics(model_a.state, dataset_a, other_state=model_b.state))
+        row.update(
+            category_metrics(
+                model_a.state,
+                dataset_a,
+                other_state=model_b.state,
+                other_dataset=dataset_b,
+            )
+        )
         history.append(row)
     save_state(model_a.state, directory, "A")
     save_state(model_b.state, directory, "B")
@@ -336,6 +349,7 @@ def _learn_inter(
         model_a.state,
         dataset_a,
         other_state=model_b.state,
+        other_dataset=dataset_b,
         history=history,
     )
 

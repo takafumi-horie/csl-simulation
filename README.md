@@ -351,7 +351,8 @@ Each experiment writes:
 - resolved YAML;
 - major compatibility CSVs (`z*`, `F`, `theta`, `Mu`, `Sig`, `pi`, words);
 - metrics/history CSV and JSON;
-- a learning-curve PNG and category-by-word heatmap PNG; the heatmap removes
+- a learning-curve PNG and category-by-word heatmap PNG (one heatmap for each
+  agent in Inter-CSL); the heatmap removes
   categories never used by an attended object, labels rows with zero-based
   local IDs such as `p4`, labels columns with vocabulary strings, and preserves
   `a/p/o/c` blocks while arranging strong category-word pairs diagonally;
@@ -360,7 +361,49 @@ Each experiment writes:
 カテゴリ×単語heatmapでは、注視対象に一度も使われなかったカテゴリを除外し、
 行を `p4` のような0始まりの属性内カテゴリID、列を語彙文字列で表示します。
 強いカテゴリ・単語対応が対角線状になるよう整列しますが、カテゴリ行は
-`a/p/o/c` の属性blockを跨いで移動しません。
+`a/p/o/c` の属性blockを跨いで移動しません。Inter-CSLではエージェントA・Bを
+`category_word_heatmap_A.png` と `category_word_heatmap_B.png` に分けて出力します。
+
+### ARI and ground truth / ARIとground truth
+
+ARI is computed with `sklearn.metrics.adjusted_rand_score`, so inferred
+category numbers do not need to match ground-truth numbers; only the induced
+partition matters. For `p`, `o`, and `c`, both inferred and true categories are
+first clipped to each document's attended object. Action `a` already has one
+category per document.
+
+ARIは `sklearn.metrics.adjusted_rand_score` で計算するため、推論カテゴリ番号と
+正解番号が直接一致する必要はなく、文書の分割が一致するかを評価します。
+`p/o/c` では推論値と正解値の双方を各文書の注視対象物体へ切り詰めてから
+計算します。Action `a` はもともと1文書1カテゴリです。
+
+For Single-CSL, `ari_truth_a/p/o/c` compares agent U with its ground truth. For
+Inter-CSL, `ari_agents_a/p/o/c` compares agents A and B after selecting the
+attended object with each agent's own attention indexes. If ground truth is
+available, `ari_truth_A_a/p/o/c` and `ari_truth_B_a/p/o/c` are also written.
+The older `ari_truth_a/p/o/c` names remain aliases for agent A for output
+compatibility. The principal legacy Inter-CSL metric was the A-versus-B ARI;
+ground-truth metrics are omitted when truth files are unavailable.
+
+Single-CSLの `ari_truth_a/p/o/c` はagent Uとground truthを比較します。
+Inter-CSLの `ari_agents_a/p/o/c` は、A・Bそれぞれ自身のattention indexで
+注視対象を選んだ後、両agentを比較します。ground truthがある場合は
+`ari_truth_A_a/p/o/c` と `ari_truth_B_a/p/o/c` も出力します。従来の
+`ari_truth_a/p/o/c` は出力互換性のためagent Aの別名として残します。旧
+Inter-CSLの主要指標はA対BのARIであり、正解ファイルが無い場合はground-truth
+ARIを出力しません。
+
+Compact NPZ truth is read from the complete set `z_a`, `z_p`, `z_o`, and
+`z_c`. In the paper-dataset layout, truth is read only when all four files
+`za_C.csv`, `zp_C.csv`, `zo_C.csv`, and `zc_C.csv` exist under the relevant
+`agentA/agentB/testss(001-040)` directory (or the shared
+`testss(001-040)` fallback). Object-category rows must follow the same object
+order as the observations.
+
+compact NPZでは `z_a/z_p/z_o/z_c` の4項目すべてをground truthとして読みます。
+論文データ形式では、対応する `agentA/agentB/testss(001-040)`（または共有の
+`testss(001-040)`）に `za_C.csv/zp_C.csv/zo_C.csv/zc_C.csv` がすべて存在する
+場合だけ正解を読み込みます。物体カテゴリの行は観測と同じ物体順にします。
 
 ## Reproducibility / 再現性
 

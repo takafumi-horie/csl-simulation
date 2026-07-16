@@ -42,6 +42,7 @@ def category_metrics(
     dataset: ObservationDataset,
     *,
     other_state: CslState | None = None,
+    other_dataset: ObservationDataset | None = None,
 ) -> dict[str, float]:
     """Calculate ARI against truth or another agent and optional kappa.
 
@@ -54,11 +55,16 @@ def category_metrics(
             主データセットと任意の正解。
         other_state: Optional second agent state.
             任意の第2エージェント状態。
+        other_dataset: Dataset belonging to the second agent.
+            第2エージェントに属するデータセット。
 
     Returns:
         Flat metric dictionary.
         フラットな指標辞書。
     """
+    if (other_state is None) != (other_dataset is None):
+        raise ValueError("other_state and other_dataset must be provided together")
+
     metrics: dict[str, float] = {}
     for attr in ATTRIBUTES:
         primary = _attended_state_categories(state, dataset, attr)
@@ -68,13 +74,25 @@ def category_metrics(
                 adjusted_rand_score(truth, primary)
             )
         if other_state is not None:
-            secondary = _attended_state_categories(other_state, dataset, attr)
+            assert other_dataset is not None
+            if len(primary) != other_dataset.num_documents:
+                raise ValueError("agent datasets must have equal document counts")
+            secondary = _attended_state_categories(
+                other_state, other_dataset, attr
+            )
             metrics[f"ari_agents_{attr}"] = float(
                 adjusted_rand_score(primary, secondary)
             )
             metrics[f"kappa_agents_{attr}"] = float(
                 cohen_kappa_score(primary, secondary)
             )
+            if truth is not None:
+                metrics[f"ari_truth_A_{attr}"] = metrics[f"ari_truth_{attr}"]
+            other_truth = other_dataset.attended_categories(attr)
+            if other_truth is not None:
+                metrics[f"ari_truth_B_{attr}"] = float(
+                    adjusted_rand_score(other_truth, secondary)
+                )
     if other_state is not None:
         comparisons = [
             left == right
@@ -127,6 +145,7 @@ def write_analysis(
     dataset: ObservationDataset,
     *,
     other_state: CslState | None = None,
+    other_dataset: ObservationDataset | None = None,
     history: list[dict[str, object]] | None = None,
 ) -> dict[str, float]:
     """Write metrics, learning curves, and category-word heatmaps.
@@ -142,6 +161,8 @@ def write_analysis(
             主データセット。
         other_state: Optional second agent state.
             任意の第2エージェント状態。
+        other_dataset: Optional second agent dataset.
+            任意の第2エージェントデータセット。
         history: Optional per-iteration metrics.
             任意の反復ごとの指標。
 
@@ -151,7 +172,12 @@ def write_analysis(
     """
     analysis_dir = directory / "analysis"
     analysis_dir.mkdir(parents=True, exist_ok=True)
-    metrics = category_metrics(state, dataset, other_state=other_state)
+    metrics = category_metrics(
+        state,
+        dataset,
+        other_state=other_state,
+        other_dataset=other_dataset,
+    )
     (analysis_dir / "metrics.json").write_text(
         json.dumps(metrics, indent=2, sort_keys=True), encoding="utf-8"
     )
@@ -159,7 +185,20 @@ def write_analysis(
     if history:
         write_metric_rows(analysis_dir / "history.csv", history)
         _plot_history(history, analysis_dir / "learning_curves.png")
-    _plot_theta(state, dataset, analysis_dir / "category_word_heatmap.png")
+    if other_state is None:
+        _plot_theta(state, dataset, analysis_dir / "category_word_heatmap.png")
+    else:
+        assert other_dataset is not None
+        _plot_theta(
+            state,
+            dataset,
+            analysis_dir / "category_word_heatmap_A.png",
+        )
+        _plot_theta(
+            other_state,
+            other_dataset,
+            analysis_dir / "category_word_heatmap_B.png",
+        )
     return metrics
 
 

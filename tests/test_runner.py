@@ -72,6 +72,10 @@ def test_inter_learning_prediction_and_analysis(tmp_path):
 
     assert (directory / "state_A.npz").is_file()
     assert (directory / "state_B.npz").is_file()
+    assert (directory / "analysis" / "category_word_heatmap_A.png").is_file()
+    assert (directory / "analysis" / "category_word_heatmap_B.png").is_file()
     assert (directory / "prediction" / "prediction.npz").is_file()
     assert "mse_a" in prediction_rows[0]
     assert "ari_agents_a" in analysis_rows[0]
+    assert "ari_truth_A_a" in analysis_rows[0]
+    assert "ari_truth_B_a" in analysis_rows[0]
