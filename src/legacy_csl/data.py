@@ -17,6 +17,7 @@ import numpy.typing as npt
 
 ATTRIBUTES = ("a", "p", "o", "c")
 OBJECT_ATTRIBUTES = ("p", "o", "c")
+LEGACY_TRUTH_DIRECTORY = "testss(001-040)"
 
 FloatArray: TypeAlias = npt.NDArray[np.float64]
 IntArray: TypeAlias = npt.NDArray[np.int64]
@@ -385,6 +386,24 @@ def write_compact_fixture(
     """Create a deterministic multi-object compact fixture.
 
     決定論的な複数物体compact fixtureを作成する。
+
+    The fixture embeds truth in each NPZ and also exports the same truth to the
+    canonical sibling legacy directory.
+
+    fixtureは各NPZに正解を埋め込み、同じ正解をcanonicalな兄弟legacy
+    ディレクトリにも出力する。
+
+    Args:
+        data_root: Destination containing agent inputs and shared truth.
+            agent入力と共有正解を含む出力先。
+        num_documents: Number of mock documents.
+            mock文書数。
+        word_length: Number of words in each Single-CSL utterance.
+            Single-CSLの各発話の単語数。
+        vocabulary_size: Number of mock word types.
+            mock単語type数。
+        seed: Random seed for fixture generation.
+            fixture生成用乱数seed。
     """
     rng = np.random.default_rng(seed)
     data_root.mkdir(parents=True, exist_ok=True)
@@ -441,6 +460,7 @@ def write_compact_fixture(
     (data_root / "single_words.json").write_text(
         json.dumps(words, indent=2), encoding="utf-8"
     )
+    _write_shared_truth_fixture(data_root, latent_a, latent_objects)
 
 
 def _load_compact_dataset(path: Path) -> ObservationDataset:
@@ -526,7 +546,6 @@ def _load_legacy_dataset(
     num_objects = np.asarray([len(value) for value in objects["p"]], dtype=np.int64)
     truth = _load_legacy_truth(
         data_root,
-        agent,
         num_objects=num_objects,
         num_documents=len(doc_dirs),
     )
@@ -667,42 +686,98 @@ def _minmax_columns(values: FloatArray) -> FloatArray:
 
 def _load_legacy_truth(
     data_root: Path,
-    agent: str,
     *,
     num_objects: IntArray,
     num_documents: int,
 ) -> Mapping[str, IntArray | ObjectCategories] | None:
-    roots = [
-        data_root / f"agent{agent}" / "testss(001-040)",
-        data_root / "testss(001-040)",
-    ]
-    for root in roots:
-        files = {attr: root / f"z{attr}_C.csv" for attr in ATTRIBUTES}
-        if not all(path.exists() for path in files.values()):
-            continue
-        action_rows = _numeric_rows(files["a"])
-        action_values = np.asarray(
-            [value for row in action_rows for value in row][-num_documents:],
-            dtype=np.int64,
+    """Load truth only from the canonical sibling directory.
+
+    canonicalな兄弟ディレクトリからだけ正解を読み込む。
+
+    Args:
+        data_root: Parent shared by agent and truth directories.
+            agentと正解ディレクトリが共有する親。
+        num_objects: Per-document object counts for loaded observations.
+            読み込んだ観測の文書別物体数。
+        num_documents: Number of trailing truth documents to load.
+            読み込む末尾正解文書数。
+
+    Returns:
+        Full truth mapping, or ``None`` when any required file is absent.
+            全正解mapping。必須fileが1つでも無い場合は ``None``。
+
+    Raises:
+        ValueError: If truth rows do not match observations.
+            正解行が観測と一致しない場合。
+    """
+    root = data_root / LEGACY_TRUTH_DIRECTORY
+    files = {attr: root / f"z{attr}_C.csv" for attr in ATTRIBUTES}
+    if not all(path.exists() for path in files.values()):
+        return None
+    action_rows = _numeric_rows(files["a"])
+    action_values = np.asarray(
+        [value for row in action_rows for value in row][-num_documents:],
+        dtype=np.int64,
+    )
+    if action_values.shape != (num_documents,):
+        raise ValueError("legacy action truth does not match document count")
+    truth: dict[str, IntArray | ObjectCategories] = {"a": action_values}
+    for attr in OBJECT_ATTRIBUTES:
+        rows = _numeric_rows(files[attr])
+        if len(rows) < num_documents:
+            raise ValueError(f"legacy {attr} truth does not match document count")
+        selected = rows[-num_documents:]
+        values: list[IntArray] = []
+        for doc_id, (row, count) in enumerate(zip(selected, num_objects)):
+            if len(row) < count:
+                raise ValueError(
+                    f"legacy {attr} truth row {doc_id} has fewer than {count} objects"
+                )
+            values.append(np.asarray(row[:count], dtype=np.int64))
+        truth[attr] = tuple(values)
+    return truth
+
+
+def _write_shared_truth_fixture(
+    data_root: Path,
+    action: IntArray,
+    objects: Mapping[str, ObjectCategories],
+) -> None:
+    """Write mock truth beside the agent inputs in legacy CSV form.
+
+    mock正解をagent入力の兄弟にlegacy CSV形式で書き出す。
+
+    Args:
+        data_root: Parent containing agent inputs and the truth directory.
+            agent入力と正解ディレクトリを含む親。
+        action: One action category per document.
+            文書ごとのactionカテゴリ。
+        objects: Ragged object categories for each object attribute.
+            物体属性ごとのragged物体カテゴリ。
+    """
+    truth_root = data_root / LEGACY_TRUTH_DIRECTORY
+    truth_root.mkdir(parents=True, exist_ok=True)
+    _write_csv_rows(truth_root / "za_C.csv", [action.tolist()])
+    for attr in OBJECT_ATTRIBUTES:
+        _write_csv_rows(
+            truth_root / f"z{attr}_C.csv",
+            [values.tolist() for values in objects[attr]],
         )
-        if action_values.shape != (num_documents,):
-            raise ValueError("legacy action truth does not match document count")
-        truth: dict[str, IntArray | ObjectCategories] = {"a": action_values}
-        for attr in OBJECT_ATTRIBUTES:
-            rows = _numeric_rows(files[attr])
-            if len(rows) < num_documents:
-                raise ValueError(f"legacy {attr} truth does not match document count")
-            selected = rows[-num_documents:]
-            values: list[IntArray] = []
-            for doc_id, (row, count) in enumerate(zip(selected, num_objects)):
-                if len(row) < count:
-                    raise ValueError(
-                        f"legacy {attr} truth row {doc_id} has fewer than {count} objects"
-                    )
-                values.append(np.asarray(row[:count], dtype=np.int64))
-            truth[attr] = tuple(values)
-        return truth
-    return None
+
+
+def _write_csv_rows(path: Path, rows: list[list[int]]) -> None:
+    """Write integer rows as a legacy-compatible CSV file.
+
+    整数行をlegacy互換CSVとして書き出す。
+
+    Args:
+        path: Destination CSV path.
+            CSV出力先。
+        rows: Integer rows to write.
+            書き出す整数行。
+    """
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        csv.writer(stream).writerows(rows)
 
 
 def _validated_truth(

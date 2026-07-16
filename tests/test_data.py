@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 
 from legacy_csl.data import (
+    LEGACY_TRUTH_DIRECTORY,
     ObservationDataset,
     load_dataset,
     load_single_words,
@@ -123,6 +124,13 @@ def test_compact_fixture_contains_multiple_objects_and_full_truth(tmp_path: Path
     assert [
         len(values) for values in dataset.true_categories["o"]  # type: ignore[union-attr]
     ] == [2, 3, 2, 3, 2]
+    truth_root = tmp_path / LEGACY_TRUTH_DIRECTORY
+    assert {path.name for path in truth_root.iterdir()} == {
+        "za_C.csv",
+        "zp_C.csv",
+        "zo_C.csv",
+        "zc_C.csv",
+    }
 
 
 def test_single_words_are_ragged_and_encoded_in_first_seen_order(tmp_path: Path) -> None:
@@ -153,7 +161,7 @@ def test_legacy_loader_keeps_objects_and_applies_original_preprocessing(
     agent_root = tmp_path / "agentU"
     _write_legacy_document(agent_root / "testss001", relative_scale=1.0)
     _write_legacy_document(agent_root / "testss002", relative_scale=2.0)
-    truth_root = agent_root / "testss(001-040)"
+    truth_root = tmp_path / LEGACY_TRUTH_DIRECTORY
     truth_root.mkdir(parents=True)
     (truth_root / "za_C.csv").write_text("7,8\n", encoding="utf-8")
     for attr, rows in {
@@ -183,6 +191,23 @@ def test_legacy_loader_keeps_objects_and_applies_original_preprocessing(
     assert dataset.true_categories is not None
     assert dataset.true_categories["p"][1].tolist() == [3, 4]  # type: ignore[index]
     np.testing.assert_array_equal(dataset.attended_categories("p"), [2, 4])
+
+
+def test_legacy_truth_is_not_loaded_from_inside_an_agent(tmp_path: Path) -> None:
+    """Truth is resolved only from a sibling of all agent directories.
+
+    正解は全agentディレクトリの兄弟からのみ解決する。
+    """
+    agent_root = tmp_path / "agentU"
+    _write_legacy_document(agent_root / "testss001", relative_scale=1.0)
+    nested_truth = agent_root / LEGACY_TRUTH_DIRECTORY
+    nested_truth.mkdir(parents=True)
+    for attr in ("a", "p", "o", "c"):
+        (nested_truth / f"z{attr}_C.csv").write_text("0,0\n", encoding="utf-8")
+
+    dataset = load_dataset(tmp_path, "U")
+
+    assert dataset.true_categories is None
 
 
 def test_legacy_inter_action_excludes_tactile(tmp_path: Path) -> None:
