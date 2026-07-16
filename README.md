@@ -61,6 +61,28 @@ python -m venv .venv
 python -m pip install -e '.[dev]'
 ```
 
+## Running the tests / テストの実行
+
+After installing the development dependencies as shown above, run the complete
+test suite from the repository root:
+
+上記の開発用依存をインストールした後、リポジトリのルートで全テストを
+実行します。
+
+```bash
+python -m pytest
+```
+
+To run one test module or display individual test names and additional detail:
+
+特定のテストモジュールだけを実行する場合や、各テスト名を含む詳細を表示する
+場合は次のようにします。
+
+```bash
+python -m pytest tests/test_rescaling.py
+python -m pytest -v
+```
+
 ## Quick start / クイックスタート
 
 Create a small deterministic fixture, then run either model with its example
