@@ -23,8 +23,8 @@ from .data import (
     load_single_words,
     validate_legacy_truth_layout,
 )
-from .model import CslModel, IntArray
-from .state_io import load_state, save_state, write_metric_rows
+from .model import CslModel, CslState, IntArray
+from .state_io import load_state, save_state, write_metric_rows, write_state_csvs
 
 
 def learn(config: Config) -> list[Path]:
@@ -296,6 +296,11 @@ def _learn_single(
         row: dict[str, object] = {"iteration": iteration + 1}
         row.update(category_metrics(model.state, dataset))
         history.append(row)
+        _write_iteration_csvs(
+            directory,
+            iteration + 1,
+            (("U", model.state),),
+        )
     save_state(model.state, directory, "U")
     write_analysis(directory, model.state, dataset, history=history)
 
@@ -350,6 +355,11 @@ def _learn_inter(
             )
         )
         history.append(row)
+        _write_iteration_csvs(
+            directory,
+            iteration + 1,
+            (("A", model_a.state), ("B", model_b.state)),
+        )
     save_state(model_a.state, directory, "A")
     save_state(model_b.state, directory, "B")
     write_analysis(
@@ -360,6 +370,28 @@ def _learn_inter(
         other_dataset=dataset_b,
         history=history,
     )
+
+
+def _write_iteration_csvs(
+    directory: Path,
+    iteration: int,
+    states: Sequence[tuple[str, CslState]],
+) -> None:
+    """Write full state CSV snapshots after one completed iteration.
+
+    1回の反復完了後の状態CSV snapshot一式を保存する。
+
+    Args:
+        directory: Experiment output directory.
+            実験出力ディレクトリ。
+        iteration: One-based completed iteration number.
+            1始まりの完了済み反復番号。
+        states: Agent identifiers paired with their current states.
+            エージェント識別子と現在状態の組。
+    """
+    csv_directory = directory / "iterations" / f"iter{iteration:04d}" / "csv"
+    for agent, state in states:
+        write_state_csvs(state, csv_directory, agent)
 
 
 def _iteration_progress(config: Config, experiment_id: int) -> tqdm[int]:

@@ -54,7 +54,53 @@ def save_state(state: CslState, directory: Path, agent: str) -> None:
     (directory / f"metadata_{agent}.json").write_text(
         json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    _write_compatibility_csv(state, directory / "csv", agent)
+    write_state_csvs(state, directory / "csv", agent)
+
+
+def write_state_csvs(state: CslState, directory: Path, agent: str) -> None:
+    """Write the complete legacy-compatible CSV snapshot for one agent.
+
+    1 agent分のlegacy互換CSV snapshot一式を保存する。
+
+    Args:
+        state: Agent state to serialize.
+            保存するエージェント状態。
+        directory: Directory that directly receives the CSV files.
+            CSVファイルを直接保存するディレクトリ。
+        agent: Agent identifier used in filenames.
+            ファイル名に使うエージェント識別子。
+    """
+    directory.mkdir(parents=True, exist_ok=True)
+    for attr in ATTRIBUTES:
+        assignments = state.z[attr]
+        rows = (
+            [[int(value)] for value in assignments]
+            if isinstance(assignments, np.ndarray)
+            else [value.astype(int).tolist() for value in assignments]
+        )
+        _write_rows(directory / f"z{attr}_{agent}.csv", rows)
+        np.savetxt(
+            directory / f"pi_{attr}_{agent}.csv", state.pi[attr], delimiter=","
+        )
+        np.savetxt(
+            directory / f"Mu_{attr}_{agent}.csv", state.means[attr], delimiter=","
+        )
+        _write_covariance_blocks(
+            directory / f"Sig_{attr}_{agent}.csv", state.covariances[attr]
+        )
+    np.savetxt(directory / f"theta_{agent}.csv", state.theta, delimiter=",")
+    _write_rows(
+        directory / f"uttered_words_{agent}.csv",
+        [row.astype(int).tolist() for row in state.words],
+    )
+    _write_rows(directory / f"F_{agent}.csv", state.attributes)
+    _write_rows(directory / f"W_list_{agent}.csv", [state.vocabulary])
+    np.savetxt(
+        directory / f"word_length_{agent}.csv",
+        np.asarray([len(row) for row in state.words]),
+        delimiter=",",
+        fmt="%d",
+    )
 
 
 def load_state(directory: Path, agent: str) -> CslState:
@@ -122,36 +168,6 @@ def write_metric_rows(path: Path, rows: list[dict[str, object]]) -> None:
         writer.writerows(rows)
 
 
-def _write_compatibility_csv(state: CslState, directory: Path, agent: str) -> None:
-    directory.mkdir(parents=True, exist_ok=True)
-    for attr in ATTRIBUTES:
-        assignments = state.z[attr]
-        rows = (
-            [[int(value)] for value in assignments]
-            if isinstance(assignments, np.ndarray)
-            else [value.astype(int).tolist() for value in assignments]
-        )
-        _write_rows(directory / f"z{attr}_{agent}.csv", rows)
-        np.savetxt(directory / f"pi_{attr}_{agent}.csv", state.pi[attr], delimiter=",")
-        np.savetxt(directory / f"Mu_{attr}_{agent}.csv", state.means[attr], delimiter=",")
-        _write_covariance_blocks(
-            directory / f"Sig_{attr}_{agent}.csv", state.covariances[attr]
-        )
-    np.savetxt(directory / f"theta_{agent}.csv", state.theta, delimiter=",")
-    _write_rows(
-        directory / f"uttered_words_{agent}.csv",
-        [row.astype(int).tolist() for row in state.words],
-    )
-    _write_rows(directory / f"F_{agent}.csv", state.attributes)
-    _write_rows(directory / f"W_list_{agent}.csv", [state.vocabulary])
-    np.savetxt(
-        directory / f"word_length_{agent}.csv",
-        np.asarray([len(row) for row in state.words]),
-        delimiter=",",
-        fmt="%d",
-    )
-
-
 def _pack_ragged(values: tuple[np.ndarray, ...]) -> tuple[np.ndarray, np.ndarray]:
     offsets = np.concatenate(
         [np.asarray([0], dtype=np.int64), np.cumsum([len(value) for value in values])]
@@ -181,4 +197,3 @@ def _write_covariance_blocks(path: Path, covariances: np.ndarray) -> None:
             writer.writerows(covariance.tolist())
             if category + 1 < len(covariances):
                 writer.writerow([])
-

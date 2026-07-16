@@ -405,19 +405,79 @@ Each experiment writes:
 - compressed native state checkpoints;
 - resolved YAML;
 - major compatibility CSVs (`z*`, `F`, `theta`, `Mu`, `Sig`, `pi`, words);
+- a complete compatibility-CSV snapshot after every inference iteration under
+  `iterations/iterNNNN/csv/`;
 - metrics/history CSV and JSON;
 - a learning-curve PNG and category-by-word heatmap PNG (one heatmap for each
   agent in Inter-CSL-PGM); the heatmap removes
   categories never used by an attended object, labels rows with zero-based
   local IDs such as `p4`, labels columns with vocabulary strings, and preserves
-  `a/p/o/c` blocks while arranging strong category-word pairs diagonally;
+  `a/p/o/c` blocks while arranging strong category-word pairs diagonally. For
+  Inter-CSL-PGM, agent A determines the shared word order and attribute
+  boundaries; agent B keeps that x-axis fixed and reorders rows only within
+  each attribute block;
+- ground-truth-category-by-word co-occurrence heatmaps for agents A and B in
+  Inter-CSL-PGM when ground truth is available;
 - Inter-CSL-PGM prediction arrays and MSE metrics when requested.
+
+The iteration folders are one-based: `iter0001` is the state after the first
+completed inference iteration and matches iteration 1 in `analysis/history.csv`.
+Single-CSL writes all 21 state CSVs for agent U in each folder. Inter-CSL-PGM
+writes all 42 state CSVs for agents A and B together, after both agents have
+completed that outer iteration. The existing top-level `expNNN/csv/` remains
+the final-state export for compatibility. Iteration folders contain CSV
+snapshots only, not resumable native checkpoints. Because this creates 21 files
+per agent per iteration, long runs can use substantial storage and file counts.
+
+```text
+exp000/
+├── csv/                         # final-state compatibility CSVs
+├── iterations/
+│   ├── iter0001/csv/            # after iteration 1
+│   ├── iter0002/csv/            # after iteration 2
+│   └── ...
+└── analysis/
+```
+
+各反復の完了後、状態のlegacy互換CSV一式を
+`iterations/iterNNNN/csv/` に保存します。番号は1始まりで、
+`iter0001` は `analysis/history.csv` のiteration 1と同じ時点です。
+Single-CSLはUの21ファイル、Inter-CSL-PGMはA・B両方の更新が
+完了した後に合計42ファイルを同じ反復フォルダに保存します。
+従来の `expNNN/csv/` は最終状態の互換出力として維持します。
+反復フォルダは解析用CSV snapshotであり、厳密な学習再開用checkpoint
+ではありません。反復数が多い場合はストレージ使用量とファイル数に
+注意してください。
 
 カテゴリ×単語heatmapでは、注視対象に一度も使われなかったカテゴリを除外し、
 行を `p4` のような0始まりの属性内カテゴリID、列を語彙文字列で表示します。
 強いカテゴリ・単語対応が対角線状になるよう整列しますが、カテゴリ行は
 `a/p/o/c` の属性blockを跨いで移動しません。Inter-CSL-PGMではエージェントA・Bを
 `category_word_heatmap_A.png` と `category_word_heatmap_B.png` に分けて出力します。
+両図の比較を容易にするため、Aを基準に決めた単語列と属性境界をBでも
+共有し、Bはその固定列に対して属性block内の行だけを並べ替えます。
+
+When Inter-CSL-PGM ground truth is available, the analysis also writes
+`ground_truth_category_word_heatmap_A.png` and
+`ground_truth_category_word_heatmap_B.png`. Each accepted word token is paired
+with the attended ground-truth category of the attribute selected by its
+inferred `F`; it is not paired with every category in the document. Object
+truth is clipped with each agent's own attention. The plots show raw
+co-occurrence counts, use labels such as `p4`, and share row and word orders
+determined from the two agents' summed counts. Thus the category IDs are ground
+truth, while the word-to-attribute correspondence still comes from inferred
+`F`. A plot is omitted only for an agent whose dataset has no ground truth.
+
+Inter-CSL-PGMでground truthが利用できる場合は、追加で
+`ground_truth_category_word_heatmap_A.png` と
+`ground_truth_category_word_heatmap_B.png` を出力します。これらの図は、
+各受理済み単語を推論済み属性列 `F` が指す属性に割り当て、その
+属性の注視対象ground-truthカテゴリとの生の共起回数を表示します。
+`p/o/c` の正解はagentごとのattentionで注視物体へ切り詰めます。
+行は `p4` のように属性と正解カテゴリIDを表示し、A/Bの行と列は
+共起数を合算して決めた共通順に揃えます。したがって、カテゴリは
+ground truthですが、単語の属性対応には推論結果 `F` が含まれます。
+ground truthがないagentの図は出力しません。
 
 ### ARI and ground truth / ARIとground truth
 
@@ -470,4 +530,3 @@ dependency versions therefore follows the same random sequence.
 
 全確率処理は `run.seed` から派生した明示的 NumPy generator を受け取ります。
 同じ入力・設定・依存バージョンで再実行すれば、同じ乱数系列を使用します。
-

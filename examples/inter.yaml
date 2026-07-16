@@ -13,7 +13,7 @@ word_model:
   importance_candidates: 10000
 attribute_model:
   # Uniform attribute sampling with replacement (duplicates are allowed).
-  exclusivity: iid
+  exclusivity: distinct
 interaction: mh
 freeze:
   gmm: false

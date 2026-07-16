@@ -8,7 +8,9 @@ from __future__ import annotations
 import numpy as np
 
 from legacy_csl.analysis import (
+    _ground_truth_word_counts,
     _plot_theta,
+    _prepare_ground_truth_heatmaps,
     _prepare_theta_heatmap,
     category_metrics,
 )
@@ -82,6 +84,179 @@ def test_theta_heatmap_plot_is_written(tmp_path) -> None:
 
     assert path.is_file()
     assert path.stat().st_size > 0
+
+
+def test_inter_heatmaps_share_agent_a_word_axis_and_reorder_b_rows() -> None:
+    state_a, dataset_a = _paired_heatmap_state(reverse_peaks=False)
+    state_b, dataset_b = _paired_heatmap_state(reverse_peaks=True)
+
+    heatmap_a = _prepare_theta_heatmap(state_a, dataset_a)
+    independent_b = _prepare_theta_heatmap(state_b, dataset_b)
+    heatmap_b = _prepare_theta_heatmap(
+        state_b,
+        dataset_b,
+        reference=heatmap_a,
+    )
+
+    assert heatmap_a.word_labels == tuple(f"w{index}" for index in range(8))
+    assert independent_b.word_labels != heatmap_a.word_labels
+    assert heatmap_b.word_labels == heatmap_a.word_labels
+    assert heatmap_b.word_boundaries == heatmap_a.word_boundaries == (2, 4, 6)
+    assert heatmap_b.category_labels == (
+        "a1",
+        "a0",
+        "p1",
+        "p0",
+        "o1",
+        "o0",
+        "c1",
+        "c0",
+    )
+    assert heatmap_b.category_boundaries == (2, 4, 6)
+    np.testing.assert_allclose(np.diag(heatmap_b.values), 0.85)
+
+
+def test_ground_truth_word_counts_use_attention_and_inferred_attributes() -> None:
+    state, dataset = _ground_truth_heatmap_state_and_dataset()
+
+    counts = _ground_truth_word_counts(state, dataset)
+
+    assert counts is not None
+    labels = tuple(f"{attr}{category}" for attr, category in counts.category_keys)
+    nonzero = {
+        (labels[row], counts.vocabulary[column]): int(counts.values[row, column])
+        for row, column in zip(*np.nonzero(counts.values))
+    }
+    assert nonzero == {
+        ("p20", "w0"): 1,
+        ("a10", "w1"): 1,
+        ("c40", "w2"): 1,
+        ("o30", "w3"): 1,
+        ("o31", "w0"): 1,
+        ("c41", "w1"): 1,
+        ("a11", "w2"): 1,
+        ("p21", "w3"): 1,
+    }
+    assert int(np.sum(counts.values)) == 8
+    assert not any("9" in label for label in labels)
+
+
+def test_ground_truth_inter_heatmaps_share_joint_semantic_axes() -> None:
+    state_a, dataset_a = _ground_truth_heatmap_state_and_dataset()
+    state_b, dataset_b = _ground_truth_heatmap_state_and_dataset()
+    state_b.words = tuple(words[::-1].copy() for words in state_b.words)
+
+    heatmap_a, heatmap_b = _prepare_ground_truth_heatmaps(
+        state_a,
+        dataset_a,
+        state_b,
+        dataset_b,
+    )
+
+    assert heatmap_a is not None
+    assert heatmap_b is not None
+    assert heatmap_a.category_labels == heatmap_b.category_labels
+    assert heatmap_a.word_labels == heatmap_b.word_labels
+    assert heatmap_a.category_boundaries == heatmap_b.category_boundaries == (
+        2,
+        4,
+        6,
+    )
+    assert heatmap_a.word_boundaries == heatmap_b.word_boundaries
+    assert int(np.sum(heatmap_a.values)) == 8
+    assert int(np.sum(heatmap_b.values)) == 8
+
+
+def test_ground_truth_heatmap_is_omitted_only_for_agent_without_truth() -> None:
+    state_a, dataset_a = _ground_truth_heatmap_state_and_dataset()
+    state_b, dataset_b = _ground_truth_heatmap_state_and_dataset()
+    dataset_a = ObservationDataset(dataset_a.observations, dataset_a.attentions)
+
+    heatmap_a, heatmap_b = _prepare_ground_truth_heatmaps(
+        state_a,
+        dataset_a,
+        state_b,
+        dataset_b,
+    )
+
+    assert heatmap_a is None
+    assert heatmap_b is not None
+
+
+def _ground_truth_heatmap_state_and_dataset() -> tuple[
+    CslState, ObservationDataset
+]:
+    observations = {
+        "a": np.ones((2, 1)),
+        **{
+            attr: (np.ones((2, 1)), np.ones((2, 1)))
+            for attr in ("p", "o", "c")
+        },
+    }
+    truth = {
+        "a": np.array([10, 11]),
+        "p": (np.array([20, 920]), np.array([921, 21])),
+        "o": (np.array([30, 930]), np.array([931, 31])),
+        "c": (np.array([40, 940]), np.array([941, 41])),
+    }
+    dataset = ObservationDataset(observations, np.array([0, 1]), truth)
+    attributes = ("a", "p", "o", "c")
+    state = CslState(
+        z={
+            "a": np.array([0, 0]),
+            **{
+                attr: (np.array([0, 0]), np.array([0, 0]))
+                for attr in ("p", "o", "c")
+            },
+        },
+        pi={attr: np.ones(1) for attr in attributes},
+        means={attr: np.zeros((1, 1)) for attr in attributes},
+        covariances={attr: np.ones((1, 1, 1)) for attr in attributes},
+        theta=np.full((4, 4), 0.25),
+        attributes=[("p", "a", "c", "o"), ("o", "c", "a", "p")],
+        words=(np.arange(4), np.arange(4)),
+        vocabulary=("w0", "w1", "w2", "w3"),
+    )
+    return state, dataset
+
+
+def _paired_heatmap_state(
+    *, reverse_peaks: bool
+) -> tuple[CslState, ObservationDataset]:
+    observations = {
+        "a": np.ones((2, 1)),
+        **{
+            attr: (np.ones((1, 1)), np.ones((1, 1)))
+            for attr in ("p", "o", "c")
+        },
+    }
+    dataset = ObservationDataset(observations, np.array([0, 0]))
+    categories = np.array([0, 1])
+    z = {
+        "a": categories.copy(),
+        **{
+            attr: (np.array([0]), np.array([1]))
+            for attr in ("p", "o", "c")
+        },
+    }
+    theta = np.full((8, 8), 0.05)
+    for row in range(8):
+        peak = row ^ 1 if reverse_peaks else row
+        theta[row, peak] = 0.85
+    pi = {attr: np.full(2, 0.5) for attr in ("a", "p", "o", "c")}
+    means = {attr: np.zeros((2, 1)) for attr in pi}
+    covariances = {attr: np.ones((2, 1, 1)) for attr in pi}
+    state = CslState(
+        z=z,
+        pi=pi,
+        means=means,
+        covariances=covariances,
+        theta=theta,
+        attributes=[("a", "p", "o", "c")] * 2,
+        words=(np.arange(4), np.arange(4, 8)),
+        vocabulary=tuple(f"w{index}" for index in range(8)),
+    )
+    return state, dataset
 
 
 def test_inter_metrics_use_each_agents_own_attention_and_truth() -> None:

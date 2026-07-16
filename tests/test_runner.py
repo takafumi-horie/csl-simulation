@@ -16,6 +16,30 @@ from legacy_csl.runner import analyze, learn, predict, validate_data
 from legacy_csl.state_io import load_state
 
 
+def _state_csv_names(agent: str) -> set[str]:
+    attributes = ("a", "p", "o", "c")
+    names = {
+        f"{prefix}_{attr}_{agent}.csv"
+        for attr in attributes
+        for prefix in ("pi", "Mu", "Sig")
+    }
+    names.update(f"z{attr}_{agent}.csv" for attr in attributes)
+    names.update(
+        {
+            f"theta_{agent}.csv",
+            f"uttered_words_{agent}.csv",
+            f"F_{agent}.csv",
+            f"W_list_{agent}.csv",
+            f"word_length_{agent}.csv",
+        }
+    )
+    return names
+
+
+def _directory_names(directory) -> set[str]:
+    return {path.name for path in directory.iterdir() if path.is_file()}
+
+
 def _config(tmp_path, mode):
     return Config(
         mode=mode,
@@ -50,7 +74,20 @@ def test_single_end_to_end(tmp_path, monkeypatch):
 
     assert len(state.words) == 6
     assert all(word_d.shape == (4,) for word_d in state.words)
-    assert (directory / "csv" / "theta_U.csv").is_file()
+    expected_csvs = _state_csv_names("U")
+    final_csv_directory = directory / "csv"
+    assert _directory_names(final_csv_directory) == expected_csvs
+    for iteration in (1, 2):
+        iteration_csv_directory = (
+            directory / "iterations" / f"iter{iteration:04d}" / "csv"
+        )
+        assert _directory_names(iteration_csv_directory) == expected_csvs
+    assert not (directory / "iterations" / "iter0000").exists()
+    final_iteration_csv = directory / "iterations" / "iter0002" / "csv"
+    for filename in expected_csvs:
+        assert (final_iteration_csv / filename).read_bytes() == (
+            final_csv_directory / filename
+        ).read_bytes()
     assert (directory / "analysis" / "learning_curves.png").is_file()
     assert "ari_truth_a" in rows[0]
     assert progress_calls == [
@@ -74,8 +111,28 @@ def test_inter_learning_prediction_and_analysis(tmp_path):
 
     assert (directory / "state_A.npz").is_file()
     assert (directory / "state_B.npz").is_file()
+    expected_csvs = _state_csv_names("A") | _state_csv_names("B")
+    final_csv_directory = directory / "csv"
+    assert _directory_names(final_csv_directory) == expected_csvs
+    for iteration in (1, 2):
+        iteration_directory = directory / "iterations" / f"iter{iteration:04d}"
+        iteration_csv_directory = iteration_directory / "csv"
+        assert _directory_names(iteration_csv_directory) == expected_csvs
+        assert not list(iteration_directory.glob("state_*.npz"))
+        assert not list(iteration_directory.glob("metadata_*.json"))
+    final_iteration_csv = directory / "iterations" / "iter0002" / "csv"
+    for filename in expected_csvs:
+        assert (final_iteration_csv / filename).read_bytes() == (
+            final_csv_directory / filename
+        ).read_bytes()
     assert (directory / "analysis" / "category_word_heatmap_A.png").is_file()
     assert (directory / "analysis" / "category_word_heatmap_B.png").is_file()
+    assert (
+        directory / "analysis" / "ground_truth_category_word_heatmap_A.png"
+    ).is_file()
+    assert (
+        directory / "analysis" / "ground_truth_category_word_heatmap_B.png"
+    ).is_file()
     assert (directory / "prediction" / "prediction.npz").is_file()
     assert "mse_a" in prediction_rows[0]
     assert "ari_agents_a" in analysis_rows[0]
