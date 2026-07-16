@@ -351,8 +351,16 @@ Each experiment writes:
 - resolved YAML;
 - major compatibility CSVs (`z*`, `F`, `theta`, `Mu`, `Sig`, `pi`, words);
 - metrics/history CSV and JSON;
-- a learning-curve PNG and category-by-word heatmap PNG;
+- a learning-curve PNG and category-by-word heatmap PNG; the heatmap removes
+  categories never used by an attended object, labels rows with zero-based
+  local IDs such as `p4`, labels columns with vocabulary strings, and preserves
+  `a/p/o/c` blocks while arranging strong category-word pairs diagonally;
 - Inter-CSL prediction arrays and MSE metrics when requested.
+
+カテゴリ×単語heatmapでは、注視対象に一度も使われなかったカテゴリを除外し、
+行を `p4` のような0始まりの属性内カテゴリID、列を語彙文字列で表示します。
+強いカテゴリ・単語対応が対角線状になるよう整列しますが、カテゴリ行は
+`a/p/o/c` の属性blockを跨いで移動しません。
 
 ## Reproducibility / 再現性
 
