@@ -13,6 +13,7 @@ from typing import Sequence
 
 import numpy as np
 import numpy.typing as npt
+from tqdm.auto import tqdm
 
 from .analysis import category_metrics, prediction_metrics, write_analysis
 from .config import Config, dump_resolved_config
@@ -39,15 +40,16 @@ def learn(config: Config) -> list[Path]:
     root.mkdir(parents=True, exist_ok=True)
     dump_resolved_config(config, root / "resolved_config.yaml")
     directories: list[Path] = []
+    seeds = np.random.SeedSequence(config.run.seed).spawn(config.run.experiments)
     for experiment_id, seed in enumerate(
-        np.random.SeedSequence(config.run.seed).spawn(config.run.experiments)
+        tqdm(seeds, desc="Experiments", unit="trial", position=0)
     ):
         directory = root / f"exp{experiment_id:03}"
         directory.mkdir(parents=True, exist_ok=True)
         if config.mode == "single-csl":
-            _learn_single(config, directory, seed)
+            _learn_single(config, directory, seed, experiment_id=experiment_id)
         else:
-            _learn_inter(config, directory, seed)
+            _learn_inter(config, directory, seed, experiment_id=experiment_id)
         directories.append(directory)
     return directories
 
@@ -244,8 +246,26 @@ def accept_words(
 
 
 def _learn_single(
-    config: Config, directory: Path, seed: np.random.SeedSequence
+    config: Config,
+    directory: Path,
+    seed: np.random.SeedSequence,
+    *,
+    experiment_id: int,
 ) -> None:
+    """Run and save one Single-CSL trial.
+
+    Single-CSLの1試行を実行して保存する。
+
+    Args:
+        config: Validated experiment configuration.
+            検証済み実験設定。
+        directory: Output directory for this trial.
+            この試行の出力ディレクトリ。
+        seed: Random seed sequence for this trial.
+            この試行の乱数seed sequence。
+        experiment_id: Zero-based trial identifier used in progress output.
+            進捗表示に使う0始まりの試行識別子。
+    """
     dataset = load_dataset(config.paths.data_root, "U")
     corpus = load_single_words(config.paths.data_root, dataset.num_documents)
     model = CslModel(
@@ -256,7 +276,8 @@ def _learn_single(
         vocabulary=corpus.vocabulary,
     )
     history: list[dict[str, object]] = []
-    for iteration in range(config.run.iterations):
+    iterations = _iteration_progress(config, experiment_id)
+    for iteration in iterations:
         model.step(corpus.encoded)
         row: dict[str, object] = {"iteration": iteration + 1}
         row.update(category_metrics(model.state, dataset))
@@ -266,8 +287,26 @@ def _learn_single(
 
 
 def _learn_inter(
-    config: Config, directory: Path, seed: np.random.SeedSequence
+    config: Config,
+    directory: Path,
+    seed: np.random.SeedSequence,
+    *,
+    experiment_id: int,
 ) -> None:
+    """Run and save one Inter-CSL trial.
+
+    Inter-CSLの1試行を実行して保存する。
+
+    Args:
+        config: Validated experiment configuration.
+            検証済み実験設定。
+        directory: Output directory for this trial.
+            この試行の出力ディレクトリ。
+        seed: Random seed sequence for this trial.
+            この試行の乱数seed sequence。
+        experiment_id: Zero-based trial identifier used in progress output.
+            進捗表示に使う0始まりの試行識別子。
+    """
     dataset_a = load_dataset(config.paths.data_root, "A")
     dataset_b = load_dataset(config.paths.data_root, "B")
     rng_a, rng_b = [np.random.default_rng(child) for child in seed.spawn(2)]
@@ -277,7 +316,8 @@ def _learn_inter(
     proposal_a = tuple(row.copy() for row in model_a.state.words)
     proposal_b = tuple(row.copy() for row in model_b.state.words)
     history: list[dict[str, object]] = []
-    for iteration in range(config.run.iterations):
+    iterations = _iteration_progress(config, experiment_id)
+    for iteration in iterations:
         source_a = proposal_a if config.interaction == "no_communication" else proposal_b
         accepted_a = accept_words(model_a, source_a, config.interaction)
         model_a.step(accepted_a)
@@ -297,6 +337,35 @@ def _learn_inter(
         dataset_a,
         other_state=model_b.state,
         history=history,
+    )
+
+
+def _iteration_progress(config: Config, experiment_id: int) -> tqdm[int]:
+    """Create the per-trial inference progress display.
+
+    試行ごとの推論進捗表示を作成する。
+
+    Args:
+        config: Experiment configuration containing iteration and trial counts.
+            iteration数と試行数を含む実験設定。
+        experiment_id: Zero-based experiment identifier.
+            0始まりの試行識別子。
+
+    Returns:
+        Progress iterator over inference iterations.
+            推論iterationを走査する進捗iterator。
+    """
+    trial_number = experiment_id + 1
+    description = (
+        f"exp{experiment_id:03} "
+        f"({trial_number}/{config.run.experiments}) iterations"
+    )
+    return tqdm(
+        range(config.run.iterations),
+        desc=description,
+        unit="iteration",
+        position=1,
+        leave=False,
     )
 
 

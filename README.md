@@ -214,6 +214,11 @@ csl predict --config examples/inter.yaml
 csl analyze --config examples/inter.yaml
 ```
 
+During learning, `csl` displays an outer progress bar for completed trials and
+an inner bar labeled with the current trial ID (for example, `exp000`) and its
+inference iteration. 学習中は、全試行の進捗を示す外側のbarと、現在の試行ID
+（例: `exp000`）および推論iterationを示す内側のbarを表示します。
+
 Example paths are resolved relative to the YAML file, not the current working
 directory. The schema is intentionally strict and rejects unknown keys.
 

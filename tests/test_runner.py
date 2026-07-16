@@ -30,9 +30,16 @@ def _config(tmp_path, mode):
     )
 
 
-def test_single_end_to_end(tmp_path):
+def test_single_end_to_end(tmp_path, monkeypatch):
     config = _config(tmp_path, "single-csl")
     write_compact_fixture(config.paths.data_root, num_documents=6)
+    progress_calls = []
+
+    def record_progress(iterable, **kwargs):
+        progress_calls.append(kwargs)
+        return iterable
+
+    monkeypatch.setattr("legacy_csl.runner.tqdm", record_progress)
 
     validate_data(config)
     [directory] = learn(config)
@@ -44,6 +51,15 @@ def test_single_end_to_end(tmp_path):
     assert (directory / "csv" / "theta_U.csv").is_file()
     assert (directory / "analysis" / "learning_curves.png").is_file()
     assert "ari_truth_a" in rows[0]
+    assert progress_calls == [
+        {"desc": "Experiments", "unit": "trial", "position": 0},
+        {
+            "desc": "exp000 (1/1) iterations",
+            "unit": "iteration",
+            "position": 1,
+            "leave": False,
+        },
+    ]
 
 
 def test_inter_learning_prediction_and_analysis(tmp_path):
