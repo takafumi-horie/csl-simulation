@@ -46,23 +46,36 @@ def category_metrics(
     """
     metrics: dict[str, float] = {}
     for attr in ATTRIBUTES:
-        if dataset.true_categories is not None and attr in dataset.true_categories:
+        primary = _attended_state_categories(state, dataset, attr)
+        truth = dataset.attended_categories(attr)
+        if truth is not None:
             metrics[f"ari_truth_{attr}"] = float(
-                adjusted_rand_score(dataset.true_categories[attr], state.z[attr])
+                adjusted_rand_score(truth, primary)
             )
         if other_state is not None:
+            secondary = _attended_state_categories(other_state, dataset, attr)
             metrics[f"ari_agents_{attr}"] = float(
-                adjusted_rand_score(state.z[attr], other_state.z[attr])
+                adjusted_rand_score(primary, secondary)
             )
             metrics[f"kappa_agents_{attr}"] = float(
-                cohen_kappa_score(state.z[attr], other_state.z[attr])
+                cohen_kappa_score(primary, secondary)
             )
     if other_state is not None:
+        comparisons = [
+            left == right
+            for left_doc, right_doc in zip(state.words, other_state.words)
+            for left, right in zip(left_doc, right_doc)
+        ]
         metrics["word_exact_agreement"] = float(
-            np.mean(state.words == other_state.words)
+            np.mean(comparisons)
         )
         metrics["utterance_exact_agreement"] = float(
-            np.mean(np.all(state.words == other_state.words, axis=1))
+            np.mean(
+                [
+                    np.array_equal(left, right)
+                    for left, right in zip(state.words, other_state.words)
+                ]
+            )
         )
     return metrics
 
@@ -87,7 +100,7 @@ def prediction_metrics(
     """
     return {
         f"mse_{attr}": float(
-            np.mean(np.square(predicted[attr] - dataset.observations[attr]))
+            np.mean(np.square(predicted[attr] - dataset.attended(attr)))
         )
         for attr in ATTRIBUTES
     }
@@ -165,3 +178,16 @@ def _plot_theta(theta: npt.NDArray[np.float64], path: Path) -> None:
     figure.savefig(path, dpi=150)
     plt.close(figure)
 
+
+def _attended_state_categories(
+    state: CslState, dataset: ObservationDataset, attribute: str
+) -> npt.NDArray[np.int64]:
+    assignments = state.z[attribute]
+    if attribute == "a":
+        assert isinstance(assignments, np.ndarray)
+        return assignments
+    assert isinstance(assignments, tuple)
+    return np.asarray(
+        [values[int(attention)] for values, attention in zip(assignments, dataset.attentions)],
+        dtype=np.int64,
+    )

@@ -159,6 +159,44 @@ def test_dump_writes_resolved_defaults_and_round_trips(tmp_path: Path) -> None:
     assert reloaded == config
 
 
+def test_gmm_defaults_match_legacy_config_hyper(tmp_path: Path) -> None:
+    config = load_config(_write_config(tmp_path, _valid_config()))
+    gmm = config.hyperparameters.gmm
+
+    assert set(gmm.mixture_concentration.as_mapping().values()) == {1.0}
+    assert set(gmm.frozen_mixture_concentration.as_mapping().values()) == {0.1}
+    assert set(gmm.mean_prior.as_mapping().values()) == {0.0}
+    assert set(gmm.mean_precision.as_mapping().values()) == {0.001}
+    assert set(gmm.covariance_scale.as_mapping().values()) == {0.01}
+    assert set(gmm.covariance_df_offset.as_mapping().values()) == {2.0}
+    assert gmm.kmeans_n_init == 10
+
+
+def test_gmm_accepts_attribute_specific_values(tmp_path: Path) -> None:
+    values = _valid_config()
+    values["hyperparameters"] = {
+        "gmm": {
+            "mixture_concentration": {"a": 2.0, "o": 0.5},
+            "mean_prior": {"p": -1.5},
+            "mean_precision": {"c": 0.2},
+            "covariance_scale": {"o": 3.0},
+            "covariance_df_offset": {"p": 4.0},
+            "kmeans_n_init": 4,
+        }
+    }
+
+    gmm = load_config(_write_config(tmp_path, values)).hyperparameters.gmm
+
+    assert gmm.mixture_concentration.a == 2.0
+    assert gmm.mixture_concentration.p == 1.0
+    assert gmm.mixture_concentration.o == 0.5
+    assert gmm.mean_prior.p == -1.5
+    assert gmm.mean_precision.c == 0.2
+    assert gmm.covariance_scale.o == 3.0
+    assert gmm.covariance_df_offset.p == 4.0
+    assert gmm.kmeans_n_init == 4
+
+
 def test_single_accepts_interaction_field_for_a_shared_schema(tmp_path: Path) -> None:
     values = _valid_config()
     values["mode"] = "single-csl"

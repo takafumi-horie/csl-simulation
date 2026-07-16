@@ -84,7 +84,8 @@ def test_iid_mode_allows_word_length_larger_than_attribute_count(tmp_path):
         rng=np.random.default_rng(12),
     )
 
-    assert model.state.words.shape == (5, 6)
+    assert len(model.state.words) == 5
+    assert all(word_d.shape == (6,) for word_d in model.state.words)
     assert all(len(sequence) == 6 for sequence in model.state.attributes)
 
 
@@ -101,3 +102,19 @@ def test_readonly_z_does_not_expose_mutable_state(tmp_path):
     view["a"][0] = 999
 
     assert model.state.z["a"][0] != 999
+
+
+def test_variances_compatibility_view_does_not_expose_state(tmp_path):
+    config = _config(tmp_path)
+    write_compact_fixture(config.paths.data_root, num_documents=4)
+    model = CslModel(
+        load_dataset(config.paths.data_root, "U"),
+        config,
+        rng=np.random.default_rng(14),
+    )
+    view = model.state.variances
+    original = model.state.covariances["a"][0, 0, 0]
+
+    view["a"][0, 0, 0] = 999
+
+    assert model.state.covariances["a"][0, 0, 0] == original

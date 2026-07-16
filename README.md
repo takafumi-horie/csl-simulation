@@ -51,6 +51,65 @@ legacy rescaling は上式のとおり全 `z` 行を単純加算します。単�
 カテゴリ更新、属性列更新、Inter-CSL の受理率は、すべて同じ変換済み行列を
 参照します。
 
+`empirical_unigram` reproduces the legacy Inter-CSL comparison condition: the
+ordinary Gibbs consumers use raw `theta`, while only the MH ratio divides the
+old and proposed word probabilities by their respective corpus-snapshot
+counts. It does not add smoothing or renormalize the rows. `none` uses raw
+`theta` everywhere.
+
+`empirical_unigram` は legacy Inter-CSL の比較条件を再現します。通常の Gibbs
+更新では未補正の `theta` を使い、MH 受理率だけが旧単語・提案単語の確率を
+それぞれのコーパス snapshot 頻度で割ります。加算 smoothing と行の再正規化は
+行いません。`none` は全箇所で未補正の `theta` を使います。
+
+## Faithful inference scope / 推論の再現範囲
+
+The categorical learning kernel infers every latent variable updated by the
+legacy Single-CSL and Inter-CSL paths:
+
+- category assignments `z` for every observed object, not only the attended
+  object;
+- mixture proportions `pi` from all of those assignments;
+- full-covariance Gaussian parameters `(mu, Sigma)` under the conjugate
+  Gaussian--inverse-Wishart posterior;
+- category-to-word distributions `theta`;
+- one attribute sequence `F` per document; and
+- in Inter-CSL, internal words through the token-wise MH naming game.
+
+Words are observed in Single-CSL. Their lengths may differ by document, and
+their vocabulary is encoded in first-seen order. The default legacy importance
+kernel uses the scan `z -> pi -> (mu, Sigma) -> F -> theta`; the optional direct
+Dirichlet kernel uses the later scan `z -> pi -> (mu, Sigma) -> theta -> F`.
+Prediction is generative: it resamples speaker categories and words, listener
+categories, and listener observations rather than reusing training `z` or `F`.
+
+categorical 学習 kernel は、旧 Single-CSL / Inter-CSL の実行経路が更新していた
+潜在変数をすべて推論します。
+
+- 注視対象だけでなく全観測物体のカテゴリ割当て `z`
+- 全物体の割当てから更新する混合比率 `pi`
+- Gaussian--inverse-Wishart 共役事後に基づく完全共分散 Gaussian パラメータ
+  `(mu, Sigma)`
+- カテゴリから単語への分布 `theta`
+- 文書ごとの属性列 `F`
+- Inter-CSL では token 単位 MH naming game による内部単語
+
+Single-CSL の単語は観測値です。文書ごとに発話長が異なってもよく、語彙は
+初出順で符号化します。既定の legacy importance kernel は
+`z -> pi -> (mu, Sigma) -> F -> theta`、任意の直接 Dirichlet kernel は後期実装の
+`z -> pi -> (mu, Sigma) -> theta -> F` という更新順です。予測時には学習済みの
+`z` や `F` を流用せず、話者カテゴリ・単語、聞き手カテゴリ・聞き手観測を
+生成的に再サンプルします。
+
+The implementation matches the probability distributions and transition
+kernel, but is not intended to reproduce the old program's random stream
+bit-for-bit: it uses an explicit modern NumPy generator and a reorganized draw
+schedule.
+
+確率分布と遷移 kernel は旧実装と等価ですが、旧プログラムと乱数列まで
+bit 単位で一致させるものではありません。明示的な現行 NumPy generator と
+再整理した乱数呼出しを使用します。
+
 ## Installation / インストール
 
 Python 3.11 is supported.
@@ -111,12 +170,98 @@ directory. The schema is intentionally strict and rejects unknown keys.
 設定内の相対パスはカレントディレクトリではなく YAML ファイルを基準に
 解決されます。設定スキーマは意図的に厳格で、未知のキーをエラーにします。
 
+## GMM hyperparameters / GMM ハイパーパラメータ
+
+Each sensory attribute has its own Gaussian mixture. The mixture uses a
+Dirichlet prior for category probabilities and a
+Gaussian--inverse-Wishart prior for full-covariance Gaussian parameters.
+Configure the legacy defaults under `hyperparameters.gmm` as follows:
+
+各感覚属性は個別の Gaussian mixture を持ちます。カテゴリ確率には Dirichlet
+事前分布、完全共分散 Gaussian のパラメータには
+Gaussian--inverse-Wishart 事前分布を使います。旧実装と同じ既定値は
+`hyperparameters.gmm` で次のように指定できます。
+
+```yaml
+hyperparameters:
+  gmm:
+    mixture_concentration: {a: 1.0, p: 1.0, o: 1.0, c: 1.0}
+    frozen_mixture_concentration: {a: 0.1, p: 0.1, o: 0.1, c: 0.1}
+    mean_prior: {a: 0.0, p: 0.0, o: 0.0, c: 0.0}
+    mean_precision: {a: 0.001, p: 0.001, o: 0.001, c: 0.001}
+    covariance_scale: {a: 0.01, p: 0.01, o: 0.01, c: 0.01}
+    covariance_df_offset: {a: 2.0, p: 2.0, o: 2.0, c: 2.0}
+    kmeans_n_init: 10
+```
+
+The keys `a`, `p`, `o`, and `c` mean action/haptic, position, object, and
+color. Scalar mean and covariance settings are expanded across every feature
+dimension of that attribute.
+
+`a`、`p`、`o`、`c` はそれぞれ動作・触覚、位置、物体、色を表します。平均と
+共分散に対するスカラー設定は、その属性の全特徴次元へ展開されます。
+
+- `mixture_concentration` is the symmetric Dirichlet concentration for the
+  category proportions `pi`. Values below `1` favor using fewer categories;
+  larger values favor more even category proportions.
+- `frozen_mixture_concentration` is the legacy alternative used when
+  `freeze.gmm: true`; GMM variables are then kept fixed after initialization.
+- `mean_prior` is the prior center of every Gaussian mean. Set it near the
+  expected center of a normalized feature space.
+- `mean_precision` is the prior strength for the Gaussian mean. Increasing it
+  pulls posterior means more strongly toward `mean_prior`; decreasing it lets
+  observations dominate sooner.
+- `covariance_scale` forms the inverse-Wishart scale matrix
+  `covariance_scale * I`. Larger values permit larger covariance at a fixed
+  degree of freedom.
+- `covariance_df_offset` defines the inverse-Wishart degrees of freedom as
+  `feature_dimension + covariance_df_offset`. Larger values concentrate and,
+  at fixed scale, shrink the covariance prior; tune it together with
+  `covariance_scale`.
+- `kmeans_n_init` controls how many K-means initializations are tried before
+  inference. Increasing it can make initialization more robust but takes
+  longer; it does not change the Bayesian prior.
+
+- `mixture_concentration` はカテゴリ比率 `pi` の対称 Dirichlet 集中度です。
+  `1` 未満では少数カテゴリを使う解を好み、大きくするとカテゴリ比率をより
+  均等にする方向へ働きます。
+- `frozen_mixture_concentration` は `freeze.gmm: true` のときに使う legacy
+  側の集中度です。この場合、初期化後の GMM 変数は固定されます。
+- `mean_prior` は各 Gaussian 平均の事前中心です。正規化済み特徴量で期待する
+  中心付近に設定します。
+- `mean_precision` は平均事前の強さです。大きくすると事後平均を
+  `mean_prior` へ強く寄せ、小さくすると観測の影響が早く強くなります。
+- `covariance_scale` は inverse-Wishart のスケール行列
+  `covariance_scale * I` を作ります。自由度が同じなら、大きい値ほど大きな
+  共分散を許します。
+- `covariance_df_offset` は自由度を
+  `特徴次元 + covariance_df_offset` と定めます。大きくすると分布が集中し、
+  スケール固定時には共分散事前を小さくするため、`covariance_scale` と組で
+  調整します。
+- `kmeans_n_init` は推論前に試す K-means 初期化回数です。増やすと初期値が
+  安定しやすい一方で計算時間が増えます。Bayes事前自体は変わりません。
+
+Start from the legacy defaults, then tune one attribute at a time. Feature
+standardization should be fixed before tuning because the mean and covariance
+priors are expressed in feature-space units. Changing `category_counts` has a
+larger structural effect than changing these priors and should be evaluated
+separately.
+
+まず legacy 既定値から始め、属性ごとに調整してください。平均・共分散事前は
+特徴空間の単位に依存するため、調整前に特徴量の標準化方法を固定します。
+`category_counts` の変更はこれらの事前分布より構造的影響が大きいため、分けて
+評価してください。
+
 ## Input data / 入力データ
 
 The recommended compact representation is one `agentU.npz`, `agentA.npz`, or
-`agentB.npz` file. Each archive contains 2-D float arrays `a`, `p`, `o`, `c`,
-and may contain integer truth arrays `z_a`, `z_p`, `z_o`, `z_c`. Single-CSL
-also uses a rectangular `single_words.json`.
+`agentB.npz` file. In each archive, `a` has shape `(D, d_a)`, `num_objects` and
+`attentions` have shape `(D,)`, and each of `p`, `o`, and `c` has
+`sum(num_objects)` rows. Object arrays may instead use shape `(D, M, d)` when
+all documents have the same object count. Optional truth must provide all of
+`z_a`, `z_p`, `z_o`, and `z_c`; object truth follows the same flattened object
+order. Single-CSL additionally reads `single_words.json`, whose rows may have
+different lengths.
 
 The `U` in `agentU.npz` is retained only as a data-format identifier for
 compatibility with existing processed datasets; the public model name is
@@ -127,10 +272,13 @@ The loader also accepts the processed legacy datadump layout under
 `target_object.txt`, `action.csv`, CNN-PCA object features, and RGB-BoF color
 features. Raw images are neither required nor distributed.
 
-推奨入力は `agentU.npz`、`agentA.npz`、`agentB.npz` です。各ファイルは
-2次元 float 配列 `a/p/o/c` と、任意で正解 `z_a/z_p/z_o/z_c` を持ちます。
-Single-CSL は長方形の `single_words.json` も使います。`agentU` の `U` は
-既存データ形式との互換性のために残した識別子で、公開モデル名は
+推奨入力は `agentU.npz`、`agentA.npz`、`agentB.npz` です。`a` は
+`(D, d_a)`、`num_objects` と `attentions` は `(D,)`、`p/o/c` はそれぞれ
+`sum(num_objects)` 行にします。全文書の物体数が同じ場合、物体配列は
+`(D, M, d)` でも構いません。正解を含める場合は `z_a/z_p/z_o/z_c` をすべて
+指定し、物体属性の正解は観測と同じ平坦化順にします。Single-CSL の
+`single_words.json` は文書ごとに異なる発話長を使用できます。`agentU` の `U`
+は既存データ形式との互換性のために残した識別子で、公開モデル名は
 Single-CSL です。処理済み legacy datadump 形式も読み込めますが、画像本体は
 不要です。
 
@@ -175,11 +323,15 @@ categorical `uni-csl` / `inter-csl` の実行経路を、独立・型付きの�
 
 The implementation was reorganized from the algorithms present at
 `multi-agent-csl` commit `831140870e5d92adfd707c40597fc5d1409c1ec0`. The
-Python 2 source under `lib/__original_source/rescaling_term.py` was used as the
-numerical oracle for legacy theta rescaling and importance weights.
+Python 2 source at history commit
+`53ac2bd679c69b9cc7fa218ff4ef0d65c6b7bc23`, path
+`lib/__original_source/rescaling_term.py`, was used as the numerical oracle for
+legacy theta rescaling and importance weights.
 
 実装は上記コミット時点のアルゴリズムを基準に再整理しました。legacy theta
-補正と importance 重みについては、Python 2 原版を数値 oracle として
-テストしています。
+補正と importance 重みについては、履歴 commit
+`53ac2bd679c69b9cc7fa218ff4ef0d65c6b7bc23` の
+`lib/__original_source/rescaling_term.py` にある Python 2 原版を数値 oracle
+としてテストしています。
 
 </details>

@@ -1,6 +1,6 @@
-"""Checkpoint and compatibility CSV serialization.
+"""Checkpoint and legacy-compatible CSV serialization.
 
-チェックポイントと互換 CSV のシリアライズ。
+チェックポイントとlegacy互換CSVのシリアライズ。
 """
 
 from __future__ import annotations
@@ -16,9 +16,9 @@ from .model import CslState
 
 
 def save_state(state: CslState, directory: Path, agent: str) -> None:
-    """Save a native checkpoint and major legacy-compatible CSV files.
+    """Save a lossless native checkpoint and major compatibility CSVs.
 
-    ネイティブチェックポイントと主要 legacy 互換 CSV を保存する。
+    欠損のないネイティブcheckpointと主要互換CSVを保存する。
 
     Args:
         state: Agent state to save.
@@ -29,18 +29,30 @@ def save_state(state: CslState, directory: Path, agent: str) -> None:
             ファイル名に使うエージェント識別子。
     """
     directory.mkdir(parents=True, exist_ok=True)
+    words_flat, word_offsets = _pack_ragged(state.words)
     payload: dict[str, np.ndarray] = {
         "theta": state.theta,
-        "words": state.words,
+        "words_flat": words_flat,
+        "word_offsets": word_offsets,
+        "z_a": np.asarray(state.z["a"], dtype=np.int64),
     }
+    for attr in ATTRIBUTES[1:]:
+        assignments = state.z[attr]
+        assert isinstance(assignments, tuple)
+        flat, offsets = _pack_ragged(assignments)
+        payload[f"z_{attr}_flat"] = flat
+        payload[f"z_{attr}_offsets"] = offsets
     for attr in ATTRIBUTES:
-        payload[f"z_{attr}"] = state.z[attr]
         payload[f"pi_{attr}"] = state.pi[attr]
         payload[f"mean_{attr}"] = state.means[attr]
-        payload[f"variance_{attr}"] = state.variances[attr]
+        payload[f"covariance_{attr}"] = state.covariances[attr]
     np.savez_compressed(directory / f"state_{agent}.npz", **payload)
-    (directory / f"attributes_{agent}.json").write_text(
-        json.dumps(state.attributes, ensure_ascii=False, indent=2), encoding="utf-8"
+    metadata = {
+        "attributes": state.attributes,
+        "vocabulary": state.vocabulary,
+    }
+    (directory / f"metadata_{agent}.json").write_text(
+        json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     _write_compatibility_csv(state, directory / "csv", agent)
 
@@ -61,33 +73,43 @@ def load_state(directory: Path, agent: str) -> CslState:
         呼出側が所有する復元済み可変状態。
     """
     with np.load(directory / f"state_{agent}.npz", allow_pickle=False) as archive:
-        z = {attr: archive[f"z_{attr}"].astype(np.int64).copy() for attr in ATTRIBUTES}
-        pi = {attr: archive[f"pi_{attr}"].astype(np.float64).copy() for attr in ATTRIBUTES}
+        z = {"a": archive["z_a"].astype(np.int64).copy()}
+        for attr in ATTRIBUTES[1:]:
+            z[attr] = _unpack_ragged(
+                archive[f"z_{attr}_flat"], archive[f"z_{attr}_offsets"]
+            )
+        pi = {
+            attr: archive[f"pi_{attr}"].astype(np.float64).copy()
+            for attr in ATTRIBUTES
+        }
         means = {
             attr: archive[f"mean_{attr}"].astype(np.float64).copy()
             for attr in ATTRIBUTES
         }
-        variances = {
-            attr: archive[f"variance_{attr}"].astype(np.float64).copy()
+        covariances = {
+            attr: archive[f"covariance_{attr}"].astype(np.float64).copy()
             for attr in ATTRIBUTES
         }
         theta = archive["theta"].astype(np.float64).copy()
-        words = archive["words"].astype(np.int64).copy()
-    raw_attributes = json.loads(
-        (directory / f"attributes_{agent}.json").read_text(encoding="utf-8")
+        words = _unpack_ragged(archive["words_flat"], archive["word_offsets"])
+    metadata = json.loads(
+        (directory / f"metadata_{agent}.json").read_text(encoding="utf-8")
     )
-    attributes = [tuple(sequence) for sequence in raw_attributes]
-    return CslState(z, pi, means, variances, theta, attributes, words)
+    attributes = [tuple(sequence) for sequence in metadata["attributes"]]
+    vocabulary = tuple(map(str, metadata["vocabulary"]))
+    return CslState(
+        z, pi, means, covariances, theta, attributes, words, vocabulary
+    )
 
 
 def write_metric_rows(path: Path, rows: list[dict[str, object]]) -> None:
     """Write homogeneous metric dictionaries as UTF-8 CSV.
 
-    同じキーを持つ指標辞書を UTF-8 CSV に保存する。
+    同じキーを持つ指標辞書をUTF-8 CSVへ保存する。
 
     Args:
         path: Destination CSV path.
-            出力 CSV パス。
+            出力CSVパス。
         rows: Metric rows; empty input writes no file.
             指標行。空の場合はファイルを作らない。
     """
@@ -103,24 +125,60 @@ def write_metric_rows(path: Path, rows: list[dict[str, object]]) -> None:
 def _write_compatibility_csv(state: CslState, directory: Path, agent: str) -> None:
     directory.mkdir(parents=True, exist_ok=True)
     for attr in ATTRIBUTES:
-        np.savetxt(directory / f"z{attr}_{agent}.csv", state.z[attr], delimiter=",", fmt="%d")
+        assignments = state.z[attr]
+        rows = (
+            [[int(value)] for value in assignments]
+            if isinstance(assignments, np.ndarray)
+            else [value.astype(int).tolist() for value in assignments]
+        )
+        _write_rows(directory / f"z{attr}_{agent}.csv", rows)
         np.savetxt(directory / f"pi_{attr}_{agent}.csv", state.pi[attr], delimiter=",")
         np.savetxt(directory / f"Mu_{attr}_{agent}.csv", state.means[attr], delimiter=",")
-        np.savetxt(
-            directory / f"Sig_{attr}_{agent}.csv",
-            state.variances[attr],
-            delimiter=",",
+        _write_covariance_blocks(
+            directory / f"Sig_{attr}_{agent}.csv", state.covariances[attr]
         )
     np.savetxt(directory / f"theta_{agent}.csv", state.theta, delimiter=",")
-    np.savetxt(directory / f"uttered_words_{agent}.csv", state.words, delimiter=",", fmt="%d")
-    with (directory / f"F_{agent}.csv").open("w", newline="", encoding="utf-8") as stream:
-        csv.writer(stream).writerows(state.attributes)
-    with (directory / f"W_list_{agent}.csv").open("w", newline="", encoding="utf-8") as stream:
-        csv.writer(stream).writerow(range(state.theta.shape[1]))
+    _write_rows(
+        directory / f"uttered_words_{agent}.csv",
+        [row.astype(int).tolist() for row in state.words],
+    )
+    _write_rows(directory / f"F_{agent}.csv", state.attributes)
+    _write_rows(directory / f"W_list_{agent}.csv", [state.vocabulary])
     np.savetxt(
         directory / f"word_length_{agent}.csv",
-        np.full(state.words.shape[0], state.words.shape[1]),
+        np.asarray([len(row) for row in state.words]),
         delimiter=",",
         fmt="%d",
     )
+
+
+def _pack_ragged(values: tuple[np.ndarray, ...]) -> tuple[np.ndarray, np.ndarray]:
+    offsets = np.concatenate(
+        [np.asarray([0], dtype=np.int64), np.cumsum([len(value) for value in values])]
+    )
+    flat = np.concatenate(values).astype(np.int64, copy=False)
+    return flat, offsets
+
+
+def _unpack_ragged(flat: np.ndarray, offsets: np.ndarray) -> tuple[np.ndarray, ...]:
+    values = np.asarray(flat, dtype=np.int64)
+    boundaries = np.asarray(offsets, dtype=np.int64)
+    return tuple(
+        values[boundaries[index] : boundaries[index + 1]].copy()
+        for index in range(len(boundaries) - 1)
+    )
+
+
+def _write_rows(path: Path, rows: object) -> None:
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        csv.writer(stream).writerows(rows)
+
+
+def _write_covariance_blocks(path: Path, covariances: np.ndarray) -> None:
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.writer(stream)
+        for category, covariance in enumerate(covariances):
+            writer.writerows(covariance.tolist())
+            if category + 1 < len(covariances):
+                writer.writerow([])
 

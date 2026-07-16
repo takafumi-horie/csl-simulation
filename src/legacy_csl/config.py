@@ -258,6 +258,101 @@ class AttributeCategoryCounts:
 
 
 @dataclass(frozen=True, slots=True)
+class AttributeScalars:
+    """Store one floating-point hyperparameter per sensory attribute.
+
+    感覚属性ごとに1つの浮動小数点ハイパーパラメータを保持する。
+
+    Args:
+        a: Action/haptic value.
+            動作・触覚属性の値。
+        p: Position value.
+            位置属性の値。
+        o: Object value.
+            物体属性の値。
+        c: Color value.
+            色属性の値。
+    """
+
+    a: float
+    p: float
+    o: float
+    c: float
+
+    def as_mapping(self) -> Mapping[str, float]:
+        """Return values keyed by attribute.
+
+        属性名をキーとする値を返す。
+
+        Returns:
+            Newly allocated attribute mapping.
+            新しく作成した属性マッピング。
+        """
+        return {"a": self.a, "p": self.p, "o": self.o, "c": self.c}
+
+
+@dataclass(frozen=True, slots=True)
+class GmmHyperparameters:
+    """Configure the legacy Gaussian--inverse-Wishart mixture.
+
+    legacy Gaussian--inverse-Wishart 混合モデルを設定する。
+
+    Scalar mean priors and covariance scales are expanded to every dimension.
+    These defaults reproduce the values built by the original ``config_hyper``.
+
+    平均事前と共分散スケールのスカラー値は全次元へ展開する。既定値は旧
+    ``config_hyper`` が構築していた値と一致する。
+    """
+
+    mixture_concentration: AttributeScalars = field(
+        default_factory=lambda: AttributeScalars(1.0, 1.0, 1.0, 1.0)
+    )
+    frozen_mixture_concentration: AttributeScalars = field(
+        default_factory=lambda: AttributeScalars(0.1, 0.1, 0.1, 0.1)
+    )
+    mean_prior: AttributeScalars = field(
+        default_factory=lambda: AttributeScalars(0.0, 0.0, 0.0, 0.0)
+    )
+    mean_precision: AttributeScalars = field(
+        default_factory=lambda: AttributeScalars(0.001, 0.001, 0.001, 0.001)
+    )
+    covariance_scale: AttributeScalars = field(
+        default_factory=lambda: AttributeScalars(0.01, 0.01, 0.01, 0.01)
+    )
+    covariance_df_offset: AttributeScalars = field(
+        default_factory=lambda: AttributeScalars(2.0, 2.0, 2.0, 2.0)
+    )
+    kmeans_n_init: int = 10
+
+    def __post_init__(self) -> None:
+        """Validate all Gaussian mixture hyperparameters.
+
+        全GMMハイパーパラメータを検証する。
+
+        Raises:
+            ConfigError: If a value is outside the valid domain.
+                値が有効範囲外の場合。
+        """
+        for field_name in (
+            "mixture_concentration",
+            "frozen_mixture_concentration",
+            "mean_precision",
+            "covariance_scale",
+            "covariance_df_offset",
+        ):
+            values = getattr(self, field_name).as_mapping()
+            for attribute, value in values.items():
+                _require_positive_float(
+                    value, f"hyperparameters.gmm.{field_name}.{attribute}"
+                )
+        for attribute, value in self.mean_prior.as_mapping().items():
+            _require_finite_float(
+                value, f"hyperparameters.gmm.mean_prior.{attribute}"
+            )
+        _require_positive_int(self.kmeans_n_init, "hyperparameters.gmm.kmeans_n_init")
+
+
+@dataclass(frozen=True, slots=True)
 class CoreHyperparameters:
     """Store the minimal hyperparameters used by categorical legacy CSL.
 
@@ -281,6 +376,7 @@ class CoreHyperparameters:
     vocabulary_size: int = 14
     word_length: int = 4
     gamma: float = 0.1
+    gmm: GmmHyperparameters = field(default_factory=GmmHyperparameters)
 
     def __post_init__(self) -> None:
         """Validate core hyperparameters after construction.
@@ -532,7 +628,7 @@ def _parse_hyperparameters(value: Any) -> CoreHyperparameters:
     values = _mapping(value, "hyperparameters")
     _reject_unknown(
         values,
-        {"category_counts", "vocabulary_size", "word_length", "gamma"},
+        {"category_counts", "vocabulary_size", "word_length", "gamma", "gmm"},
         "hyperparameters",
     )
     counts_value = _mapping(
@@ -547,11 +643,74 @@ def _parse_hyperparameters(value: Any) -> CoreHyperparameters:
         o=counts_value.get("o", 10),
         c=counts_value.get("c", 10),
     )
+    gmm = _parse_gmm(values.get("gmm", {}))
     return CoreHyperparameters(
         category_counts=counts,
         vocabulary_size=values.get("vocabulary_size", 14),
         word_length=values.get("word_length", 4),
         gamma=values.get("gamma", 0.1),
+        gmm=gmm,
+    )
+
+
+def _parse_gmm(value: Any) -> GmmHyperparameters:
+    values = _mapping(value, "hyperparameters.gmm")
+    fields = {
+        "mixture_concentration",
+        "frozen_mixture_concentration",
+        "mean_prior",
+        "mean_precision",
+        "covariance_scale",
+        "covariance_df_offset",
+        "kmeans_n_init",
+    }
+    _reject_unknown(values, fields, "hyperparameters.gmm")
+    defaults = GmmHyperparameters()
+    return GmmHyperparameters(
+        mixture_concentration=_parse_attribute_scalars(
+            values.get("mixture_concentration", {}),
+            "hyperparameters.gmm.mixture_concentration",
+            defaults.mixture_concentration,
+        ),
+        frozen_mixture_concentration=_parse_attribute_scalars(
+            values.get("frozen_mixture_concentration", {}),
+            "hyperparameters.gmm.frozen_mixture_concentration",
+            defaults.frozen_mixture_concentration,
+        ),
+        mean_prior=_parse_attribute_scalars(
+            values.get("mean_prior", {}),
+            "hyperparameters.gmm.mean_prior",
+            defaults.mean_prior,
+        ),
+        mean_precision=_parse_attribute_scalars(
+            values.get("mean_precision", {}),
+            "hyperparameters.gmm.mean_precision",
+            defaults.mean_precision,
+        ),
+        covariance_scale=_parse_attribute_scalars(
+            values.get("covariance_scale", {}),
+            "hyperparameters.gmm.covariance_scale",
+            defaults.covariance_scale,
+        ),
+        covariance_df_offset=_parse_attribute_scalars(
+            values.get("covariance_df_offset", {}),
+            "hyperparameters.gmm.covariance_df_offset",
+            defaults.covariance_df_offset,
+        ),
+        kmeans_n_init=values.get("kmeans_n_init", defaults.kmeans_n_init),
+    )
+
+
+def _parse_attribute_scalars(
+    value: Any, field_name: str, defaults: AttributeScalars
+) -> AttributeScalars:
+    values = _mapping(value, field_name)
+    _reject_unknown(values, {"a", "p", "o", "c"}, field_name)
+    return AttributeScalars(
+        a=values.get("a", defaults.a),
+        p=values.get("p", defaults.p),
+        o=values.get("o", defaults.o),
+        c=values.get("c", defaults.c),
     )
 
 
@@ -614,6 +773,11 @@ def _require_positive_int(value: Any, field_name: str) -> None:
 def _require_positive_float(value: Any, field_name: str) -> None:
     if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
         raise ConfigError(f"{field_name} must be a finite positive number")
+
+
+def _require_finite_float(value: Any, field_name: str) -> None:
+    if type(value) not in (int, float) or not math.isfinite(value):
+        raise ConfigError(f"{field_name} must be a finite number")
 
 
 def _require_bool(value: Any, field_name: str) -> None:

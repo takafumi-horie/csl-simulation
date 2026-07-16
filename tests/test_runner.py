@@ -39,7 +39,8 @@ def test_single_end_to_end(tmp_path):
     rows = analyze(config)
     state = load_state(directory, "U")
 
-    assert state.words.shape == (6, 4)
+    assert len(state.words) == 6
+    assert all(word_d.shape == (4,) for word_d in state.words)
     assert (directory / "csv" / "theta_U.csv").is_file()
     assert (directory / "analysis" / "learning_curves.png").is_file()
     assert "ari_truth_a" in rows[0]

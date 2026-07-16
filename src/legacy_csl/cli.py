@@ -32,7 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--config", type=Path, required=True)
     fixture_parser = subparsers.add_parser("make-fixture")
     fixture_parser.add_argument("destination", type=Path)
-    fixture_parser.add_argument("--documents", type=int, default=8)
+    fixture_parser.add_argument("--documents", type=int, default=12)
     fixture_parser.add_argument("--seed", type=int, default=7)
     return parser
 

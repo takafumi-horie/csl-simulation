@@ -1,87 +1,103 @@
-"""Core categorical Single-CSL state and inference updates.
+"""Mathematically faithful categorical Single-CSL inference.
 
-categorical Single-CSL の状態と推論更新の中核実装。
+数学的に旧実装と等価な categorical Single-CSL 推論。
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Mapping, Sequence
+from typing import Mapping, Sequence, TypeAlias
 
 import numpy as np
 import numpy.typing as npt
+from scipy.stats import multivariate_normal
+from sklearn.cluster import KMeans
 
 from .attributes import AttributeSampler
 from .config import Config
 from .data import ATTRIBUTES, ObservationDataset
-from .rescaling import rescale_theta, sample_theta
+from .giw import GiwPrior
+from .rescaling import legacy_theta_sum_rescaling, sample_theta
+
+FloatArray: TypeAlias = npt.NDArray[np.float64]
+IntArray: TypeAlias = npt.NDArray[np.int64]
+CategoryAssignments: TypeAlias = IntArray | tuple[IntArray, ...]
 
 
 @dataclass(slots=True)
 class CslState:
-    """Own all mutable random variables for one CSL agent.
+    """Own every inferred random variable for one categorical CSL agent.
 
-    1体の CSL エージェントに属する可変確率変数を保持する。
+    categorical CSL エージェント1体の全推論確率変数を保持する。
 
-    Args:
-        z: Document category assignments keyed by attribute.
-            属性別の文書カテゴリ割当て。
-        pi: Category probabilities keyed by attribute.
-            属性別のカテゴリ確率。
-        means: Gaussian means keyed by attribute.
-            属性別のガウス平均。
-        variances: Diagonal Gaussian variances keyed by attribute.
-            属性別の対角ガウス分散。
-        theta: Global category-to-word probabilities.
-            全カテゴリから単語への確率。
-        attributes: Attribute sequence for every document.
-            文書ごとの属性列。
-        words: Integer word sequence for every document.
-            文書ごとの整数単語列。
+    ``z['a']`` is a ``(D,)`` array. The remaining assignments are ragged tuples
+    with one ``(M_d,)`` array per document, matching all observed objects.
+
+    ``z['a']`` は ``(D,)`` 配列で、他属性は全観測物体に対応する文書別
+    ``(M_d,)`` 配列の ragged tuple である。
     """
 
-    z: dict[str, npt.NDArray[np.int64]]
-    pi: dict[str, npt.NDArray[np.float64]]
-    means: dict[str, npt.NDArray[np.float64]]
-    variances: dict[str, npt.NDArray[np.float64]]
-    theta: npt.NDArray[np.float64]
+    z: dict[str, CategoryAssignments]
+    pi: dict[str, FloatArray]
+    means: dict[str, FloatArray]
+    covariances: dict[str, FloatArray]
+    theta: FloatArray
     attributes: list[tuple[str, ...]]
-    words: npt.NDArray[np.int64]
+    words: tuple[IntArray, ...]
+    vocabulary: tuple[str, ...]
 
-    def copy(self) -> CslState:
-        """Return a deep independent state copy.
+    @property
+    def variances(self) -> Mapping[str, FloatArray]:
+        """Return copied full covariances under the former public name.
 
-        独立した状態の深いコピーを返す。
+        以前の公開名でコピーした full covariance を返す。
 
         Returns:
-            Independent state copy.
-            独立した状態コピー。
+            Read-only outer mapping of copied covariances.
+            コピー済み共分散の読取専用外側mapping。
+        """
+        return MappingProxyType(
+            {key: value.copy() for key, value in self.covariances.items()}
+        )
+
+    def copy(self) -> CslState:
+        """Return an independent deep copy.
+
+        独立した深いコピーを返す。
+
+        Returns:
+            Copied state.
+            コピー済み状態。
         """
         return CslState(
-            z={key: value.copy() for key, value in self.z.items()},
+            z={key: _copy_assignments(value) for key, value in self.z.items()},
             pi={key: value.copy() for key, value in self.pi.items()},
             means={key: value.copy() for key, value in self.means.items()},
-            variances={key: value.copy() for key, value in self.variances.items()},
+            covariances={
+                key: value.copy() for key, value in self.covariances.items()
+            },
             theta=self.theta.copy(),
             attributes=list(self.attributes),
-            words=self.words.copy(),
+            words=tuple(value.copy() for value in self.words),
+            vocabulary=tuple(self.vocabulary),
         )
 
 
 class CslModel:
-    """Run categorical Gibbs-style updates for one CSL agent.
+    """Run the legacy categorical CSL Gibbs transition kernel.
 
-    1体のエージェントについて categorical Gibbs 型更新を実行する。
+    legacy categorical CSL の Gibbs 遷移カーネルを実行する。
 
-    This class deliberately composes probability helpers instead of reproducing
-    the inheritance-heavy legacy variable hierarchy. All word-probability
-    consumers use :meth:`effective_theta`, which guarantees one consistent
-    rescaling definition for words, z, F, and Inter-CSL MH ratios.
+    The categorical scope infers every variable inferred by the original code:
+    all-object ``z``, ``pi``, full-covariance GIW ``(mu, Sigma)``, ``theta``,
+    and attribute columns ``F``. Fixed observed words are not inferred in
+    Single-CSL; Inter-CSL updates them through the outer MH naming game.
 
-    継承中心の旧変数階層は再現せず確率ヘルパーを合成する。単語、z、F、
-    Inter-CSL の MH 比はすべて :meth:`effective_theta` を通じ、同一の
-    リスケーリング定義を参照する。
+    categorical 対象では旧コードが推論した全変数、すなわち全物体 ``z``、
+    ``pi``、full-covariance GIW ``(mu, Sigma)``、``theta``、属性列 ``F`` を
+    推論する。Single-CSL の観測単語は固定で、Inter-CSL では外側のMH naming
+    gameが単語を更新する。
     """
 
     def __init__(
@@ -90,25 +106,28 @@ class CslModel:
         config: Config,
         *,
         rng: np.random.Generator,
-        initial_words: npt.ArrayLike | None = None,
+        initial_words: Sequence[npt.ArrayLike] | npt.ArrayLike | None = None,
+        vocabulary: Sequence[str] | None = None,
     ) -> None:
-        """Initialize an agent and its owned state.
+        """Initialize parameters with the same distributions as legacy CSL.
 
-        エージェントと所有状態を初期化する。
+        legacy CSL と同じ分布でパラメータを初期化する。
 
         Args:
-            dataset: Attended observations for the agent.
-                エージェントの注視対象観測。
+            dataset: Full multi-object observations.
+                全物体を含む観測。
             config: Validated experiment configuration.
                 検証済み実験設定。
-            rng: Explicit generator owned by this model.
-                このモデルが所有する明示的乱数生成器。
-            initial_words: Optional fixed/initial ``(D, L)`` word matrix.
-                任意の固定・初期 ``(D, L)`` 単語行列。
+            rng: Explicit random-number generator.
+                明示的乱数生成器。
+            initial_words: Optional fixed/ragged observed words.
+                任意の固定・ragged観測単語。
+            vocabulary: Vocabulary in theta-column order.
+                theta列順の語彙。
 
         Raises:
-            ValueError: If supplied words do not match the dataset/configuration.
-                単語列がデータまたは設定と一致しない場合。
+            ValueError: If dimensions, vocabulary, or frozen truth are invalid.
+                次元、語彙、固定用正解が不正な場合。
         """
         self.dataset = dataset
         self.config = config
@@ -118,38 +137,53 @@ class CslModel:
         )
         self.offsets = _category_offsets(self.category_counts)
         self.num_categories = sum(self.category_counts.values())
-        self.vocabulary_size = config.hyperparameters.vocabulary_size
-        self.word_length = config.hyperparameters.word_length
         self.attribute_sampler = AttributeSampler(
             ATTRIBUTES, config.attribute_model.exclusivity, rng
         )
-        words = self._initialize_words(initial_words)
-        z = {
-            attr: rng.integers(0, self.category_counts[attr], dataset.num_documents)
-            for attr in ATTRIBUTES
-        }
-        pi = {
-            attr: np.full(self.category_counts[attr], 1.0 / self.category_counts[attr])
-            for attr in ATTRIBUTES
-        }
-        means, variances = self._initialize_gaussians(z)
+        words = self._coerce_words(initial_words)
+        if vocabulary is None:
+            vocabulary = tuple(
+                str(index) for index in range(config.hyperparameters.vocabulary_size)
+            )
+        self.vocabulary = tuple(vocabulary)
+        if not self.vocabulary or len(set(self.vocabulary)) != len(self.vocabulary):
+            raise ValueError("vocabulary must be non-empty and unique")
+        if words is not None and any(
+            np.any(word_d < 0) or np.any(word_d >= len(self.vocabulary))
+            for word_d in words
+        ):
+            raise ValueError("word indexes must be within the supplied vocabulary")
+        lengths = (
+            [len(word_d) for word_d in words]
+            if words is not None
+            else [config.hyperparameters.word_length] * dataset.num_documents
+        )
+        attributes = [
+            self.attribute_sampler.sample_prior(length) for length in lengths
+        ]
+        pi = self._sample_pi_prior()
+        means, covariances = self._initialize_gaussians()
+        z = self._sample_z_prior(pi)
         theta = np.asarray(
             [
                 rng.dirichlet(
-                    np.full(
-                        self.vocabulary_size,
-                        config.hyperparameters.gamma,
-                        dtype=np.float64,
-                    )
+                    np.full(len(self.vocabulary), config.hyperparameters.gamma)
                 )
                 for _ in range(self.num_categories)
-            ]
+            ],
+            dtype=np.float64,
         )
-        attributes = [
-            self.attribute_sampler.sample_prior(self.word_length)
-            for _ in range(dataset.num_documents)
-        ]
-        self.state = CslState(z, pi, means, variances, theta, attributes, words)
+        if words is None:
+            words = tuple(np.zeros(length, dtype=np.int64) for length in lengths)
+        self.state = CslState(
+            z, pi, means, covariances, theta, attributes, words, self.vocabulary
+        )
+        if initial_words is None:
+            drawn = self.draw_words()
+            self.state.words = tuple(word_d.copy() for word_d in drawn)
+        if config.freeze.gmm:
+            self._initialize_frozen_gmm()
+        self._validate_state(self.state)
 
     @classmethod
     def from_state(
@@ -160,332 +194,597 @@ class CslModel:
         *,
         rng: np.random.Generator,
     ) -> CslModel:
-        """Rebuild a model around a validated loaded state.
+        """Rebuild a model without resampling a loaded checkpoint.
 
-        読み込んだ検証済み状態からモデルを再構築する。
+        読み込んだチェックポイントを再サンプルせずモデルを再構築する。
 
         Args:
-            dataset: Agent observations.
-                エージェント観測。
+            dataset: Full observations.
+                全観測。
             config: Experiment configuration.
                 実験設定。
-            state: Loaded model state.
-                読み込んだモデル状態。
-            rng: Explicit random generator.
-                明示的乱数生成器。
+            state: Loaded state.
+                読み込んだ状態。
+            rng: Explicit generator for subsequent transitions.
+                以後の遷移に使う明示的generator。
 
         Returns:
             Reconstructed model.
-            再構築したモデル。
+            再構築済みモデル。
         """
-        model = cls(dataset, config, rng=rng, initial_words=state.words)
-        model._validate_state(state)
+        model = cls.__new__(cls)
+        model.dataset = dataset
+        model.config = config
+        model.rng = rng
+        model.category_counts = dict(
+            config.hyperparameters.category_counts.as_mapping()
+        )
+        model.offsets = _category_offsets(model.category_counts)
+        model.num_categories = sum(model.category_counts.values())
+        model.attribute_sampler = AttributeSampler(
+            ATTRIBUTES, config.attribute_model.exclusivity, rng
+        )
+        model.vocabulary = tuple(state.vocabulary)
         model.state = state.copy()
+        model._validate_state(model.state)
         return model
 
-    def effective_theta(
-        self, words: npt.ArrayLike | None = None
-    ) -> npt.NDArray[np.float64]:
-        """Return the configured read-only word-probability view as a copy.
+    def word_theta(self) -> FloatArray:
+        """Return theta used by z, F, generation, and legacy MH consumers.
 
-        設定された単語確率を独立コピーとして返す。
-
-        Args:
-            words: Word matrix used to form empirical unigram counts.
-                経験的ユニグラム頻度に使う単語行列。
+        z、F、単語生成、legacy MHで使うthetaを返す。
 
         Returns:
-            Rescaled category-by-word probability matrix.
-            補正済みカテゴリ×単語確率行列。
+            Independent category-by-word probability matrix.
+            独立したカテゴリ×単語確率行列。
         """
-        empirical = None
-        if self.config.word_model.rescaling == "empirical_unigram":
-            word_array = self.state.words if words is None else np.asarray(words)
-            empirical = np.bincount(
-                word_array.astype(np.int64).reshape(-1),
-                minlength=self.vocabulary_size,
-            ).astype(np.float64) + 1.0
-        return rescale_theta(
-            self.state.theta,
-            self.config.word_model.rescaling,
-            empirical_unigram=empirical,
-        )
+        if self.config.word_model.rescaling == "legacy_theta_sum":
+            return legacy_theta_sum_rescaling(self.state.theta)
+        return self.state.theta.copy()
 
-    def step(self, words: npt.ArrayLike | None = None) -> None:
-        """Perform one complete inference sweep.
+    def effective_theta(
+        self, words: Sequence[npt.ArrayLike] | npt.ArrayLike | None = None
+    ) -> FloatArray:
+        """Compatibility alias for :meth:`word_theta`.
 
-        1回の完全な推論スイープを実行する。
+        :meth:`word_theta` の互換alias。
 
         Args:
-            words: Optional accepted/fixed word matrix used in this sweep.
-                このスイープで使う任意の受理済み・固定単語行列。
+            words: Ignored; empirical correction belongs only to Inter MH.
+                未使用。経験的補正はInter MH専用である。
+
+        Returns:
+            Word-consumer theta.
+            単語consumer用theta。
+        """
+        del words
+        return self.word_theta()
+
+    def step(self, words: Sequence[npt.ArrayLike] | npt.ArrayLike | None = None) -> None:
+        """Perform one legacy Gibbs sweep.
+
+        legacy Gibbs sweepを1回実行する。
+
+        Args:
+            words: Optional accepted/fixed word corpus for this sweep.
+                このsweepで使う任意の受理済み・固定単語コーパス。
         """
         if words is not None:
-            self.state.words = self._validated_words(words)
-        effective_theta = self.effective_theta(self.state.words)
+            coerced = self._coerce_words(words)
+            assert coerced is not None
+            self._validate_word_shapes(coerced)
+            self.state.words = coerced
+        theta = self.word_theta()
         if not self.config.freeze.gmm:
-            self._sample_z(effective_theta)
-            self._update_gaussians()
+            self._sample_z(theta)
             self._sample_pi()
-        if not self.config.freeze.attributes:
-            self._sample_attributes(effective_theta)
+            self._sample_gaussians()
+        # Python2 legacy importance sampled F before theta; the current
+        # Dirichlet path sampled theta before F. Preserve both reference scans.
+        if self.config.word_model.theta_sampler == "legacy_importance":
+            if not self.config.freeze.attributes:
+                self._sample_attributes(theta)
+            if not self.config.freeze.theta:
+                self._sample_theta()
+            return
         if not self.config.freeze.theta:
             self._sample_theta()
+        if not self.config.freeze.attributes:
+            self._sample_attributes(self.word_theta())
 
-    def draw_words(self) -> npt.NDArray[np.int64]:
-        """Draw a new word matrix from the current rescaled theta.
+    def draw_words(self) -> tuple[IntArray, ...]:
+        """Draw a ragged word corpus from the current latent state.
 
-        現在の補正済み theta から新しい単語行列を生成する。
+        現在の潜在状態からragged単語コーパスを生成する。
 
         Returns:
-            Sampled ``(D, L)`` integer matrix.
-            サンプルした ``(D, L)`` 整数行列。
+            One integer word array per document.
+            文書ごとの整数単語配列。
         """
-        probabilities = self.effective_theta(self.state.words)
-        words = np.empty_like(self.state.words)
+        theta = self.word_theta()
+        result: list[IntArray] = []
         for doc_id, attributes in enumerate(self.state.attributes):
-            for word_id, attr in enumerate(attributes):
-                category = self.global_category(attr, self.state.z[attr][doc_id])
-                words[doc_id, word_id] = self.rng.choice(
-                    self.vocabulary_size, p=probabilities[category]
+            word_d = np.empty(len(attributes), dtype=np.int64)
+            for word_id, attribute in enumerate(attributes):
+                category = self.global_category(
+                    attribute, self.attended_category(attribute, doc_id)
                 )
-        return words
+                word_d[word_id] = self.rng.choice(len(self.vocabulary), p=theta[category])
+            result.append(word_d)
+        return tuple(result)
 
-    def predict_observations(
-        self, words: npt.ArrayLike
-    ) -> tuple[dict[str, npt.NDArray[np.int64]], dict[str, npt.NDArray[np.float64]]]:
-        """Predict categories and modality means from received words.
+    def sample_categories_without_observations(
+        self, words: Sequence[npt.ArrayLike]
+    ) -> dict[str, IntArray]:
+        """Sample attended predictive categories using only words and pi.
 
-        受信単語列からカテゴリとモダリティ平均を予測する。
-
-        Args:
-            words: Received ``(D, L)`` word matrix.
-                受信した ``(D, L)`` 単語行列。
-
-        Returns:
-            Predicted categories and observation means by attribute.
-            属性別の予測カテゴリと観測平均。
-        """
-        word_array = self._validated_words(words)
-        theta = self.effective_theta(word_array)
-        predicted_z: dict[str, npt.NDArray[np.int64]] = {}
-        predicted_x: dict[str, npt.NDArray[np.float64]] = {}
-        for attr in ATTRIBUTES:
-            values = np.empty(self.dataset.num_documents, dtype=np.int64)
-            for doc_id in range(self.dataset.num_documents):
-                positions = [
-                    index
-                    for index, assigned in enumerate(self.state.attributes[doc_id])
-                    if assigned == attr
-                ]
-                logweights = np.log(self.state.pi[attr] + 1e-300)
-                for category in range(self.category_counts[attr]):
-                    global_id = self.global_category(attr, category)
-                    if positions:
-                        logweights[category] += np.log(
-                            theta[global_id, word_array[doc_id, positions]] + 1e-300
-                        ).sum()
-                values[doc_id] = int(np.argmax(logweights))
-            predicted_z[attr] = values
-            predicted_x[attr] = self.state.means[attr][values].copy()
-        return predicted_z, predicted_x
-
-    def global_category(self, attribute: str, local_category: int) -> int:
-        """Convert an attribute-local category into a theta row.
-
-        属性内カテゴリを theta の行番号に変換する。
+        単語とpiのみから注視対象の予測カテゴリをサンプルする。
 
         Args:
-            attribute: Attribute name.
-                属性名。
-            local_category: Category index within the attribute.
-                属性内カテゴリ番号。
+            words: Received word corpus. Prediction uses canonical F=(a,p,o,c).
+                受信単語コーパス。予測ではcanonical F=(a,p,o,c)を使う。
 
         Returns:
-            Global category row.
-            全体カテゴリ行番号。
+            Sampled ``(D,)`` categories by attribute.
+            属性別のサンプル済み ``(D,)`` カテゴリ。
+
+        Raises:
+            ValueError: If an utterance is not of canonical length four.
+                発話長がcanonicalな4でない場合。
         """
-        return self.offsets[attribute] + int(local_category)
-
-    def readonly_z(self) -> Mapping[str, npt.NDArray[np.int64]]:
-        """Return copied category assignments behind a read-only mapping.
-
-        コピーしたカテゴリ割当てを読み取り専用マッピングで返す。
-
-        Returns:
-            Read-only attribute-to-category mapping.
-            読み取り専用の属性・カテゴリマッピング。
-        """
-        return MappingProxyType({key: value.copy() for key, value in self.state.z.items()})
-
-    def _initialize_words(
-        self, initial_words: npt.ArrayLike | None
-    ) -> npt.NDArray[np.int64]:
-        if initial_words is None:
-            return self.rng.integers(
-                0,
-                self.vocabulary_size,
-                size=(self.dataset.num_documents, self.word_length),
-            )
-        return self._validated_words(initial_words)
-
-    def _validated_words(self, words: npt.ArrayLike) -> npt.NDArray[np.int64]:
-        array = np.asarray(words, dtype=np.int64)
-        expected = (self.dataset.num_documents, self.word_length)
-        if array.shape != expected:
-            raise ValueError(f"words must have shape {expected}, got {array.shape}")
-        if np.any(array < 0) or np.any(array >= self.vocabulary_size):
-            raise ValueError("word indexes must be within the configured vocabulary")
-        return array.copy()
-
-    def _initialize_gaussians(
-        self, z: Mapping[str, npt.NDArray[np.int64]]
-    ) -> tuple[
-        dict[str, npt.NDArray[np.float64]],
-        dict[str, npt.NDArray[np.float64]],
-    ]:
-        means: dict[str, npt.NDArray[np.float64]] = {}
-        variances: dict[str, npt.NDArray[np.float64]] = {}
-        for attr in ATTRIBUTES:
-            observations = np.asarray(self.dataset.observations[attr], dtype=np.float64)
-            global_variance = np.var(observations, axis=0) + 1e-3
-            attr_means = []
-            for category in range(self.category_counts[attr]):
-                selected = observations[z[attr] == category]
-                if selected.size:
-                    attr_means.append(selected.mean(axis=0))
-                else:
-                    attr_means.append(observations[self.rng.integers(len(observations))])
-            means[attr] = np.asarray(attr_means, dtype=np.float64)
-            variances[attr] = np.repeat(
-                global_variance[np.newaxis, :], self.category_counts[attr], axis=0
-            )
-        return means, variances
-
-    def _sample_z(self, theta: npt.NDArray[np.float64]) -> None:
-        for attr in ATTRIBUTES:
-            observations = np.asarray(self.dataset.observations[attr], dtype=np.float64)
-            for doc_id, observation in enumerate(observations):
-                positions = [
-                    index
-                    for index, assigned in enumerate(self.state.attributes[doc_id])
-                    if assigned == attr
-                ]
+        word_corpus = self._coerce_words(words)
+        assert word_corpus is not None
+        if any(len(word_d) != len(ATTRIBUTES) for word_d in word_corpus):
+            raise ValueError("legacy prediction requires four words per utterance")
+        theta = self.word_theta()
+        predicted = {
+            attr: np.empty(self.dataset.num_documents, dtype=np.int64)
+            for attr in ATTRIBUTES
+        }
+        for doc_id, word_d in enumerate(word_corpus):
+            for word_id, attr in enumerate(ATTRIBUTES):
                 logweights = np.log(self.state.pi[attr] + 1e-300)
-                for category in range(self.category_counts[attr]):
-                    logweights[category] += _diagonal_gaussian_logpdf(
-                        observation,
+                offset = self.offsets[attr]
+                category_theta = theta[
+                    offset : offset + self.category_counts[attr], word_d[word_id]
+                ]
+                logweights += np.log(category_theta + 1e-300)
+                predicted[attr][doc_id] = _sample_logweights(logweights, self.rng)
+        return predicted
+
+    def sample_observations(
+        self, categories: Mapping[str, IntArray]
+    ) -> dict[str, FloatArray]:
+        """Sample predictive observations from full-covariance Gaussians.
+
+        full-covariance Gaussianから予測観測をサンプルする。
+
+        Args:
+            categories: Predictive category vector for each attribute.
+                属性ごとの予測カテゴリベクトル。
+
+        Returns:
+            Sampled ``(D, dimension)`` observations by attribute.
+            属性別のサンプル済み ``(D, dimension)`` 観測。
+        """
+        return {
+            attr: np.asarray(
+                [
+                    self.rng.multivariate_normal(
                         self.state.means[attr][category],
-                        self.state.variances[attr][category],
+                        self.state.covariances[attr][category],
                     )
-                    if positions:
-                        global_id = self.global_category(attr, category)
-                        logweights[category] += np.log(
-                            theta[
-                                global_id,
-                                self.state.words[doc_id, positions],
-                            ]
-                            + 1e-300
-                        ).sum()
-                self.state.z[attr][doc_id] = _sample_logweights(logweights, self.rng)
+                    for category in categories[attr]
+                ],
+                dtype=np.float64,
+            )
+            for attr in ATTRIBUTES
+        }
 
-    def _update_gaussians(self) -> None:
-        for attr in ATTRIBUTES:
-            observations = np.asarray(self.dataset.observations[attr], dtype=np.float64)
-            global_mean = observations.mean(axis=0)
-            global_variance = np.var(observations, axis=0) + 1e-3
-            for category in range(self.category_counts[attr]):
-                selected = observations[self.state.z[attr] == category]
-                if selected.size == 0:
-                    self.state.means[attr][category] = global_mean
-                    self.state.variances[attr][category] = global_variance
-                    continue
-                count = len(selected)
-                posterior_mean = (selected.sum(axis=0) + global_mean) / (count + 1)
-                centered = selected - posterior_mean
-                posterior_variance = (
-                    np.square(centered).sum(axis=0) + global_variance
-                ) / (count + 1)
-                self.state.means[attr][category] = posterior_mean
-                self.state.variances[attr][category] = np.maximum(
-                    posterior_variance, 1e-6
+    def attended_category(self, attribute: str, doc_id: int) -> int:
+        """Return the category that conditions words in one document.
+
+        1文書の単語を条件付けるカテゴリを返す。
+
+        Args:
+            attribute: Sensory attribute.
+                感覚属性。
+            doc_id: Document index.
+                文書番号。
+
+        Returns:
+            Attribute-local category.
+            属性内カテゴリ。
+        """
+        assignments = self.state.z[attribute]
+        if attribute == "a":
+            assert isinstance(assignments, np.ndarray)
+            return int(assignments[doc_id])
+        assert isinstance(assignments, tuple)
+        return int(assignments[doc_id][self.dataset.attentions[doc_id]])
+
+    def attended_z(self) -> Mapping[str, IntArray]:
+        """Return copied attended categories behind a read-only mapping.
+
+        コピーした注視対象カテゴリを読み取り専用mappingで返す。
+
+        Returns:
+            Read-only attended category mapping.
+            読み取り専用の注視対象カテゴリmapping。
+        """
+        return MappingProxyType(
+            {
+                attr: np.asarray(
+                    [
+                        self.attended_category(attr, doc_id)
+                        for doc_id in range(self.dataset.num_documents)
+                    ],
+                    dtype=np.int64,
                 )
+                for attr in ATTRIBUTES
+            }
+        )
 
-    def _sample_pi(self) -> None:
-        for attr in ATTRIBUTES:
-            counts = np.bincount(
-                self.state.z[attr], minlength=self.category_counts[attr]
+    def z_logweights(
+        self,
+        attribute: str,
+        doc_id: int,
+        object_id: int,
+        theta: FloatArray | None = None,
+        *,
+        include_observation: bool = True,
+    ) -> FloatArray:
+        """Calculate the exact legacy conditional log-weights for one ``z``.
+
+        1つの ``z`` に対する正確なlegacy条件付き対数重みを計算する。
+
+        Args:
+            attribute: Sensory attribute.
+                感覚属性。
+            doc_id: Document index.
+                文書番号。
+            object_id: Object index; action always uses zero.
+                物体番号。Actionは常に0。
+            theta: Optional word-consumer theta, defaulting to current theta.
+                任意の単語consumer用theta。省略時は現在値。
+            include_observation: Include the Gaussian likelihood.
+                Gaussian尤度を含めるか。
+
+        Returns:
+            One log-weight per attribute-local category.
+            属性内カテゴリごとの対数重み。
+        """
+        if theta is None:
+            theta = self.word_theta()
+        observations_d = self.dataset.document_arrays(attribute)[doc_id]
+        if object_id < 0 or object_id >= len(observations_d):
+            raise IndexError(object_id)
+        logweights = np.log(self.state.pi[attribute] + 1e-300)
+        if include_observation:
+            observation = observations_d[object_id]
+            logweights += np.asarray(
+                [
+                    multivariate_normal.logpdf(
+                        observation,
+                        mean=self.state.means[attribute][category],
+                        cov=self.state.covariances[attribute][category],
+                        allow_singular=False,
+                    )
+                    for category in range(self.category_counts[attribute])
+                ]
             )
-            self.state.pi[attr] = self.rng.dirichlet(counts + 1.0)
+        attended = attribute == "a" or object_id == self.dataset.attentions[doc_id]
+        if attended:
+            selected_words = [
+                word
+                for word, assigned_attr in zip(
+                    self.state.words[doc_id], self.state.attributes[doc_id]
+                )
+                if assigned_attr == attribute
+            ]
+            if selected_words:
+                offset = self.offsets[attribute]
+                for category in range(self.category_counts[attribute]):
+                    logweights[category] += np.log(
+                        theta[offset + category, selected_words] + 1e-300
+                    ).sum()
+        return logweights
 
-    def _sample_attributes(self, theta: npt.NDArray[np.float64]) -> None:
-        for doc_id in range(self.dataset.num_documents):
-            table = np.empty((self.word_length, len(ATTRIBUTES)), dtype=np.float64)
-            for word_id, word in enumerate(self.state.words[doc_id]):
-                for attr_id, attr in enumerate(ATTRIBUTES):
-                    category = self.global_category(attr, self.state.z[attr][doc_id])
-                    table[word_id, attr_id] = np.log(theta[category, word] + 1e-300)
-            self.state.attributes[doc_id] = self.attribute_sampler.sample_posterior(
-                self.word_length, table
-            )
+    def pi_posterior_parameters(self, attribute: str) -> FloatArray:
+        """Return legacy Dirichlet posterior parameters for ``pi``.
 
-    def _sample_theta(self) -> None:
+        ``pi`` のlegacy Dirichlet事後パラメータを返す。
+
+        Args:
+            attribute: Sensory attribute.
+                感覚属性。
+
+        Returns:
+            Prior concentration plus all-object category counts.
+            事前集中度と全物体カテゴリ頻度の和。
+        """
+        concentration = (
+            self.config.hyperparameters.gmm.mixture_concentration.as_mapping()[
+                attribute
+            ]
+        )
+        counts = np.bincount(
+            _flatten_assignments(self.state.z[attribute]),
+            minlength=self.category_counts[attribute],
+        )
+        return counts.astype(np.float64) + concentration
+
+    def theta_posterior_parameters(self) -> FloatArray:
+        """Return category-by-word Dirichlet posterior parameters.
+
+        カテゴリ×単語Dirichlet事後パラメータを返す。
+
+        Returns:
+            ``gamma`` plus attended ``(z,F,w)`` counts.
+            ``gamma`` と注視対象 ``(z,F,w)`` 頻度の和。
+        """
         alpha = np.full(
-            (self.num_categories, self.vocabulary_size),
+            (self.num_categories, len(self.vocabulary)),
             self.config.hyperparameters.gamma,
             dtype=np.float64,
         )
         for doc_id, attributes in enumerate(self.state.attributes):
-            for word_id, attr in enumerate(attributes):
-                category = self.global_category(attr, self.state.z[attr][doc_id])
-                alpha[category, self.state.words[doc_id, word_id]] += 1.0
-        word_counts = np.bincount(
-            self.state.words.reshape(-1), minlength=self.vocabulary_size
+            for word, attr in zip(self.state.words[doc_id], attributes):
+                category = self.global_category(
+                    attr, self.attended_category(attr, doc_id)
+                )
+                alpha[category, word] += 1.0
+        return alpha
+
+    def readonly_z(self) -> Mapping[str, CategoryAssignments]:
+        """Return deep-copied all-object assignments.
+
+        深くコピーした全物体割当てを返す。
+
+        Returns:
+            Read-only outer mapping of copied assignments.
+            コピー済み割当ての読み取り専用外側mapping。
+        """
+        return MappingProxyType(
+            {key: _copy_assignments(value) for key, value in self.state.z.items()}
+        )
+
+    def global_category(self, attribute: str, local_category: int) -> int:
+        """Convert an attribute-local category to a theta row.
+
+        属性内カテゴリをtheta行へ変換する。
+
+        Args:
+            attribute: Attribute name.
+                属性名。
+            local_category: Attribute-local category.
+                属性内カテゴリ。
+
+        Returns:
+            Global theta row.
+            theta全体行。
+        """
+        return self.offsets[attribute] + int(local_category)
+
+    def _sample_pi_prior(self) -> dict[str, FloatArray]:
+        concentrations = self.config.hyperparameters.gmm.mixture_concentration.as_mapping()
+        return {
+            attr: self.rng.dirichlet(
+                np.full(self.category_counts[attr], concentrations[attr])
+            )
+            for attr in ATTRIBUTES
+        }
+
+    def _initialize_gaussians(self) -> tuple[dict[str, FloatArray], dict[str, FloatArray]]:
+        gmm = self.config.hyperparameters.gmm
+        scale_values = gmm.covariance_scale.as_mapping()
+        means: dict[str, FloatArray] = {}
+        covariances: dict[str, FloatArray] = {}
+        for attr in ATTRIBUTES:
+            observations = self.dataset.flatten(attr)
+            if len(observations) < self.category_counts[attr]:
+                raise ValueError(
+                    f"attribute {attr!r} has fewer observations than categories"
+                )
+            random_state = int(self.rng.integers(0, np.iinfo(np.int32).max))
+            means[attr] = KMeans(
+                n_clusters=self.category_counts[attr],
+                init="k-means++",
+                n_init=gmm.kmeans_n_init,
+                random_state=random_state,
+            ).fit(observations).cluster_centers_.astype(np.float64)
+            covariance = np.eye(observations.shape[1]) * scale_values[attr]
+            covariances[attr] = np.repeat(
+                covariance[np.newaxis, :, :], self.category_counts[attr], axis=0
+            )
+        return means, covariances
+
+    def _sample_z_prior(
+        self, pi: Mapping[str, FloatArray]
+    ) -> dict[str, CategoryAssignments]:
+        z: dict[str, CategoryAssignments] = {
+            "a": np.asarray(
+                [
+                    self.rng.choice(len(pi["a"]), p=pi["a"])
+                    for _ in range(self.dataset.num_documents)
+                ],
+                dtype=np.int64,
+            )
+        }
+        for attr in ATTRIBUTES[1:]:
+            z[attr] = tuple(
+                np.asarray(
+                    [
+                        self.rng.choice(len(pi[attr]), p=pi[attr])
+                        for _ in range(len(observations_d))
+                    ],
+                    dtype=np.int64,
+                )
+                for observations_d in self.dataset.observations[attr]
+            )
+        return z
+
+    def _sample_z(self, theta: FloatArray) -> None:
+        for attr in ATTRIBUTES:
+            assignments = self.state.z[attr]
+            observation_docs = self.dataset.document_arrays(attr)
+            for doc_id, observations_d in enumerate(observation_docs):
+                for object_id, observation in enumerate(observations_d):
+                    del observation
+                    logweights = self.z_logweights(
+                        attr, doc_id, object_id, theta
+                    )
+                    sampled = _sample_logweights(logweights, self.rng)
+                    if attr == "a":
+                        assert isinstance(assignments, np.ndarray)
+                        assignments[doc_id] = sampled
+                    else:
+                        assert isinstance(assignments, tuple)
+                        assignments[doc_id][object_id] = sampled
+
+    def _sample_pi(self) -> None:
+        for attr in ATTRIBUTES:
+            self.state.pi[attr] = self.rng.dirichlet(
+                self.pi_posterior_parameters(attr)
+            )
+
+    def _sample_gaussians(self) -> None:
+        for attr in ATTRIBUTES:
+            observations = self.dataset.flatten(attr)
+            categories = _flatten_assignments(self.state.z[attr])
+            prior = self._giw_prior(attr, observations.shape[1])
+            means = np.empty_like(self.state.means[attr])
+            covariances = np.empty_like(self.state.covariances[attr])
+            for category in range(self.category_counts[attr]):
+                selected = observations[categories == category]
+                means[category], covariances[category] = prior.sample_posterior(
+                    selected, rng=self.rng
+                )
+            self.state.means[attr] = means
+            self.state.covariances[attr] = covariances
+
+    def _sample_attributes(self, theta: FloatArray) -> None:
+        for doc_id, word_d in enumerate(self.state.words):
+            table = np.empty((len(word_d), len(ATTRIBUTES)), dtype=np.float64)
+            for word_id, word in enumerate(word_d):
+                for attr_id, attr in enumerate(ATTRIBUTES):
+                    category = self.global_category(
+                        attr, self.attended_category(attr, doc_id)
+                    )
+                    table[word_id, attr_id] = np.log(theta[category, word] + 1e-300)
+            self.state.attributes[doc_id] = self.attribute_sampler.sample_posterior(
+                len(word_d), table
+            )
+
+    def _sample_theta(self) -> None:
+        alpha = self.theta_posterior_parameters()
+        counts = np.bincount(
+            np.concatenate(self.state.words), minlength=len(self.vocabulary)
         )
         self.state.theta = sample_theta(
             alpha,
             rng=self.rng,
             sampler=self.config.word_model.theta_sampler,
-            word_counts=word_counts,
+            word_counts=counts,
             rescaling_mode=self.config.word_model.rescaling,
             n_candidates=self.config.word_model.importance_candidates,
         )
 
+    def _initialize_frozen_gmm(self) -> None:
+        if self.dataset.true_categories is None:
+            raise ValueError("freeze.gmm requires full ground-truth categories")
+        self.state.z = {
+            attr: _copy_assignments(self.dataset.true_categories[attr])
+            for attr in ATTRIBUTES
+        }
+        concentrations = self.config.hyperparameters.gmm.frozen_mixture_concentration.as_mapping()
+        for attr in ATTRIBUTES:
+            categories = _flatten_assignments(self.state.z[attr])
+            counts = np.bincount(categories, minlength=self.category_counts[attr])
+            self.state.pi[attr] = self.rng.dirichlet(counts + concentrations[attr])
+        self._sample_gaussians()
+
+    def _giw_prior(self, attr: str, dimension: int) -> GiwPrior:
+        gmm = self.config.hyperparameters.gmm
+        return GiwPrior(
+            m0=np.full(dimension, gmm.mean_prior.as_mapping()[attr]),
+            kappa0=gmm.mean_precision.as_mapping()[attr],
+            V0=np.eye(dimension) * gmm.covariance_scale.as_mapping()[attr],
+            nu0=dimension + gmm.covariance_df_offset.as_mapping()[attr],
+        )
+
+    def _coerce_words(
+        self, words: Sequence[npt.ArrayLike] | npt.ArrayLike | None
+    ) -> tuple[IntArray, ...] | None:
+        if words is None:
+            return None
+        array = np.asarray(words)
+        if array.ndim == 2 and array.dtype != object:
+            result = tuple(np.asarray(row, dtype=np.int64).copy() for row in array)
+        else:
+            result = tuple(np.asarray(row, dtype=np.int64).copy() for row in words)
+        if len(result) != self.dataset.num_documents or any(
+            row.ndim != 1 or len(row) == 0 for row in result
+        ):
+            raise ValueError("words must contain one non-empty 1-D sequence per document")
+        return result
+
+    def _validate_word_shapes(self, words: tuple[IntArray, ...]) -> None:
+        expected = [len(sequence) for sequence in self.state.attributes]
+        actual = [len(sequence) for sequence in words]
+        if actual != expected:
+            raise ValueError(f"word lengths must match F: expected {expected}, got {actual}")
+        if any(np.any(row < 0) or np.any(row >= len(self.vocabulary)) for row in words):
+            raise ValueError("word indexes must be within the vocabulary")
+
     def _validate_state(self, state: CslState) -> None:
-        self._validated_words(state.words)
-        if state.theta.shape != (self.num_categories, self.vocabulary_size):
-            raise ValueError("loaded theta shape is inconsistent with configuration")
-        if len(state.attributes) != self.dataset.num_documents:
-            raise ValueError("loaded attribute sequence count is inconsistent")
+        if len(state.words) != self.dataset.num_documents:
+            raise ValueError("state word document count is inconsistent")
+        self._validate_word_shapes(state.words)
+        if state.theta.shape != (self.num_categories, len(state.vocabulary)):
+            raise ValueError("theta shape is inconsistent")
+        if not np.allclose(state.theta.sum(axis=1), 1.0):
+            raise ValueError("theta rows must sum to one")
+        for attr in ATTRIBUTES:
+            dimension = self.dataset.flatten(attr).shape[1]
+            categories = _flatten_assignments(state.z[attr])
+            if np.any(categories < 0) or np.any(categories >= self.category_counts[attr]):
+                raise ValueError(f"z[{attr!r}] contains an invalid category")
+            if state.pi[attr].shape != (
+                self.category_counts[attr],
+            ) or not np.isclose(state.pi[attr].sum(), 1.0):
+                raise ValueError(f"pi[{attr!r}] is invalid")
+            if state.means[attr].shape != (self.category_counts[attr], dimension):
+                raise ValueError(f"mean[{attr!r}] shape is invalid")
+            expected_covariance = (self.category_counts[attr], dimension, dimension)
+            if state.covariances[attr].shape != expected_covariance:
+                raise ValueError(f"covariance[{attr!r}] shape is invalid")
+            if any(np.linalg.eigvalsh(matrix).min() <= 0 for matrix in state.covariances[attr]):
+                raise ValueError(f"covariance[{attr!r}] must be positive definite")
 
 
 def _category_offsets(category_counts: Mapping[str, int]) -> dict[str, int]:
     offset = 0
-    offsets: dict[str, int] = {}
+    result: dict[str, int] = {}
     for attr in ATTRIBUTES:
-        offsets[attr] = offset
+        result[attr] = offset
         offset += category_counts[attr]
-    return offsets
+    return result
 
 
-def _diagonal_gaussian_logpdf(
-    value: npt.NDArray[np.float64],
-    mean: npt.NDArray[np.float64],
-    variance: npt.NDArray[np.float64],
-) -> float:
-    return float(
-        -0.5
-        * (
-            len(value) * np.log(2.0 * np.pi)
-            + np.log(variance).sum()
-            + (np.square(value - mean) / variance).sum()
-        )
-    )
+def _copy_assignments(value: CategoryAssignments) -> CategoryAssignments:
+    if isinstance(value, np.ndarray):
+        return value.copy()
+    return tuple(item.copy() for item in value)
 
 
-def _sample_logweights(
-    logweights: npt.NDArray[np.float64], rng: np.random.Generator
-) -> int:
+def _flatten_assignments(value: CategoryAssignments) -> IntArray:
+    if isinstance(value, np.ndarray):
+        return value.reshape(-1)
+    return np.concatenate(value).astype(np.int64, copy=False)
+
+
+def _sample_logweights(logweights: FloatArray, rng: np.random.Generator) -> int:
     shifted = logweights - np.max(logweights)
     probabilities = np.exp(shifted)
     probabilities /= probabilities.sum()
