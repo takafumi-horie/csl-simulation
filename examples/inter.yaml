@@ -1,7 +1,7 @@
 mode: inter-csl
 run:
   name: inter-example
-  iterations: 200
+  iterations: 500
   experiments: 1
   seed: 0
 paths:
