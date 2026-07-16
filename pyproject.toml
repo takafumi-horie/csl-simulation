@@ -22,7 +22,7 @@ dependencies = [
 dev = ["pytest>=8,<10", "pytest-cov>=5,<7", "ruff>=0.9,<1"]
 
 [project.scripts]
-legacy-csl = "legacy_csl.cli:main"
+csl = "legacy_csl.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

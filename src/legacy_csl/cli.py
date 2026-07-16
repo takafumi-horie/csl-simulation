@@ -23,7 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
         設定済み引数パーサー。
     """
     parser = argparse.ArgumentParser(
-        prog="legacy-csl",
+        prog="csl",
         description="Standalone categorical Single-CSL / Inter-CSL",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)

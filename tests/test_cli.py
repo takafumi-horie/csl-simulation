@@ -6,6 +6,7 @@ from legacy_csl.cli import build_parser, main
 def test_parser_supports_all_public_commands():
     parser = build_parser()
 
+    assert parser.prog == "csl"
     for command in ("learn", "predict", "analyze", "validate-data"):
         args = parser.parse_args([command, "--config", "example.yaml"])
         assert args.command == command

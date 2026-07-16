@@ -142,6 +142,56 @@ python -m pytest tests/test_rescaling.py
 python -m pytest -v
 ```
 
+## Preparing existing data / 既存データの準備
+
+Before using the commands below with an existing dataset, copy an example YAML
+and edit at least `mode`, `paths.data_root`, `paths.output_root`, and the
+category counts. `paths.data_root` must point to the directory that directly
+contains `agentU.npz`/`agentA.npz`/`agentB.npz`, or the corresponding
+`agentU`/`agentA`/`agentB` directories in the paper-dataset layout. Paths in a
+YAML file are resolved relative to that YAML file.
+
+既存データで以下のコマンドを使う前に、設定例の YAML をコピーし、少なくとも
+`mode`、`paths.data_root`、`paths.output_root`、カテゴリ数を変更してください。
+`paths.data_root` は、`agentU.npz` / `agentA.npz` / `agentB.npz` を直接含む
+ディレクトリ、または論文データ形式の `agentU` / `agentA` / `agentB`
+ディレクトリを直接含む場所を指定します。YAML内の相対パスは、そのYAML
+ファイルを基準に解決されます。
+
+Single-CSL also needs the observed utterances. For compact or newly prepared
+data, edit `single_words.json` under `paths.data_root`. The outer JSON array
+contains one utterance per document in the same document order, and each inner
+array contains that document's word tokens. Rows must be non-empty; different
+documents may have different utterance lengths. For example:
+
+Single-CSL では観測発話も必要です。compact形式または新たに用意したデータを
+使う場合は、`paths.data_root` 直下の `single_words.json` を編集してください。
+JSONの外側配列はデータと同じ文書順に1文書1発話を並べ、各内側配列にその
+文書の単語tokenを記述します。空の発話は使えませんが、発話長は文書ごとに
+異なっても構いません。例えば次の形式です。
+
+```json
+[
+  ["push", "red", "left", "box"],
+  ["touch", "blue", "right", "ball"]
+]
+```
+
+For paper-dataset reproduction, the legacy
+`agentU/testss(001-040)/testss_words.csv` is read automatically when neither
+`single_words.json` nor `uni_words.json` exists. Adding `single_words.json`
+overrides that CSV, which is useful when reproducing the observations with a
+different utterance set. Inter-CSL generates its internal words and therefore
+does not require this JSON file. Run `csl validate-data` after editing the YAML
+and JSON, before starting a long inference run.
+
+論文データの再現では、`single_words.json` と `uni_words.json` が無ければ legacy
+の `agentU/testss(001-040)/testss_words.csv` を自動的に読み込みます。
+`single_words.json` を置くとCSVより優先されるため、同じ観測に別の発話集合を
+与える実験にも利用できます。Inter-CSL は内部単語を生成するため、このJSONは
+不要です。長時間の推論を始める前に、YAMLとJSONの編集後に
+`csl validate-data` を実行してください。
+
 ## Quick start / クイックスタート
 
 Create a small deterministic fixture, then run either model with its example
@@ -150,18 +200,18 @@ configuration.
 決定論的な小型 fixture を生成し、各モデルの設定例を使って実行します。
 
 ```bash
-legacy-csl make-fixture fixture
+csl make-fixture fixture
 
 # One-agent learning / 1エージェント学習
-legacy-csl validate-data --config examples/single.yaml
-legacy-csl learn --config examples/single.yaml
-legacy-csl analyze --config examples/single.yaml
+csl validate-data --config examples/single.yaml
+csl learn --config examples/single.yaml
+csl analyze --config examples/single.yaml
 
 # Two-agent learning and prediction / 2エージェント学習・予測
-legacy-csl validate-data --config examples/inter.yaml
-legacy-csl learn --config examples/inter.yaml
-legacy-csl predict --config examples/inter.yaml
-legacy-csl analyze --config examples/inter.yaml
+csl validate-data --config examples/inter.yaml
+csl learn --config examples/inter.yaml
+csl predict --config examples/inter.yaml
+csl analyze --config examples/inter.yaml
 ```
 
 Example paths are resolved relative to the YAML file, not the current working
@@ -267,10 +317,11 @@ The `U` in `agentU.npz` is retained only as a data-format identifier for
 compatibility with existing processed datasets; the public model name is
 Single-CSL.
 
-The loader also accepts the processed legacy datadump layout under
-`agentU/agentA/agentB/testssNNN`, including `object_center.txt`,
-`target_object.txt`, `action.csv`, CNN-PCA object features, and RGB-BoF color
-features. Raw images are neither required nor distributed.
+For reproducing the paper experiments, use the processed legacy datadump layout
+under `agentU/agentA/agentB/testssNNN`. The loader reads
+`object_center.txt`, `target_object.txt`, `action.csv`, CNN-PCA object features,
+and RGB-BoF color features directly from this layout. Raw images are neither
+required nor distributed.
 
 推奨入力は `agentU.npz`、`agentA.npz`、`agentB.npz` です。`a` は
 `(D, d_a)`、`num_objects` と `attentions` は `(D,)`、`p/o/c` はそれぞれ
@@ -279,8 +330,13 @@ features. Raw images are neither required nor distributed.
 指定し、物体属性の正解は観測と同じ平坦化順にします。Single-CSL の
 `single_words.json` は文書ごとに異なる発話長を使用できます。`agentU` の `U`
 は既存データ形式との互換性のために残した識別子で、公開モデル名は
-Single-CSL です。処理済み legacy datadump 形式も読み込めますが、画像本体は
-不要です。
+Single-CSL です。
+
+論文実験を再現する場合は、`agentU/agentA/agentB/testssNNN` 以下に配置された
+処理済み legacy datadump 形式を使用してください。この形式から
+`object_center.txt`、`target_object.txt`、`action.csv`、CNN-PCA物体特徴、
+RGB-BoF色特徴を直接読み込みます。生画像は必要なく、本リポジトリにも含まれ
+ません。
 
 ## Outputs / 出力
 
