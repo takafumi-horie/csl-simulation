@@ -326,19 +326,22 @@ For reproducing the paper experiments, use the processed legacy datadump layout
 under `agentU/agentA/agentB/testssNNN`. The loader reads
 `object_center.txt`, `target_object.txt`, `action.csv`, CNN-PCA object features,
 and RGB-BoF color features directly from this layout. Raw images are neither
-required nor distributed. Place the shared ground-truth directory beside all
-three agent directories, never inside an agent directory:
+required nor distributed. Place each ground-truth directory inside its agent:
 
 ```text
 <data_root>/
 ├── agentU/
+│   └── testss(001-040)/
+│       ├── za_C.csv
+│       ├── zp_C.csv
+│       ├── zo_C.csv
+│       └── zc_C.csv
 ├── agentA/
-├── agentB/
-└── testss(001-040)/
-    ├── za_C.csv
-    ├── zp_C.csv
-    ├── zo_C.csv
-    └── zc_C.csv
+│   └── testss(001-040)/
+│       └── za_C.csv, zp_C.csv, zo_C.csv, zc_C.csv
+└── agentB/
+    └── testss(001-040)/
+        └── za_C.csv, zp_C.csv, zo_C.csv, zc_C.csv
 ```
 
 推奨入力は `agentU.npz`、`agentA.npz`、`agentB.npz` です。`a` は
@@ -354,8 +357,8 @@ Single-CSL です。
 処理済み legacy datadump 形式を使用してください。この形式から
 `object_center.txt`、`target_object.txt`、`action.csv`、CNN-PCA物体特徴、
 RGB-BoF色特徴を直接読み込みます。生画像は必要なく、本リポジトリにも含まれ
-ません。共有ground truthディレクトリ `testss(001-040)` はagentディレクトリの
-内側ではなく、必ず `agentU`、`agentA`、`agentB` と同じ階層に配置してください。
+ません。ground truthディレクトリ `testss(001-040)` は、agentごとに
+`agentU`、`agentA`、`agentB` の内側へ配置してください。
 
 ## Outputs / 出力
 
@@ -408,18 +411,18 @@ Inter-CSLの主要指標はA対BのARIであり、正解ファイルが無い場
 ARIを出力しません。
 
 Compact NPZ truth is read from the complete set `z_a`, `z_p`, `z_o`, and
-`z_c`. The generated mock fixture also writes the four legacy CSV files to the
-sibling `<data_root>/testss(001-040)` directory. In the paper-dataset layout,
-truth is read only from this sibling directory and only when all four files
-`za_C.csv`, `zp_C.csv`, `zo_C.csv`, and `zc_C.csv` exist. Object-category rows
-must follow the same object order as the observations.
+`z_c`. The generated mock fixture also writes the four legacy CSV files under
+each `<data_root>/agentX/testss(001-040)` directory. In the paper-dataset
+layout, each agent reads truth only from its own directory and only when all
+four files `za_C.csv`, `zp_C.csv`, `zo_C.csv`, and `zc_C.csv` exist.
+Object-category rows must follow the same object order as the observations.
 
 compact NPZでは `z_a/z_p/z_o/z_c` の4項目すべてをground truthとして読みます。
-mock fixture生成時には、legacy CSV 4ファイルも兄弟ディレクトリ
-`<data_root>/testss(001-040)` に出力します。論文データ形式でもこの兄弟
-ディレクトリだけを参照し、`za_C.csv/zp_C.csv/zo_C.csv/zc_C.csv` がすべて
-存在する場合だけ正解を読み込みます。物体カテゴリの行は観測と同じ物体順に
-します。
+mock fixture生成時には、legacy CSV 4ファイルもagentごとの
+`<data_root>/agentX/testss(001-040)` に出力します。論文データ形式でも各agentは
+自身のディレクトリだけを参照し、`za_C.csv/zp_C.csv/zo_C.csv/zc_C.csv` が
+すべて存在する場合だけ正解を読み込みます。物体カテゴリの行は観測と同じ
+物体順にします。
 
 ## Reproducibility / 再現性
 

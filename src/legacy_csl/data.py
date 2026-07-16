@@ -387,15 +387,15 @@ def write_compact_fixture(
 
     決定論的な複数物体compact fixtureを作成する。
 
-    The fixture embeds truth in each NPZ and also exports the same truth to the
-    canonical sibling legacy directory.
+    The fixture embeds truth in each NPZ and also exports the same truth under
+    every agent's canonical legacy directory.
 
-    fixtureは各NPZに正解を埋め込み、同じ正解をcanonicalな兄弟legacy
+    fixtureは各NPZに正解を埋め込み、同じ正解を各agentのcanonicalなlegacy
     ディレクトリにも出力する。
 
     Args:
-        data_root: Destination containing agent inputs and shared truth.
-            agent入力と共有正解を含む出力先。
+        data_root: Destination containing agent inputs and per-agent truth.
+            agent入力とagent別正解を含む出力先。
         num_documents: Number of mock documents.
             mock文書数。
         word_length: Number of words in each Single-CSL utterance.
@@ -460,7 +460,7 @@ def write_compact_fixture(
     (data_root / "single_words.json").write_text(
         json.dumps(words, indent=2), encoding="utf-8"
     )
-    _write_shared_truth_fixture(data_root, latent_a, latent_objects)
+    _write_agent_truth_fixtures(data_root, latent_a, latent_objects)
 
 
 def _load_compact_dataset(path: Path) -> ObservationDataset:
@@ -546,6 +546,7 @@ def _load_legacy_dataset(
     num_objects = np.asarray([len(value) for value in objects["p"]], dtype=np.int64)
     truth = _load_legacy_truth(
         data_root,
+        agent,
         num_objects=num_objects,
         num_documents=len(doc_dirs),
     )
@@ -686,17 +687,20 @@ def _minmax_columns(values: FloatArray) -> FloatArray:
 
 def _load_legacy_truth(
     data_root: Path,
+    agent: str,
     *,
     num_objects: IntArray,
     num_documents: int,
 ) -> Mapping[str, IntArray | ObjectCategories] | None:
-    """Load truth only from the canonical sibling directory.
+    """Load truth only from the canonical per-agent directory.
 
-    canonicalな兄弟ディレクトリからだけ正解を読み込む。
+    canonicalなagent別ディレクトリからだけ正解を読み込む。
 
     Args:
-        data_root: Parent shared by agent and truth directories.
-            agentと正解ディレクトリが共有する親。
+        data_root: Parent of all agent directories.
+            全agentディレクトリの親。
+        agent: Agent identifier such as ``U``, ``A``, or ``B``.
+            ``U``、``A``、``B`` などのagent識別子。
         num_objects: Per-document object counts for loaded observations.
             読み込んだ観測の文書別物体数。
         num_documents: Number of trailing truth documents to load.
@@ -710,7 +714,7 @@ def _load_legacy_truth(
         ValueError: If truth rows do not match observations.
             正解行が観測と一致しない場合。
     """
-    root = data_root / LEGACY_TRUTH_DIRECTORY
+    root = data_root / f"agent{agent}" / LEGACY_TRUTH_DIRECTORY
     files = {attr: root / f"z{attr}_C.csv" for attr in ATTRIBUTES}
     if not all(path.exists() for path in files.values()):
         return None
@@ -738,31 +742,32 @@ def _load_legacy_truth(
     return truth
 
 
-def _write_shared_truth_fixture(
+def _write_agent_truth_fixtures(
     data_root: Path,
     action: IntArray,
     objects: Mapping[str, ObjectCategories],
 ) -> None:
-    """Write mock truth beside the agent inputs in legacy CSV form.
+    """Write mock truth under every agent in legacy CSV form.
 
-    mock正解をagent入力の兄弟にlegacy CSV形式で書き出す。
+    mock正解を各agent配下へlegacy CSV形式で書き出す。
 
     Args:
-        data_root: Parent containing agent inputs and the truth directory.
-            agent入力と正解ディレクトリを含む親。
+        data_root: Parent containing all agent inputs.
+            全agent入力を含む親。
         action: One action category per document.
             文書ごとのactionカテゴリ。
         objects: Ragged object categories for each object attribute.
             物体属性ごとのragged物体カテゴリ。
     """
-    truth_root = data_root / LEGACY_TRUTH_DIRECTORY
-    truth_root.mkdir(parents=True, exist_ok=True)
-    _write_csv_rows(truth_root / "za_C.csv", [action.tolist()])
-    for attr in OBJECT_ATTRIBUTES:
-        _write_csv_rows(
-            truth_root / f"z{attr}_C.csv",
-            [values.tolist() for values in objects[attr]],
-        )
+    for agent in ("U", "A", "B"):
+        truth_root = data_root / f"agent{agent}" / LEGACY_TRUTH_DIRECTORY
+        truth_root.mkdir(parents=True, exist_ok=True)
+        _write_csv_rows(truth_root / "za_C.csv", [action.tolist()])
+        for attr in OBJECT_ATTRIBUTES:
+            _write_csv_rows(
+                truth_root / f"z{attr}_C.csv",
+                [values.tolist() for values in objects[attr]],
+            )
 
 
 def _write_csv_rows(path: Path, rows: list[list[int]]) -> None:
