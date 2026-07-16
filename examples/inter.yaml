@@ -5,7 +5,7 @@ run:
   experiments: 1
   seed: 0
 paths:
-  data_root: ../fixture
+  data_root: ../../datadump
   output_root: ../outputs
 word_model:
   rescaling: legacy_theta_sum

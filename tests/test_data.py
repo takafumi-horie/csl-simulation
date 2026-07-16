@@ -188,7 +188,7 @@ def test_legacy_loader_keeps_objects_and_applies_original_preprocessing(
     )
     np.testing.assert_allclose(
         dataset.observations["c"][0],  # type: ignore[index]
-        np.asarray([[3, 4], [5, 12]]) / np.asarray([[5], [13]]),
+        np.asarray([[3, 4], [5, 12]]) / np.asarray([[7], [17]]),
     )
     assert dataset.true_categories is not None
     assert dataset.true_categories["p"][1].tolist() == [3, 4]  # type: ignore[index]

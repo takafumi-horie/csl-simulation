@@ -642,8 +642,10 @@ def _read_legacy_document(
             )[0],
             dtype=np.float64,
         )
-        norm = np.linalg.norm(color)
-        color_features.append(color / norm if norm > 0.0 else color)
+        # The paper normalizes the vector-quantized RGB histogram.  Preserve
+        # the original CSL-PGM preprocessing by making its total mass one.
+        total = color.sum()
+        color_features.append(color / total if total > 0.0 else color)
     return (
         action,
         {

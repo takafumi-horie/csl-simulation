@@ -376,7 +376,10 @@ For reproducing the paper experiments, use the processed legacy datadump layout
 under `agentU/agentA/agentB/testssNNN`. The loader reads
 `object_center.txt`, `target_object.txt`, `action.csv`, CNN-PCA object features,
 and RGB-BoF color features directly from this layout. Raw images are neither
-required nor distributed. Place each ground-truth directory inside its agent:
+required nor distributed. Following the CSL-PGM paper and its original
+preprocessing, each vector-quantized RGB histogram is L1-normalized so that its
+elements sum to one; an all-zero histogram is left unchanged. Place each
+ground-truth directory inside its agent:
 
 ```text
 <data_root>/
@@ -407,7 +410,9 @@ CSL-PGM です。
 処理済み legacy datadump 形式を使用してください。この形式から
 `object_center.txt`、`target_object.txt`、`action.csv`、CNN-PCA物体特徴、
 RGB-BoF色特徴を直接読み込みます。生画像は必要なく、本リポジトリにも含まれ
-ません。ground truthディレクトリ `testss(001-040)` は、agentごとに
+ません。CSL-PGM論文と元実装の前処理に従い、ベクトル量子化済みRGB
+ヒストグラムは要素の総和が1になるようL1正規化します（全要素が0なら変更
+しません）。ground truthディレクトリ `testss(001-040)` は、agentごとに
 `agentU`、`agentA`、`agentB` の内側へ配置してください。
 
 For a legacy datadump, `csl validate-data` requires this per-agent directory
