@@ -360,6 +360,16 @@ RGB-BoF色特徴を直接読み込みます。生画像は必要なく、本リ�
 ません。ground truthディレクトリ `testss(001-040)` は、agentごとに
 `agentU`、`agentA`、`agentB` の内側へ配置してください。
 
+For a legacy datadump, `csl validate-data` requires this per-agent directory
+and all four truth CSVs for every agent used by the selected mode. A missing or
+misplaced file is reported before inference starts. Compact NPZ inputs may
+still omit ground truth unless `freeze.gmm: true` is selected.
+
+legacy datadumpでは、`csl validate-data` が選択modeで使う各agentについて、この
+agent別ディレクトリと4つの正解CSVを必須検証します。不足または配置違いは推論
+開始前にエラーとして表示します。compact NPZ入力では、`freeze.gmm: true` を
+指定しない限りground truthは引き続き省略できます。
+
 ## Outputs / 出力
 
 Each experiment writes:

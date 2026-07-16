@@ -326,6 +326,32 @@ def load_dataset(data_root: Path, agent: str) -> ObservationDataset:
     raise FileNotFoundError(f"expected {compact_path} or legacy directory {agent_root}")
 
 
+def validate_legacy_truth_layout(data_root: Path, agent: str) -> None:
+    """Require every truth CSV in the canonical per-agent directory.
+
+    canonicalなagent別ディレクトリ内の全正解CSVを必須検証する。
+
+    Args:
+        data_root: Parent of all agent directories.
+            全agentディレクトリの親。
+        agent: Agent identifier such as ``U``, ``A``, or ``B``.
+            ``U``、``A``、``B`` などのagent識別子。
+
+    Raises:
+        ValueError: If the truth directory or any required CSV is missing.
+            正解ディレクトリまたは必須CSVが不足している場合。
+    """
+    truth_root = data_root / f"agent{agent}" / LEGACY_TRUTH_DIRECTORY
+    required = tuple(f"z{attr}_C.csv" for attr in ATTRIBUTES)
+    missing = [name for name in required if not (truth_root / name).is_file()]
+    if missing:
+        missing_text = ", ".join(missing)
+        raise ValueError(
+            f"legacy ground truth for agent {agent} must be under "
+            f"{truth_root}; missing: {missing_text}"
+        )
+
+
 def load_single_words(data_root: Path, num_documents: int) -> WordCorpus:
     """Load and first-seen encode fixed Single-CSL utterances.
 

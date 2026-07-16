@@ -17,7 +17,12 @@ from tqdm.auto import tqdm
 
 from .analysis import category_metrics, prediction_metrics, write_analysis
 from .config import Config, dump_resolved_config
-from .data import ATTRIBUTES, load_dataset, load_single_words
+from .data import (
+    ATTRIBUTES,
+    load_dataset,
+    load_single_words,
+    validate_legacy_truth_layout,
+)
 from .model import CslModel, IntArray
 from .state_io import load_state, save_state, write_metric_rows
 
@@ -171,15 +176,18 @@ def analyze(config: Config) -> list[dict[str, object]]:
 
 
 def validate_data(config: Config) -> None:
-    """Validate observations, truth needed by freeze, and Single words.
+    """Validate observations, legacy truth layout, and Single words.
 
-    観測、freezeに必要な正解、Single単語を検証する。
+    観測、legacy正解配置、Single単語を検証する。
 
     Args:
         config: Validated configuration.
             検証済み設定。
     """
     agents = ("U",) if config.mode == "single-csl" else ("A", "B")
+    for agent in agents:
+        if not (config.paths.data_root / f"agent{agent}.npz").is_file():
+            validate_legacy_truth_layout(config.paths.data_root, agent)
     datasets = [load_dataset(config.paths.data_root, agent) for agent in agents]
     if len({dataset.num_documents for dataset in datasets}) != 1:
         raise ValueError("all Inter-CSL agents must have the same document count")

@@ -16,6 +16,7 @@ from legacy_csl.data import (
     ObservationDataset,
     load_dataset,
     load_single_words,
+    validate_legacy_truth_layout,
     write_compact_fixture,
 )
 
@@ -209,6 +210,25 @@ def test_legacy_truth_is_not_loaded_from_shared_sibling(tmp_path: Path) -> None:
     dataset = load_dataset(tmp_path, "U")
 
     assert dataset.true_categories is None
+
+
+def test_legacy_truth_layout_validation_lists_missing_agent_files(
+    tmp_path: Path,
+) -> None:
+    """Validation requires all four files under the requested agent.
+
+    validationは指定agent配下の4fileすべてを要求する。
+    """
+    truth_root = tmp_path / "agentA" / LEGACY_TRUTH_DIRECTORY
+    truth_root.mkdir(parents=True)
+    for attr in ("a", "p", "o"):
+        (truth_root / f"z{attr}_C.csv").write_text("0\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match=r"agent A.*zc_C\.csv"):
+        validate_legacy_truth_layout(tmp_path, "A")
+
+    (truth_root / "zc_C.csv").write_text("0\n", encoding="utf-8")
+    validate_legacy_truth_layout(tmp_path, "A")
 
 
 def test_legacy_inter_action_excludes_tactile(tmp_path: Path) -> None:

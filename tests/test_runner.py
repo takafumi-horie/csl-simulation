@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 from legacy_csl.config import (
     AttributeCategoryCounts,
     AttributeModel,
@@ -9,7 +11,7 @@ from legacy_csl.config import (
     Run,
     WordModel,
 )
-from legacy_csl.data import write_compact_fixture
+from legacy_csl.data import load_dataset, write_compact_fixture
 from legacy_csl.runner import analyze, learn, predict, validate_data
 from legacy_csl.state_io import load_state
 
@@ -79,3 +81,27 @@ def test_inter_learning_prediction_and_analysis(tmp_path):
     assert "ari_agents_a" in analysis_rows[0]
     assert "ari_truth_A_a" in analysis_rows[0]
     assert "ari_truth_B_a" in analysis_rows[0]
+
+
+def test_validate_data_checks_each_legacy_agents_truth_layout(
+    tmp_path, monkeypatch
+):
+    config = _config(tmp_path, "inter-csl")
+    write_compact_fixture(config.paths.data_root, num_documents=6)
+    dataset = load_dataset(config.paths.data_root, "A")
+    legacy_root = tmp_path / "legacy"
+    config = replace(
+        config,
+        paths=replace(config.paths, data_root=legacy_root),
+    )
+    checked_agents = []
+
+    monkeypatch.setattr(
+        "legacy_csl.runner.validate_legacy_truth_layout",
+        lambda data_root, agent: checked_agents.append((data_root, agent)),
+    )
+    monkeypatch.setattr("legacy_csl.runner.load_dataset", lambda root, agent: dataset)
+
+    validate_data(config)
+
+    assert checked_agents == [(legacy_root, "A"), (legacy_root, "B")]
