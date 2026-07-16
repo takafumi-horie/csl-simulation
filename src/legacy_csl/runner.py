@@ -60,18 +60,21 @@ def learn(config: Config) -> list[Path]:
 
 
 def predict(config: Config) -> list[dict[str, object]]:
-    """Run the legacy Inter-CSL generative prediction procedure.
+    """Predict listener observations from the speaker's observed situation.
 
-    legacy Inter-CSLの生成的予測手続きを実行する。
+    話者の観測状況から聞き手の観測を予測する。
 
-    Loaded training ``z`` and ``F`` are deliberately not reused. Prediction
-    fixes canonical ``F=(a,p,o,c)``, samples speaker categories from ``pi``,
-    samples words, samples listener categories from ``pi*theta``, and finally
-    samples observations from the listener's full Gaussians.
+    Loaded training ``z`` and ``F`` are deliberately not reused. For every
+    action and object observed by speaker A, prediction samples a category from
+    ``pi_A * N(x_A | mu_A, Sigma_A)``. It then fixes canonical
+    ``F=(a,p,o,c)``, generates words from A's attended categories, samples B's
+    categories from ``pi_B*theta_B``, and finally samples observations from B's
+    full Gaussians.
 
-    学習時の ``z`` と ``F`` は再利用しない。canonical ``F=(a,p,o,c)`` を固定し、
-    話者カテゴリを ``pi``、単語、聞き手カテゴリを ``pi*theta``、観測を聞き手の
-    full Gaussianから順にサンプルする。
+    学習時の ``z`` と ``F`` は再利用しない。話者Aの全行動・全物体に対して
+    ``pi_A * N(x_A | mu_A, Sigma_A)`` からカテゴリをサンプルする。
+    その後canonical ``F=(a,p,o,c)`` でAの注視カテゴリから単語を生成し、
+    Bのカテゴリを ``pi_B*theta_B``、観測をBのfull Gaussianからサンプルする。
 
     Args:
         config: Validated Inter-CSL configuration.
@@ -107,7 +110,8 @@ def predict(config: Config) -> list[dict[str, object]]:
             np.zeros(len(ATTRIBUTES), dtype=np.int64)
             for _ in range(dataset_a.num_documents)
         )
-        speaker.state.z = speaker._sample_z_prior(speaker.state.pi)
+        speaker.state.z = speaker.sample_categories_from_observations()
+        speaker_attended_z = speaker.attended_z()
         utterances = speaker.draw_words()
         listener.state.attributes = list(canonical)
         predicted_z = listener.sample_categories_without_observations(utterances)
@@ -121,6 +125,10 @@ def predict(config: Config) -> list[dict[str, object]]:
             prediction_dir / "prediction.npz",
             utterances_flat=utterance_flat,
             utterance_offsets=utterance_offsets,
+            **{
+                f"speaker_z_{key}": value
+                for key, value in speaker_attended_z.items()
+            },
             **{f"z_{key}": value for key, value in predicted_z.items()},
             **{f"x_{key}": value for key, value in predicted_observations.items()},
         )

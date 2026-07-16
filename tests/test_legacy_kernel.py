@@ -17,7 +17,7 @@ from legacy_csl.config import (
     Run,
     WordModel,
 )
-from legacy_csl.data import load_dataset, write_compact_fixture
+from legacy_csl.data import ObservationDataset, load_dataset, write_compact_fixture
 from legacy_csl.model import CslModel
 from legacy_csl.runner import accept_words
 from legacy_csl.state_io import load_state, save_state
@@ -104,6 +104,71 @@ def test_z_logweights_use_full_covariance_and_words_only_for_attention(tmp_path)
         distractor,
         np.log(model.state.pi["p"]) + expected_observation_distractor,
     )
+
+
+def test_observation_category_logweights_use_only_pi_and_full_gaussian(tmp_path):
+    model = _model(tmp_path)
+    model.state.pi["p"] = np.array([0.35, 0.65])
+    model.state.means["p"] = np.array([[0.0, 0.0], [1.0, -0.5]])
+    model.state.covariances["p"] = np.array(
+        [[[1.0, 0.6], [0.6, 2.0]], [[0.7, -0.2], [-0.2, 1.3]]]
+    )
+    observation = np.array([0.4, -0.1])
+    expected = np.log(model.state.pi["p"]) + np.asarray(
+        [
+            multivariate_normal.logpdf(
+                observation,
+                mean=model.state.means["p"][category],
+                cov=model.state.covariances["p"][category],
+            )
+            for category in range(2)
+        ]
+    )
+
+    before = model.observation_category_logweights("p", observation)
+    model.state.words = tuple(np.full(4, 7, dtype=np.int64) for _ in model.state.words)
+    model.state.theta[:] = 1e-12
+    model.state.theta[:, 7] = 1.0
+    after = model.observation_category_logweights("p", observation)
+
+    np.testing.assert_allclose(before, expected)
+    np.testing.assert_allclose(after, expected)
+
+
+def test_observation_prediction_samples_action_and_every_ragged_object(
+    tmp_path, monkeypatch
+):
+    config = _config(tmp_path)
+    object_documents = (
+        np.array([[0.1], [9.9]]),
+        np.array([[9.7], [0.3], [10.1]]),
+    )
+    dataset = ObservationDataset(
+        {
+            "a": np.array([[9.8], [0.2]]),
+            "p": object_documents,
+            "o": object_documents,
+            "c": object_documents,
+        },
+        np.array([1, 0]),
+    )
+    model = CslModel(dataset, config, rng=np.random.default_rng(74))
+    for attr in ("a", "p", "o", "c"):
+        model.state.pi[attr] = np.array([0.5, 0.5])
+        model.state.means[attr] = np.array([[0.0], [10.0]])
+        model.state.covariances[attr] = np.array([[[0.05]], [[0.05]]])
+    monkeypatch.setattr(
+        "legacy_csl.model._sample_logweights",
+        lambda logweights, rng: int(np.argmax(logweights)),
+    )
+
+    sampled = model.sample_categories_from_observations()
+
+    np.testing.assert_array_equal(sampled["a"], [1, 0])
+    for attr in ("p", "o", "c"):
+        assert isinstance(sampled[attr], tuple)
+        np.testing.assert_array_equal(sampled[attr][0], [0, 1])
+        np.testing.assert_array_equal(sampled[attr][1], [1, 0, 1])
 
 
 def test_pi_posterior_counts_every_object(tmp_path):

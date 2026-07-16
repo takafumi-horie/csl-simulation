@@ -40,6 +40,28 @@ the model names used in this README are **CSL-PGM** and **Inter-CSL-PGM**.
 `single-csl` と `inter-csl` は設定上の mode 識別子です。本 README では、
 正式なモデル名として **CSL-PGM** と **Inter-CSL-PGM** を使用します。
 
+Inter-CSL-PGM prediction follows the conditional chain
+`A observation -> A category -> A word -> B category -> B observation`.
+For every action and object observed by A, it samples the speaker category
+from
+
+\[
+p(z^A=k\mid x^A) \propto
+\pi^A_k\,\mathcal{N}(x^A;\mu^A_k,\Sigma^A_k).
+\]
+
+The learned global parameters remain fixed. Canonical `F=(a,p,o,c)` then maps
+A's attended categories to words; B infers categories from those words and
+generates predicted observations. The training-time document-local `z` and
+`F` are not reused.
+
+Inter-CSL-PGMの予測は
+`Aの観測 -> Aのカテゴリ -> Aの単語 -> Bのカテゴリ -> Bの観測`
+という条件付き生成を行います。Aの行動・全物体の観測に対して上式から
+カテゴリをサンプルし、学習済み大域パラメータは固定します。その後、
+canonical `F=(a,p,o,c)` とattentionでAの単語を生成し、Bが単語から
+カテゴリと観測を予測します。学習時の文書固有 `z` と `F` は再利用しません。
+
 ### MLA-style citations / MLA形式の引用
 
 - Taniguchi, Akira, et al. “Cross-Situational Learning with Bayesian Generative
@@ -418,7 +440,8 @@ Each experiment writes:
   each attribute block;
 - ground-truth-category-by-word co-occurrence heatmaps for agents A and B in
   Inter-CSL-PGM when ground truth is available;
-- Inter-CSL-PGM prediction arrays and MSE metrics when requested.
+- Inter-CSL-PGM prediction arrays, attended speaker categories
+  (`speaker_z_a/p/o/c`), and MSE metrics when requested.
 
 The iteration folders are one-based: `iter0001` is the state after the first
 completed inference iteration and matches iteration 1 in `analysis/history.csv`.

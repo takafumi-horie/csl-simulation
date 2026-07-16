@@ -313,6 +313,95 @@ class CslModel:
             result.append(word_d)
         return tuple(result)
 
+    def observation_category_logweights(
+        self,
+        attribute: str,
+        observation: npt.ArrayLike,
+    ) -> FloatArray:
+        """Calculate ``log pi + log Gaussian`` for one speaker observation.
+
+        話者の1観測に対する ``log pi + log Gaussian`` を計算する。
+
+        Args:
+            attribute: Sensory attribute of the observation.
+                観測の感覚属性。
+            observation: One feature vector.
+                1つの特徴ベクトル。
+
+        Returns:
+            One posterior log-weight per attribute-local category.
+            属性内カテゴリごとの事後対数重み。
+
+        Raises:
+            KeyError: If the attribute is unknown.
+                属性が未知の場合。
+            ValueError: If the observation dimension is invalid.
+                観測次元が不正な場合。
+        """
+        if attribute not in self.category_counts:
+            raise KeyError(attribute)
+        value = np.asarray(observation, dtype=np.float64)
+        expected_shape = (self.state.means[attribute].shape[1],)
+        if value.shape != expected_shape or not np.all(np.isfinite(value)):
+            raise ValueError(
+                f"observation for {attribute!r} must have shape {expected_shape}"
+            )
+        return np.log(self.state.pi[attribute] + 1e-300) + np.asarray(
+            [
+                multivariate_normal.logpdf(
+                    value,
+                    mean=self.state.means[attribute][category],
+                    cov=self.state.covariances[attribute][category],
+                    allow_singular=False,
+                )
+                for category in range(self.category_counts[attribute])
+            ],
+            dtype=np.float64,
+        )
+
+    def sample_categories_from_observations(
+        self,
+    ) -> dict[str, CategoryAssignments]:
+        """Infer speaker categories from every observed action and object.
+
+        全行動・全物体の観測から話者カテゴリを推論する。
+
+        The learned ``pi``, means, and covariances are held fixed. Categories
+        are sampled from ``pi_k * N(x | mu_k, Sigma_k)`` without a word
+        likelihood. Object attributes retain all ragged object assignments;
+        attention is applied later only when generating words.
+
+        学習済み ``pi``、平均、共分散を固定し、単語尤度を使わず
+        ``pi_k * N(x | mu_k, Sigma_k)`` からサンプルする。物体属性は全物体の
+        ragged割当てを保持し、attentionは後の単語生成時にのみ適用する。
+
+        Returns:
+            Action ``(D,)`` and ragged all-object assignments for ``p/o/c``.
+            Actionの ``(D,)`` と ``p/o/c`` の全物体ragged割当て。
+        """
+        sampled: dict[str, CategoryAssignments] = {}
+        for attr in ATTRIBUTES:
+            documents = tuple(
+                np.asarray(
+                    [
+                        _sample_logweights(
+                            self.observation_category_logweights(attr, observation),
+                            self.rng,
+                        )
+                        for observation in observations_d
+                    ],
+                    dtype=np.int64,
+                )
+                for observations_d in self.dataset.document_arrays(attr)
+            )
+            if attr == "a":
+                sampled[attr] = np.asarray(
+                    [categories[0] for categories in documents], dtype=np.int64
+                )
+            else:
+                sampled[attr] = documents
+        return sampled
+
     def sample_categories_without_observations(
         self, words: Sequence[npt.ArrayLike]
     ) -> dict[str, IntArray]:
@@ -462,16 +551,8 @@ class CslModel:
         logweights = np.log(self.state.pi[attribute] + 1e-300)
         if include_observation:
             observation = observations_d[object_id]
-            logweights += np.asarray(
-                [
-                    multivariate_normal.logpdf(
-                        observation,
-                        mean=self.state.means[attribute][category],
-                        cov=self.state.covariances[attribute][category],
-                        allow_singular=False,
-                    )
-                    for category in range(self.category_counts[attribute])
-                ]
+            logweights = self.observation_category_logweights(
+                attribute, observation
             )
         attended = attribute == "a" or object_id == self.dataset.attentions[doc_id]
         if attended:

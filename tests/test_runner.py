@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 
+import numpy as np
+
 from legacy_csl.config import (
     AttributeCategoryCounts,
     AttributeModel,
@@ -12,6 +14,7 @@ from legacy_csl.config import (
     WordModel,
 )
 from legacy_csl.data import load_dataset, write_compact_fixture
+from legacy_csl.model import CslModel
 from legacy_csl.runner import analyze, learn, predict, validate_data
 from legacy_csl.state_io import load_state
 
@@ -101,14 +104,32 @@ def test_single_end_to_end(tmp_path, monkeypatch):
     ]
 
 
-def test_inter_learning_prediction_and_analysis(tmp_path):
+def test_inter_learning_prediction_and_analysis(tmp_path, monkeypatch):
     config = _config(tmp_path, "inter-csl")
     write_compact_fixture(config.paths.data_root, num_documents=6)
 
     [directory] = learn(config)
+    observation_sampler = CslModel.sample_categories_from_observations
+    sampled_datasets = []
+
+    def record_observation_sampling(model):
+        sampled_datasets.append(model.dataset)
+        return observation_sampler(model)
+
+    def reject_prior_sampling(model, pi):
+        del model, pi
+        raise AssertionError("prediction must condition speaker z on observations")
+
+    monkeypatch.setattr(
+        CslModel,
+        "sample_categories_from_observations",
+        record_observation_sampling,
+    )
+    monkeypatch.setattr(CslModel, "_sample_z_prior", reject_prior_sampling)
     prediction_rows = predict(config)
     analysis_rows = analyze(config)
 
+    assert len(sampled_datasets) == 1
     assert (directory / "state_A.npz").is_file()
     assert (directory / "state_B.npz").is_file()
     expected_csvs = _state_csv_names("A") | _state_csv_names("B")
@@ -134,6 +155,13 @@ def test_inter_learning_prediction_and_analysis(tmp_path):
         directory / "analysis" / "ground_truth_category_word_heatmap_B.png"
     ).is_file()
     assert (directory / "prediction" / "prediction.npz").is_file()
+    with np.load(directory / "prediction" / "prediction.npz") as prediction:
+        assert {
+            "speaker_z_a",
+            "speaker_z_p",
+            "speaker_z_o",
+            "speaker_z_c",
+        } <= set(prediction.files)
     assert "mse_a" in prediction_rows[0]
     assert "ari_agents_a" in analysis_rows[0]
     assert "ari_truth_A_a" in analysis_rows[0]
