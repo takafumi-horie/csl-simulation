@@ -1,16 +1,18 @@
-# legacy-csl
+# csl-simulation
 
-`legacy-csl` provides reproducible reference implementations of two
-categorical cross-situational learning models. **Single-CSL** learns a
-word–meaning system from one agent's multimodal observations and fixed
-utterances. **Inter-CSL** lets two agents learn through a Metropolis–Hastings
-naming game and can predict one agent's observations from the other's words.
+`csl-simulation` provides reproducible reference implementations of two
+categorical cross-situational learning models. The `single-csl` mode runs
+**CSL-PGM**, which learns a word–meaning system from one agent's multimodal
+observations and fixed utterances. The `inter-csl` mode runs **Inter-CSL-PGM**,
+which lets two agents learn through a Metropolis–Hastings naming game and can
+predict one agent's observations from the other's words.
 
-`legacy-csl` は、カテゴリカル交差状況学習モデルを再現可能な形で実行する
-ためのリファレンス実装です。**Single-CSL** は1エージェントのマルチモーダル
-観測と固定発話から単語と意味の対応を学習します。**Inter-CSL** は2エージェント
-間の Metropolis–Hastings naming game によって記号体系を学習し、相手の単語から
-観測を予測できます。
+`csl-simulation` は、カテゴリカル交差状況学習モデルを再現可能な形で
+実行するためのリファレンス実装です。`single-csl` mode は、1エージェントの
+マルチモーダル観測と固定発話から単語と意味の対応を学習する **CSL-PGM**
+を実行します。`inter-csl` mode は、2エージェント間の Metropolis–Hastings
+naming game によって記号体系を学習し、相手の単語から観測を予測できる
+**Inter-CSL-PGM** を実行します。
 
 The package includes strict YAML configuration, explicit random seeds,
 checkpointing, legacy-compatible CSV export, standard metrics, and compact
@@ -20,6 +22,34 @@ legacy datadump layout.
 本パッケージには、厳格な YAML 設定、明示的乱数シード、チェックポイント、
 主要な legacy 互換 CSV 出力、標準評価指標、基本的な可視化が含まれます。
 同梱の合成データ形式と、処理済み legacy datadump 形式の両方を読み込めます。
+
+## Models and papers / モデルと論文
+
+- **CSL-PGM** (`single-csl`): [Cross-Situational Learning with Bayesian
+  Generative Models for Multimodal Category and Word Learning in
+  Robots](https://www.frontiersin.org/journals/neurorobotics/articles/10.3389/fnbot.2017.00066/full)
+  / 1エージェントの交差状況学習モデル。
+- **Inter-CSL-PGM** (`inter-csl`): [Symbol Emergence as Interpersonal
+  Cross-Situational Learning: The Emergence of Lexical Knowledge with
+  Combinatoriality](https://arxiv.org/abs/2306.15837)
+  / 複数エージェント間の交差状況学習モデル。
+
+The strings `single-csl` and `inter-csl` are configuration mode identifiers;
+the model names used in this README are **CSL-PGM** and **Inter-CSL-PGM**.
+
+`single-csl` と `inter-csl` は設定上の mode 識別子です。本 README では、
+正式なモデル名として **CSL-PGM** と **Inter-CSL-PGM** を使用します。
+
+### MLA-style citations / MLA形式の引用
+
+- Taniguchi, Akira, et al. “Cross-Situational Learning with Bayesian Generative
+  Models for Multimodal Category and Word Learning in Robots.” *Frontiers in
+  Neurorobotics*, vol. 11, 19 Dec. 2017, article 66,
+  <https://doi.org/10.3389/fnbot.2017.00066>.
+- Hagiwara, Yoshinobu, et al. “Symbol Emergence as Interpersonal
+  Cross-Situational Learning: The Emergence of Lexical Knowledge with
+  Combinatoriality.” *arXiv*, 27 June 2023, arXiv:2306.15837,
+  <https://doi.org/10.48550/arXiv.2306.15837>.
 
 ## Supported model choices / 対応するモデル選択
 
@@ -34,7 +64,7 @@ legacy datadump layout.
 - attribute sequence / 属性列:
   - `distinct`: simple MEC2, sampled without replacement / 単純MEC2・重複なし
   - `iid`: uniform independent assignments with replacement / 一様独立・重複可
-- Inter-CSL interaction: `mh`, `no_communication`, or `all_accept`
+- Inter-CSL-PGM interaction: `mh`, `no_communication`, or `all_accept`
 
 The legacy rescaling is defined exactly as
 
@@ -45,27 +75,26 @@ R_w = \sum_z \theta_{z,w},\qquad
 \]
 
 All word-probability consumers—word generation, category updates, attribute
-updates, and Inter-CSL acceptance ratios—use the same transformed matrix.
+updates, and Inter-CSL-PGM acceptance ratios—use the same transformed matrix.
 
 legacy rescaling は上式のとおり全 `z` 行を単純加算します。単語生成、
-カテゴリ更新、属性列更新、Inter-CSL の受理率は、すべて同じ変換済み行列を
+カテゴリ更新、属性列更新、Inter-CSL-PGM の受理率は、すべて同じ変換済み行列を
 参照します。
 
-`empirical_unigram` reproduces the legacy Inter-CSL comparison condition: the
+`empirical_unigram` reproduces the legacy Inter-CSL-PGM comparison condition: the
 ordinary Gibbs consumers use raw `theta`, while only the MH ratio divides the
 old and proposed word probabilities by their respective corpus-snapshot
 counts. It does not add smoothing or renormalize the rows. `none` uses raw
 `theta` everywhere.
 
-`empirical_unigram` は legacy Inter-CSL の比較条件を再現します。通常の Gibbs
+`empirical_unigram` は legacy Inter-CSL-PGM の比較条件を再現します。通常の Gibbs
 更新では未補正の `theta` を使い、MH 受理率だけが旧単語・提案単語の確率を
 それぞれのコーパス snapshot 頻度で割ります。加算 smoothing と行の再正規化は
 行いません。`none` は全箇所で未補正の `theta` を使います。
 
 ## Faithful inference scope / 推論の再現範囲
 
-The categorical learning kernel infers every latent variable updated by the
-legacy Single-CSL and Inter-CSL paths:
+The categorical learning kernel infers every latent variable:
 
 - category assignments `z` for every observed object, not only the attended
   object;
@@ -74,17 +103,16 @@ legacy Single-CSL and Inter-CSL paths:
   Gaussian--inverse-Wishart posterior;
 - category-to-word distributions `theta`;
 - one attribute sequence `F` per document; and
-- in Inter-CSL, internal words through the token-wise MH naming game.
+- in Inter-CSL-PGM, internal words through the token-wise MH naming game.
 
-Words are observed in Single-CSL. Their lengths may differ by document, and
+Words are observed in CSL-PGM. Their lengths may differ by document, and
 their vocabulary is encoded in first-seen order. The default legacy importance
 kernel uses the scan `z -> pi -> (mu, Sigma) -> F -> theta`; the optional direct
 Dirichlet kernel uses the later scan `z -> pi -> (mu, Sigma) -> theta -> F`.
 Prediction is generative: it resamples speaker categories and words, listener
 categories, and listener observations rather than reusing training `z` or `F`.
 
-categorical 学習 kernel は、旧 Single-CSL / Inter-CSL の実行経路が更新していた
-潜在変数をすべて推論します。
+categorical 学習 kernel は、潜在変数をすべて推論します。
 
 - 注視対象だけでなく全観測物体のカテゴリ割当て `z`
 - 全物体の割当てから更新する混合比率 `pi`
@@ -92,9 +120,9 @@ categorical 学習 kernel は、旧 Single-CSL / Inter-CSL の実行経路が更
   `(mu, Sigma)`
 - カテゴリから単語への分布 `theta`
 - 文書ごとの属性列 `F`
-- Inter-CSL では token 単位 MH naming game による内部単語
+- Inter-CSL-PGM では token 単位 MH naming game による内部単語
 
-Single-CSL の単語は観測値です。文書ごとに発話長が異なってもよく、語彙は
+CSL-PGM の単語は観測値です。文書ごとに発話長が異なってもよく、語彙は
 初出順で符号化します。既定の legacy importance kernel は
 `z -> pi -> (mu, Sigma) -> F -> theta`、任意の直接 Dirichlet kernel は後期実装の
 `z -> pi -> (mu, Sigma) -> theta -> F` という更新順です。予測時には学習済みの
@@ -158,13 +186,13 @@ YAML file are resolved relative to that YAML file.
 ディレクトリを直接含む場所を指定します。YAML内の相対パスは、そのYAML
 ファイルを基準に解決されます。
 
-Single-CSL also needs the observed utterances. For compact or newly prepared
+CSL-PGM also needs the observed utterances. For compact or newly prepared
 data, edit `single_words.json` under `paths.data_root`. The outer JSON array
 contains one utterance per document in the same document order, and each inner
 array contains that document's word tokens. Rows must be non-empty; different
 documents may have different utterance lengths. For example:
 
-Single-CSL では観測発話も必要です。compact形式または新たに用意したデータを
+CSL-PGM では観測発話も必要です。compact形式または新たに用意したデータを
 使う場合は、`paths.data_root` 直下の `single_words.json` を編集してください。
 JSONの外側配列はデータと同じ文書順に1文書1発話を並べ、各内側配列にその
 文書の単語tokenを記述します。空の発話は使えませんが、発話長は文書ごとに
@@ -181,14 +209,14 @@ For paper-dataset reproduction, the legacy
 `agentU/testss(001-040)/testss_words.csv` is read automatically when neither
 `single_words.json` nor `uni_words.json` exists. Adding `single_words.json`
 overrides that CSV, which is useful when reproducing the observations with a
-different utterance set. Inter-CSL generates its internal words and therefore
+different utterance set. Inter-CSL-PGM generates its internal words and therefore
 does not require this JSON file. Run `csl validate-data` after editing the YAML
 and JSON, before starting a long inference run.
 
 論文データの再現では、`single_words.json` と `uni_words.json` が無ければ legacy
 の `agentU/testss(001-040)/testss_words.csv` を自動的に読み込みます。
 `single_words.json` を置くとCSVより優先されるため、同じ観測に別の発話集合を
-与える実験にも利用できます。Inter-CSL は内部単語を生成するため、このJSONは
+与える実験にも利用できます。Inter-CSL-PGM は内部単語を生成するため、このJSONは
 不要です。長時間の推論を始める前に、YAMLとJSONの編集後に
 `csl validate-data` を実行してください。
 
@@ -315,12 +343,12 @@ The recommended compact representation is one `agentU.npz`, `agentA.npz`, or
 `sum(num_objects)` rows. Object arrays may instead use shape `(D, M, d)` when
 all documents have the same object count. Optional truth must provide all of
 `z_a`, `z_p`, `z_o`, and `z_c`; object truth follows the same flattened object
-order. Single-CSL additionally reads `single_words.json`, whose rows may have
+order. CSL-PGM additionally reads `single_words.json`, whose rows may have
 different lengths.
 
 The `U` in `agentU.npz` is retained only as a data-format identifier for
 compatibility with existing processed datasets; the public model name is
-Single-CSL.
+CSL-PGM.
 
 For reproducing the paper experiments, use the processed legacy datadump layout
 under `agentU/agentA/agentB/testssNNN`. The loader reads
@@ -348,10 +376,10 @@ required nor distributed. Place each ground-truth directory inside its agent:
 `(D, d_a)`、`num_objects` と `attentions` は `(D,)`、`p/o/c` はそれぞれ
 `sum(num_objects)` 行にします。全文書の物体数が同じ場合、物体配列は
 `(D, M, d)` でも構いません。正解を含める場合は `z_a/z_p/z_o/z_c` をすべて
-指定し、物体属性の正解は観測と同じ平坦化順にします。Single-CSL の
+指定し、物体属性の正解は観測と同じ平坦化順にします。CSL-PGM の
 `single_words.json` は文書ごとに異なる発話長を使用できます。`agentU` の `U`
 は既存データ形式との互換性のために残した識別子で、公開モデル名は
-Single-CSL です。
+CSL-PGM です。
 
 論文実験を再現する場合は、`agentU/agentA/agentB/testssNNN` 以下に配置された
 処理済み legacy datadump 形式を使用してください。この形式から
@@ -379,16 +407,16 @@ Each experiment writes:
 - major compatibility CSVs (`z*`, `F`, `theta`, `Mu`, `Sig`, `pi`, words);
 - metrics/history CSV and JSON;
 - a learning-curve PNG and category-by-word heatmap PNG (one heatmap for each
-  agent in Inter-CSL); the heatmap removes
+  agent in Inter-CSL-PGM); the heatmap removes
   categories never used by an attended object, labels rows with zero-based
   local IDs such as `p4`, labels columns with vocabulary strings, and preserves
   `a/p/o/c` blocks while arranging strong category-word pairs diagonally;
-- Inter-CSL prediction arrays and MSE metrics when requested.
+- Inter-CSL-PGM prediction arrays and MSE metrics when requested.
 
 カテゴリ×単語heatmapでは、注視対象に一度も使われなかったカテゴリを除外し、
 行を `p4` のような0始まりの属性内カテゴリID、列を語彙文字列で表示します。
 強いカテゴリ・単語対応が対角線状になるよう整列しますが、カテゴリ行は
-`a/p/o/c` の属性blockを跨いで移動しません。Inter-CSLではエージェントA・Bを
+`a/p/o/c` の属性blockを跨いで移動しません。Inter-CSL-PGMではエージェントA・Bを
 `category_word_heatmap_A.png` と `category_word_heatmap_B.png` に分けて出力します。
 
 ### ARI and ground truth / ARIとground truth
@@ -404,20 +432,20 @@ ARIは `sklearn.metrics.adjusted_rand_score` で計算するため、推論カ�
 `p/o/c` では推論値と正解値の双方を各文書の注視対象物体へ切り詰めてから
 計算します。Action `a` はもともと1文書1カテゴリです。
 
-For Single-CSL, `ari_truth_a/p/o/c` compares agent U with its ground truth. For
-Inter-CSL, `ari_agents_a/p/o/c` compares agents A and B after selecting the
+For CSL-PGM, `ari_truth_a/p/o/c` compares agent U with its ground truth. For
+Inter-CSL-PGM, `ari_agents_a/p/o/c` compares agents A and B after selecting the
 attended object with each agent's own attention indexes. If ground truth is
 available, `ari_truth_A_a/p/o/c` and `ari_truth_B_a/p/o/c` are also written.
 The older `ari_truth_a/p/o/c` names remain aliases for agent A for output
-compatibility. The principal legacy Inter-CSL metric was the A-versus-B ARI;
+compatibility. The principal legacy Inter-CSL-PGM metric was the A-versus-B ARI;
 ground-truth metrics are omitted when truth files are unavailable.
 
-Single-CSLの `ari_truth_a/p/o/c` はagent Uとground truthを比較します。
-Inter-CSLの `ari_agents_a/p/o/c` は、A・Bそれぞれ自身のattention indexで
+CSL-PGMの `ari_truth_a/p/o/c` はagent Uとground truthを比較します。
+Inter-CSL-PGMの `ari_agents_a/p/o/c` は、A・Bそれぞれ自身のattention indexで
 注視対象を選んだ後、両agentを比較します。ground truthがある場合は
 `ari_truth_A_a/p/o/c` と `ari_truth_B_a/p/o/c` も出力します。従来の
 `ari_truth_a/p/o/c` は出力互換性のためagent Aの別名として残します。旧
-Inter-CSLの主要指標はA対BのARIであり、正解ファイルが無い場合はground-truth
+Inter-CSL-PGMの主要指標はA対BのARIであり、正解ファイルが無い場合はground-truth
 ARIを出力しません。
 
 Compact NPZ truth is read from the complete set `z_a`, `z_p`, `z_o`, and
@@ -443,36 +471,3 @@ dependency versions therefore follows the same random sequence.
 全確率処理は `run.seed` から派生した明示的 NumPy generator を受け取ります。
 同じ入力・設定・依存バージョンで再実行すれば、同じ乱数系列を使用します。
 
-NPYLM, Pitman–Yor word generation, character rescaling, extended MEC2, deep
-observation models, TensorFlow, and Torch are deliberately outside this
-repository.
-
-NPYLM、Pitman–Yor 単語生成、文字補正、extended MEC2、深層観測モデル、
-TensorFlow、Torch は意図的に対象外です。
-
-<details>
-<summary>Repository creation note / レポジトリ作成者向けの補足</summary>
-
-`legacy-csl` is a standalone, typed reorganization of the categorical
-`uni-csl` and `inter-csl` execution paths formerly hosted under
-`src/_legacy_codes` in `multi-agent-csl`.
-
-`legacy-csl` は、`multi-agent-csl` の `src/_legacy_codes` にあった
-categorical `uni-csl` / `inter-csl` の実行経路を、独立・型付きの構成へ
-再整理したリポジトリです。旧クラス階層は引き継がず、設定、データ、状態、
-確率計算、推論、保存、解析を分離しています。
-
-The implementation was reorganized from the algorithms present at
-`multi-agent-csl` commit `831140870e5d92adfd707c40597fc5d1409c1ec0`. The
-Python 2 source at history commit
-`53ac2bd679c69b9cc7fa218ff4ef0d65c6b7bc23`, path
-`lib/__original_source/rescaling_term.py`, was used as the numerical oracle for
-legacy theta rescaling and importance weights.
-
-実装は上記コミット時点のアルゴリズムを基準に再整理しました。legacy theta
-補正と importance 重みについては、履歴 commit
-`53ac2bd679c69b9cc7fa218ff4ef0d65c6b7bc23` の
-`lib/__original_source/rescaling_term.py` にある Python 2 原版を数値 oracle
-としてテストしています。
-
-</details>
