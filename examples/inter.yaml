@@ -1,0 +1,30 @@
+mode: inter-csl
+run:
+  name: inter-example
+  iterations: 200
+  experiments: 1
+  seed: 0
+paths:
+  data_root: ../fixture
+  output_root: ../outputs
+word_model:
+  rescaling: legacy_theta_sum
+  theta_sampler: legacy_importance
+  importance_candidates: 10000
+attribute_model:
+  # Uniform attribute sampling with replacement (duplicates are allowed).
+  exclusivity: iid
+interaction: mh
+freeze:
+  gmm: false
+  theta: false
+  attributes: false
+hyperparameters:
+  category_counts:
+    a: 10
+    p: 10
+    o: 10
+    c: 10
+  vocabulary_size: 14
+  word_length: 4
+  gamma: 0.1
