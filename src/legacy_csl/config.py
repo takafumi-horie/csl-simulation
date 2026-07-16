@@ -10,7 +10,7 @@ from typing import Any, Literal, Mapping, TypeAlias, cast
 import yaml
 
 
-Mode: TypeAlias = Literal["uni-csl", "inter-csl"]
+Mode: TypeAlias = Literal["single-csl", "inter-csl"]
 Rescaling: TypeAlias = Literal[
     "legacy_theta_sum", "empirical_unigram", "none"
 ]
@@ -305,8 +305,8 @@ class Config:
     検証済みのスタンドアロン CSL 設定を表す。
 
     Args:
-        mode (Mode): ``uni-csl`` or ``inter-csl``.
-            ``uni-csl`` または ``inter-csl``。
+        mode (Mode): ``single-csl`` or ``inter-csl``.
+            ``single-csl`` または ``inter-csl``。
         run (Run): Repeated-run settings.
             反復実行の設定。
         paths (Paths): Input and output roots.
@@ -343,7 +343,7 @@ class Config:
                 選択肢またはセクション間の組み合わせが
                 不正な場合。
         """
-        _require_choice(self.mode, {"uni-csl", "inter-csl"}, "mode")
+        _require_choice(self.mode, {"single-csl", "inter-csl"}, "mode")
         _require_choice(
             self.interaction,
             {"mh", "no_communication", "all_accept"},

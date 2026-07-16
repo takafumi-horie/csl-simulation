@@ -104,10 +104,10 @@ def load_dataset(data_root: Path, agent: str) -> ObservationDataset:
     )
 
 
-def load_uni_words(data_root: Path, num_documents: int) -> npt.NDArray[np.int64]:
-    """Load fixed Uni-CSL words from compact JSON or legacy CSV.
+def load_single_words(data_root: Path, num_documents: int) -> npt.NDArray[np.int64]:
+    """Load fixed Single-CSL words from compact JSON or legacy CSV.
 
-    Uni-CSL の固定単語列を小型 JSON または legacy CSV から読む。
+    Single-CSL の固定単語列を小型 JSON または legacy CSV から読む。
 
     Args:
         data_root: Dataset root.
@@ -119,16 +119,19 @@ def load_uni_words(data_root: Path, num_documents: int) -> npt.NDArray[np.int64]
         Integer word matrix with shape ``(D, L)``.
         ``(D, L)`` の整数単語行列。
     """
-    json_path = data_root / "uni_words.json"
+    json_path = data_root / "single_words.json"
+    legacy_json_path = data_root / "uni_words.json"
     if json_path.exists():
         words = json.loads(json_path.read_text(encoding="utf-8"))
+    elif legacy_json_path.exists():
+        words = json.loads(legacy_json_path.read_text(encoding="utf-8"))
     else:
         csv_path = data_root / "agentU" / "testss(001-040)" / "testss_words.csv"
         with csv_path.open(encoding="utf-8") as stream:
             words = [row for row in csv.reader(stream) if row]
     array = np.asarray(words[:num_documents])
     if array.ndim != 2 or array.shape[0] != num_documents:
-        raise ValueError("Uni word input must be a rectangular D x L matrix")
+        raise ValueError("Single-CSL words must be a rectangular D x L matrix")
     try:
         return array.astype(np.int64)
     except ValueError:
@@ -178,7 +181,7 @@ def write_compact_fixture(
     words = np.mod(
         latent_word_sources + np.arange(word_length), vocabulary_size
     ).tolist()
-    (data_root / "uni_words.json").write_text(
+    (data_root / "single_words.json").write_text(
         json.dumps(words, indent=2), encoding="utf-8"
     )
 

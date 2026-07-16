@@ -159,9 +159,9 @@ def test_dump_writes_resolved_defaults_and_round_trips(tmp_path: Path) -> None:
     assert reloaded == config
 
 
-def test_uni_accepts_interaction_field_for_a_shared_schema(tmp_path: Path) -> None:
+def test_single_accepts_interaction_field_for_a_shared_schema(tmp_path: Path) -> None:
     values = _valid_config()
-    values["mode"] = "uni-csl"
+    values["mode"] = "single-csl"
     values["interaction"] = "no_communication"
 
     config = load_config(_write_config(tmp_path, values))
@@ -169,10 +169,10 @@ def test_uni_accepts_interaction_field_for_a_shared_schema(tmp_path: Path) -> No
     assert config.interaction == "no_communication"
 
 
-@pytest.mark.parametrize("filename", ["uni.yaml", "inter.yaml"])
+@pytest.mark.parametrize("filename", ["single.yaml", "inter.yaml"])
 def test_shipped_examples_are_valid(filename: str) -> None:
     example = Path(__file__).parents[1] / "examples" / filename
 
     config = load_config(example)
 
-    assert config.mode in {"uni-csl", "inter-csl"}
+    assert config.mode in {"single-csl", "inter-csl"}

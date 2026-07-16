@@ -21,7 +21,7 @@ from legacy_csl.rescaling import legacy_theta_sum_rescaling
 def _config(tmp_path, *, exclusivity="distinct", rescaling="legacy_theta_sum"):
     sampler = "legacy_importance" if rescaling == "legacy_theta_sum" else "dirichlet"
     return Config(
-        mode="uni-csl",
+        mode="single-csl",
         run=Run(name="test", iterations=1, experiments=1, seed=3),
         paths=Paths(data_root=tmp_path / "data", output_root=tmp_path / "out"),
         word_model=WordModel(
@@ -101,4 +101,3 @@ def test_readonly_z_does_not_expose_mutable_state(tmp_path):
     view["a"][0] = 999
 
     assert model.state.z["a"][0] != 999
-

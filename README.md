@@ -1,17 +1,29 @@
 # legacy-csl
 
-`legacy-csl` is a standalone, typed reorganization of the categorical
-`uni-csl` and `inter-csl` execution paths formerly hosted under
-`src/_legacy_codes` in `multi-agent-csl`.
+`legacy-csl` provides reproducible reference implementations of two
+categorical cross-situational learning models. **Single-CSL** learns a
+word–meaning system from one agent's multimodal observations and fixed
+utterances. **Inter-CSL** lets two agents learn through a Metropolis–Hastings
+naming game and can predict one agent's observations from the other's words.
 
-`legacy-csl` は、`multi-agent-csl` の `src/_legacy_codes` にあった
-categorical `uni-csl` / `inter-csl` の実行経路を、独立・型付きの構成へ
-再整理したリポジトリです。旧クラス階層は引き継がず、設定、データ、状態、
-確率計算、推論、保存、解析を分離しています。
+`legacy-csl` は、カテゴリカル交差状況学習モデルを再現可能な形で実行する
+ためのリファレンス実装です。**Single-CSL** は1エージェントのマルチモーダル
+観測と固定発話から単語と意味の対応を学習します。**Inter-CSL** は2エージェント
+間の Metropolis–Hastings naming game によって記号体系を学習し、相手の単語から
+観測を予測できます。
+
+The package includes strict YAML configuration, explicit random seeds,
+checkpointing, legacy-compatible CSV export, standard metrics, and compact
+plots. It can read either the included synthetic-data format or the processed
+legacy datadump layout.
+
+本パッケージには、厳格な YAML 設定、明示的乱数シード、チェックポイント、
+主要な legacy 互換 CSV 出力、標準評価指標、基本的な可視化が含まれます。
+同梱の合成データ形式と、処理済み legacy datadump 形式の両方を読み込めます。
 
 ## Supported model choices / 対応するモデル選択
 
-- `mode`: `uni-csl` or `inter-csl`
+- `mode`: `single-csl` or `inter-csl`
 - word rescaling / 単語確率補正:
   - `legacy_theta_sum` (default / 既定)
   - `empirical_unigram`
@@ -51,14 +63,20 @@ python -m pip install -e '.[dev]'
 
 ## Quick start / クイックスタート
 
-Create the distributable synthetic fixture and use an example configuration.
+Create a small deterministic fixture, then run either model with its example
+configuration.
+
+決定論的な小型 fixture を生成し、各モデルの設定例を使って実行します。
 
 ```bash
 legacy-csl make-fixture fixture
-legacy-csl validate-data --config examples/uni.yaml
-legacy-csl learn --config examples/uni.yaml
-legacy-csl analyze --config examples/uni.yaml
 
+# One-agent learning / 1エージェント学習
+legacy-csl validate-data --config examples/single.yaml
+legacy-csl learn --config examples/single.yaml
+legacy-csl analyze --config examples/single.yaml
+
+# Two-agent learning and prediction / 2エージェント学習・予測
 legacy-csl validate-data --config examples/inter.yaml
 legacy-csl learn --config examples/inter.yaml
 legacy-csl predict --config examples/inter.yaml
@@ -75,8 +93,12 @@ directory. The schema is intentionally strict and rejects unknown keys.
 
 The recommended compact representation is one `agentU.npz`, `agentA.npz`, or
 `agentB.npz` file. Each archive contains 2-D float arrays `a`, `p`, `o`, `c`,
-and may contain integer truth arrays `z_a`, `z_p`, `z_o`, `z_c`. Uni-CSL also
-uses a rectangular `uni_words.json`.
+and may contain integer truth arrays `z_a`, `z_p`, `z_o`, `z_c`. Single-CSL
+also uses a rectangular `single_words.json`.
+
+The `U` in `agentU.npz` is retained only as a data-format identifier for
+compatibility with existing processed datasets; the public model name is
+Single-CSL.
 
 The loader also accepts the processed legacy datadump layout under
 `agentU/agentA/agentB/testssNNN`, including `object_center.txt`,
@@ -85,8 +107,10 @@ features. Raw images are neither required nor distributed.
 
 推奨入力は `agentU.npz`、`agentA.npz`、`agentB.npz` です。各ファイルは
 2次元 float 配列 `a/p/o/c` と、任意で正解 `z_a/z_p/z_o/z_c` を持ちます。
-Uni-CSL は長方形の `uni_words.json` も使います。処理済み legacy datadump
-形式も読み込めますが、画像本体は不要です。
+Single-CSL は長方形の `single_words.json` も使います。`agentU` の `U` は
+既存データ形式との互換性のために残した識別子で、公開モデル名は
+Single-CSL です。処理済み legacy datadump 形式も読み込めますが、画像本体は
+不要です。
 
 ## Outputs / 出力
 
@@ -99,17 +123,14 @@ Each experiment writes:
 - a learning-curve PNG and category-by-word heatmap PNG;
 - Inter-CSL prediction arrays and MSE metrics when requested.
 
-## Reproducibility and provenance / 再現性と由来
+## Reproducibility / 再現性
 
 Every stochastic operation receives an explicit NumPy generator derived from
-`run.seed`. The implementation was reorganized from the algorithms present at
-`multi-agent-csl` commit `831140870e5d92adfd707c40597fc5d1409c1ec0` and uses
-the Python 2 source under `lib/__original_source/rescaling_term.py` as the
-oracle for legacy theta rescaling and importance weights.
+`run.seed`. Repeating an experiment with the same input, configuration, and
+dependency versions therefore follows the same random sequence.
 
 全確率処理は `run.seed` から派生した明示的 NumPy generator を受け取ります。
-legacy theta 補正と importance 重みは Python 2 原版を数値 oracle として
-テストします。
+同じ入力・設定・依存バージョンで再実行すれば、同じ乱数系列を使用します。
 
 NPYLM, Pitman–Yor word generation, character rescaling, extended MEC2, deep
 observation models, TensorFlow, and Torch are deliberately outside this
@@ -118,3 +139,25 @@ repository.
 NPYLM、Pitman–Yor 単語生成、文字補正、extended MEC2、深層観測モデル、
 TensorFlow、Torch は意図的に対象外です。
 
+<details>
+<summary>Repository creation note / レポジトリ作成者向けの補足</summary>
+
+`legacy-csl` is a standalone, typed reorganization of the categorical
+`uni-csl` and `inter-csl` execution paths formerly hosted under
+`src/_legacy_codes` in `multi-agent-csl`.
+
+`legacy-csl` は、`multi-agent-csl` の `src/_legacy_codes` にあった
+categorical `uni-csl` / `inter-csl` の実行経路を、独立・型付きの構成へ
+再整理したリポジトリです。旧クラス階層は引き継がず、設定、データ、状態、
+確率計算、推論、保存、解析を分離しています。
+
+The implementation was reorganized from the algorithms present at
+`multi-agent-csl` commit `831140870e5d92adfd707c40597fc5d1409c1ec0`. The
+Python 2 source under `lib/__original_source/rescaling_term.py` was used as the
+numerical oracle for legacy theta rescaling and importance weights.
+
+実装は上記コミット時点のアルゴリズムを基準に再整理しました。legacy theta
+補正と importance 重みについては、Python 2 原版を数値 oracle として
+テストしています。
+
+</details>

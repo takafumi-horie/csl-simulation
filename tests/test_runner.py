@@ -30,8 +30,8 @@ def _config(tmp_path, mode):
     )
 
 
-def test_uni_end_to_end(tmp_path):
-    config = _config(tmp_path, "uni-csl")
+def test_single_end_to_end(tmp_path):
+    config = _config(tmp_path, "single-csl")
     write_compact_fixture(config.paths.data_root, num_documents=6)
 
     validate_data(config)
@@ -58,4 +58,3 @@ def test_inter_learning_prediction_and_analysis(tmp_path):
     assert (directory / "prediction" / "prediction.npz").is_file()
     assert "mse_a" in prediction_rows[0]
     assert "ari_agents_a" in analysis_rows[0]
-

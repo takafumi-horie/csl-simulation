@@ -24,7 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(
         prog="legacy-csl",
-        description="Standalone categorical Uni-CSL / Inter-CSL",
+        description="Standalone categorical Single-CSL / Inter-CSL",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
     for command in ("learn", "predict", "analyze", "validate-data"):

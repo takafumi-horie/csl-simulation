@@ -1,6 +1,6 @@
-mode: uni-csl
+mode: single-csl
 run:
-  name: uni-example
+  name: single-example
   iterations: 200
   experiments: 1
   seed: 0

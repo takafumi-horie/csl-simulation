@@ -19,5 +19,4 @@ def test_make_fixture_command(tmp_path):
     assert (destination / "agentU.npz").is_file()
     assert (destination / "agentA.npz").is_file()
     assert (destination / "agentB.npz").is_file()
-    assert (destination / "uni_words.json").is_file()
-
+    assert (destination / "single_words.json").is_file()

@@ -1,6 +1,6 @@
-"""Core categorical Uni-CSL state and inference updates.
+"""Core categorical Single-CSL state and inference updates.
 
-categorical Uni-CSL の状態と推論更新の中核実装。
+categorical Single-CSL の状態と推論更新の中核実装。
 """
 
 from __future__ import annotations
@@ -490,4 +490,3 @@ def _sample_logweights(
     probabilities = np.exp(shifted)
     probabilities /= probabilities.sum()
     return int(rng.choice(len(probabilities), p=probabilities))
-

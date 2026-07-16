@@ -1,4 +1,4 @@
-"""Attribute-column sampling for Uni-CSL and Inter-CSL."""
+"""Attribute-column sampling for Single-CSL and Inter-CSL."""
 
 from __future__ import annotations
 

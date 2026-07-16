@@ -15,7 +15,7 @@ import numpy.typing as npt
 
 from .analysis import category_metrics, prediction_metrics, write_analysis
 from .config import Config, dump_resolved_config
-from .data import ATTRIBUTES, ObservationDataset, load_dataset, load_uni_words
+from .data import ATTRIBUTES, ObservationDataset, load_dataset, load_single_words
 from .model import CslModel
 from .state_io import load_state, save_state, write_metric_rows
 
@@ -44,8 +44,8 @@ def learn(config: Config) -> list[Path]:
     for experiment_id, seed_sequence in enumerate(seed_sequences):
         directory = root / f"exp{experiment_id:03}"
         directory.mkdir(parents=True, exist_ok=True)
-        if config.mode == "uni-csl":
-            _learn_uni(config, directory, seed_sequence)
+        if config.mode == "single-csl":
+            _learn_single(config, directory, seed_sequence)
         else:
             _learn_inter(config, directory, seed_sequence)
         experiment_dirs.append(directory)
@@ -66,8 +66,8 @@ def predict(config: Config) -> list[dict[str, object]]:
         実験ごとの指標行。
 
     Raises:
-        ValueError: If called for Uni-CSL.
-            Uni-CSL に対して呼び出した場合。
+        ValueError: If called for Single-CSL.
+            Single-CSL に対して呼び出した場合。
     """
     if config.mode != "inter-csl":
         raise ValueError("prediction is available only for inter-csl")
@@ -122,7 +122,7 @@ def analyze(config: Config) -> list[dict[str, object]]:
     """
     root = config.paths.output_root / config.run.name
     rows: list[dict[str, object]] = []
-    if config.mode == "uni-csl":
+    if config.mode == "single-csl":
         dataset = load_dataset(config.paths.data_root, "U")
         for experiment_id in range(config.run.experiments):
             directory = root / f"exp{experiment_id:03}"
@@ -168,7 +168,7 @@ def validate_data(config: Config) -> None:
         ValueError: If document counts, dimensions, or words are inconsistent.
             文書数、次元、単語列が不整合の場合。
     """
-    agents = ("U",) if config.mode == "uni-csl" else ("A", "B")
+    agents = ("U",) if config.mode == "single-csl" else ("A", "B")
     datasets = [load_dataset(config.paths.data_root, agent) for agent in agents]
     if len({dataset.num_documents for dataset in datasets}) != 1:
         raise ValueError("all Inter-CSL agents must have the same document count")
@@ -177,26 +177,33 @@ def validate_data(config: Config) -> None:
             values = np.asarray(dataset.observations[attr])
             if values.ndim != 2 or not np.all(np.isfinite(values)):
                 raise ValueError(f"observations[{attr!r}] must be a finite D x P matrix")
-    if config.mode == "uni-csl":
-        words = load_uni_words(config.paths.data_root, datasets[0].num_documents)
+    if config.mode == "single-csl":
+        words = load_single_words(config.paths.data_root, datasets[0].num_documents)
         expected = (
             datasets[0].num_documents,
             config.hyperparameters.word_length,
         )
         if words.shape != expected:
-            raise ValueError(f"Uni words must have shape {expected}, got {words.shape}")
+            raise ValueError(
+                f"Single-CSL words must have shape {expected}, got {words.shape}"
+            )
         if np.any(words < 0) or np.any(
             words >= config.hyperparameters.vocabulary_size
         ):
-            raise ValueError("Uni words exceed the configured vocabulary")
+            raise ValueError("Single-CSL words exceed the configured vocabulary")
 
 
-def _learn_uni(
+def _learn_single(
     config: Config, directory: Path, seed_sequence: np.random.SeedSequence
 ) -> None:
     dataset = load_dataset(config.paths.data_root, "U")
-    words = load_uni_words(config.paths.data_root, dataset.num_documents)
-    model = CslModel(dataset, config, rng=np.random.default_rng(seed_sequence), initial_words=words)
+    words = load_single_words(config.paths.data_root, dataset.num_documents)
+    model = CslModel(
+        dataset,
+        config,
+        rng=np.random.default_rng(seed_sequence),
+        initial_words=words,
+    )
     history: list[dict[str, object]] = []
     for iteration in range(config.run.iterations):
         model.step(words)
@@ -278,4 +285,3 @@ def _load_history(path: Path) -> list[dict[str, object]] | None:
             }
             for row in csv.DictReader(stream)
         ]
-
