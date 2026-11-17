@@ -165,6 +165,7 @@ def test_dump_writes_resolved_defaults_and_round_trips(tmp_path: Path) -> None:
     assert dumped["attribute_model"]["exclusivity"] == "distinct"
     assert dumped["interaction"] == "mh"
     assert dumped["original_heuristics"] == {
+        "execution_profile": "current",
         "theta_mean_samples": 1,
         "inference_theta": "rescaled",
         "gaussian_mean_samples": 1,
@@ -245,6 +246,7 @@ def test_shipped_examples_are_valid(filename: str) -> None:
     if "original_heuristics" in filename:
         assert config.word_model.theta_sampler == "dirichlet"
         assert config.original_heuristics == OriginalHeuristics(
+            execution_profile="original",
             theta_mean_samples=100,
             inference_theta="raw",
             gaussian_mean_samples=100,

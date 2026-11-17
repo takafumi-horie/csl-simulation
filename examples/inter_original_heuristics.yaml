@@ -12,6 +12,7 @@ word_model:
   theta_sampler: dirichlet
   importance_candidates: 10000
 original_heuristics:
+  execution_profile: original
   theta_mean_samples: 100
   inference_theta: raw
   gaussian_mean_samples: 100

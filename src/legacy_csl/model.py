@@ -129,6 +129,11 @@ class CslModel:
             ValueError: If dimensions, vocabulary, or frozen truth are invalid.
                 次元、語彙、固定用正解が不正な場合。
         """
+        if getattr(config.original_heuristics, "execution_profile", "current") == "original":
+            raise ValueError(
+                "original execution requires joint initialize_original_models(); "
+                "the standalone CslModel constructor cannot preserve shared RNG order"
+            )
         self.dataset = dataset
         self.config = config
         self.rng = rng
@@ -275,6 +280,11 @@ class CslModel:
             words: Optional accepted/fixed word corpus for this sweep.
                 このsweepで使う任意の受理済み・固定単語コーパス。
         """
+        if self.config.original_heuristics.execution_profile == "original":
+            raise ValueError(
+                "original learning requires joint initialize_original_models; "
+                "from_state reconstructs prediction models, not a learning resume"
+            )
         if words is not None:
             coerced = self._coerce_words(words)
             assert coerced is not None

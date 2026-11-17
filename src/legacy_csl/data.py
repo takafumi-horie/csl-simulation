@@ -326,6 +326,94 @@ def load_dataset(data_root: Path, agent: str) -> ObservationDataset:
     raise FileNotFoundError(f"expected {compact_path} or legacy directory {agent_root}")
 
 
+def load_datasets(
+    data_root: Path,
+    agents: tuple[str, ...],
+    *,
+    execution_profile: str = "current",
+) -> tuple[ObservationDataset, ...]:
+    """Select the same processed observations for every CLI workflow.
+
+    Original INTER requires raw legacy inputs because both actions use B's
+    raw relative-coordinate range. Compact files cannot recover that range.
+    """
+    if execution_profile != "original" or agents != ("A", "B"):
+        return tuple(load_dataset(data_root, agent) for agent in agents)
+    for agent in agents:
+        root = data_root / f"agent{agent}"
+        if not root.is_dir() or not _legacy_document_dirs(root, agent):
+            raise ValueError(
+                "original INTER preprocessing requires raw legacy datadump "
+                f"documents for agent {agent}; compact NPZ inputs do not retain "
+                "the raw action coordinates needed for B-range normalization"
+            )
+    datasets = tuple(
+        _load_legacy_dataset(
+            data_root / f"agent{agent}", data_root, agent, normalize_action=False
+        )
+        for agent in agents
+    )
+    raw_b = np.asarray(datasets[1].observations["a"])[:, :3]
+    minimum = raw_b.min(axis=0)
+    extent = raw_b.max(axis=0) - minimum
+    if np.any(extent <= 0.0):
+        columns = np.flatnonzero(extent <= 0.0).tolist()
+        raise ValueError(
+            "original INTER B action normalization has constant columns "
+            f"{columns}; the original reader division is undefined"
+        )
+    normalized: list[ObservationDataset] = []
+    for dataset in datasets:
+        action = np.array(dataset.observations["a"], copy=True)
+        action[:, :3] = (action[:, :3] - minimum) / extent
+        normalized.append(
+            ObservationDataset(
+                {**dataset.observations, "a": action},
+                dataset.attentions,
+                dataset.true_categories,
+            )
+        )
+    return tuple(normalized)
+
+
+def dataset_input_files(
+    data_root: Path, agent: str, *, execution_profile: str = "current"
+) -> tuple[Path, ...]:
+    """Return every source file consumed by the selected observation reader."""
+    compact = data_root / f"agent{agent}.npz"
+    if compact.exists() and not (
+        execution_profile == "original" and agent in {"A", "B"}
+    ):
+        return (compact,)
+    agent_root = data_root / f"agent{agent}"
+    paths: list[Path] = []
+    for document in _legacy_document_dirs(agent_root, agent):
+        paths.extend(document / name for name in (
+            "object_center.txt", "target_object.txt", "action.csv"
+        ))
+        count = int(_numeric_rows(document / "object_center.txt")[0][0])
+        paths.extend(
+            document / "image" / f"{prefix}_{object_id:02}.csv"
+            for object_id in range(1, count + 1)
+            for prefix in ("object_CNN_PCA_40", "object_RGB_BoF_40")
+        )
+    paths.extend(
+        agent_root / LEGACY_TRUTH_DIRECTORY / f"z{attr}_C.csv"
+        for attr in ATTRIBUTES
+        if (agent_root / LEGACY_TRUTH_DIRECTORY / f"z{attr}_C.csv").is_file()
+    )
+    return tuple(paths)
+
+
+def single_words_input_file(data_root: Path) -> Path:
+    """Return the corpus source selected by the existing SINGLE reader."""
+    for name in ("single_words.json", "uni_words.json"):
+        path = data_root / name
+        if path.exists():
+            return path
+    return data_root / "agentU" / LEGACY_TRUTH_DIRECTORY / "testss_words.csv"
+
+
 def validate_legacy_truth_layout(data_root: Path, agent: str) -> None:
     """Require every truth CSV in the canonical per-agent directory.
 
@@ -540,14 +628,19 @@ def _split_compact_rows(
     raise ValueError(f"compact {name} shape does not match num_objects")
 
 
-def _load_legacy_dataset(
-    agent_root: Path, data_root: Path, agent: str
-) -> ObservationDataset:
-    doc_dirs = sorted(
+def _legacy_document_dirs(agent_root: Path, agent: str) -> list[Path]:
+    documents = sorted(
         path for path in agent_root.glob("testss[0-9][0-9][0-9]") if path.is_dir()
     )
-    if agent in {"A", "B"} and len(doc_dirs) >= 40:
-        doc_dirs = doc_dirs[-30:]
+    if agent in {"A", "B"} and len(documents) >= 40:
+        documents = documents[-30:]
+    return documents
+
+
+def _load_legacy_dataset(
+    agent_root: Path, data_root: Path, agent: str, *, normalize_action: bool = True
+) -> ObservationDataset:
+    doc_dirs = _legacy_document_dirs(agent_root, agent)
     if not doc_dirs:
         raise FileNotFoundError(f"no legacy documents under {agent_root}")
 
@@ -564,7 +657,8 @@ def _load_legacy_dataset(
             objects[attr].append(document_objects[attr])
 
     action_matrix = np.asarray(actions, dtype=np.float64)
-    action_matrix[:, :3] = _minmax_columns(action_matrix[:, :3])
+    if normalize_action:
+        action_matrix[:, :3] = _minmax_columns(action_matrix[:, :3])
     observations: dict[str, FloatArray | ObjectObservations] = {
         "a": action_matrix,
         **{attr: tuple(values) for attr, values in objects.items()},

@@ -1,0 +1,24 @@
+{
+  "date_jst": "2026-11-17",
+  "baseline_commit": "455b499",
+  "python": "3.11.18",
+  "tests": {
+    "command": "python3.11 -m pytest",
+    "passed": 204,
+    "warnings": 10,
+    "warning_cause": "single-class synthetic INTER fixture: confusion matrix and undefined cohen kappa"
+  },
+  "ruff": {
+    "version": "0.15.21",
+    "command": "python3.11 -m ruff check .",
+    "passed": true
+  },
+  "diff_check": {
+    "command": "git diff --check",
+    "passed": true
+  },
+  "independent_reviewer_status": "pending user-appointed reviewer",
+  "long_experiment_status": "10 trials x 500 iterations deferred until independent review, per specification 9.4",
+  "reference_archive_sha256": "36c78c4b463f5b95891b11d838de0fdf70e7c59ec288683d6e48cea36ed22224",
+  "reference_archive_note": "Three original sources and three exact translated runtime texts are archived without whitespace modification."
+}

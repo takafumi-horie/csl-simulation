@@ -83,9 +83,9 @@ canonical `F=(a,p,o,c)` とattentionでAの単語を生成し、Bが単語から
 - theta posterior:
   - `legacy_importance` (default, 10,000 candidates / 既定1万候補)
   - `dirichlet`
-- original implementation heuristics / 原典実装のヒューリスティクス:
-  - optional posterior sample averaging, raw training theta, and uniform empty
-    component means / 事後標本平均、学習時の未補正θ、空カテゴリ平均の一様配置を選択可能
+- original implementation / 原典実装:
+  - `execution_profile: current` (default): optional learning heuristics / 既定：学習時の4機能を選択可能
+  - `execution_profile: original`: original-compatible training, with the SINGLE provenance limits below / 原典互換学習。SINGLEの出自上の限定は後述
 - attribute sequence / 属性列:
   - `distinct`: simple MEC2, sampled without replacement / 単純MEC2・重複なし
   - `iid`: uniform independent assignments with replacement / 一様独立・重複可
@@ -124,19 +124,20 @@ counts. It does not add smoothing or renormalize the rows. `none` uses raw
 
 ### Original implementation heuristics / 論文オリジナル実装ヒューリスティクス
 
-The optional top-level `original_heuristics` section selects four learning
-heuristics from the original implementation. Omitting it uses the following
-defaults and preserves the ordinary kernel and its random-draw order for the
-same input and hyperparameters. This is not a complete reproduction of the
-original program's initialization, preprocessing, RNG, or reported paper values.
+The optional top-level `original_heuristics` section selects an execution
+profile and four learning heuristics. Omitting `execution_profile` selects
+`current`: the existing initialization, preprocessing, independent NumPy
+Generators, and communication order. Omitting the whole section also disables
+the four heuristics, as shown below. The ordinary examples keep this behavior.
 
-任意のトップレベル `original_heuristics` で、原典にある4つの学習処理を選択できます。
-省略時は次の既定値となり、同じ入力・ハイパーパラメータなら通常版の更新と
-乱数消費順を維持します。原典の初期化・前処理・乱数生成器や論文値を含む、
-プログラム全体の完全再現を意味するものではありません。
+任意のトップレベル `original_heuristics` で、実行プロファイルと4つの学習処理を
+選択できます。`execution_profile` の省略時は `current` で、従来の初期化・前処理・
+独立したNumPy Generator・通信順を使います。セクション全体を省略すると、
+4機能も以下の既定値となります。通常版の設定例はこの動作を維持します。
 
 ```yaml
 original_heuristics:
+  execution_profile: current
   theta_mean_samples: 1
   inference_theta: rescaled
   gaussian_mean_samples: 1
@@ -145,12 +146,13 @@ original_heuristics:
 
 | Option / 設定 | Default / 既定値 | Behavior / 動作 |
 |---|---|---|
+| `execution_profile` | `current` | `current` preserves the existing execution; `original` selects the complete training profile described below. / `current` は従来方式、`original` は後述の学習実行方式一式を選択します。 |
 | `theta_mean_samples` | `1` | Positive integer. `1` preserves the configured theta sampler; N > 1 averages N actual posterior Dirichlet draws per row and requires `word_model.theta_sampler: dirichlet`. Importance sampling with averaging is rejected. / 正の整数。`1` は選択したθ抽選方式を維持し、2以上は各事後Dirichlet行から実際に指定数を生成して平均します。`dirichlet` が必須で、importance方式との併用はエラーです。 |
 | `inference_theta` | `rescaled` | `rescaled` uses the ordinary `word_theta()`; `raw` passes stored, uncorrected theta only to training `z` and `F`. / `rescaled` は通常の `word_theta()`、`raw` は保存された補正前θを学習時の `z` と `F` だけに渡します。 |
 | `gaussian_mean_samples` | `1` | Positive integer: for each occupied category, draw Sigma once, then average this many actual conditional Normal draws of mu. Applies to all four attributes, not empty categories. / 占有カテゴリでΣを1回生成後、そのΣを条件とするNormalから指定数のμを実際に生成して平均します。全4属性が対象で、空カテゴリには適用しません。 |
 | `empty_component_mean` | `prior` | `prior` keeps the GIW prior update. `original_uniform` draws each mu coordinate uniformly from `[-0.5, 0.5)` for position and `[0, 1)` for other attributes, then draws Sigma once from the existing prior inverse-Wishart. / `prior` は従来のGIW事前更新。`original_uniform` は位置を `[-0.5, 0.5)`、他属性を `[0, 1)` から座標ごとに独立一様生成し、その後に従来の事前逆WishartからΣを1回生成します。 |
 
-With `theta_mean_samples > 1`, the scan is coupled to theta averaging:
+Under `execution_profile: current`, with `theta_mean_samples > 1`, the scan is coupled to theta averaging:
 `z -> pi -> Gaussian -> F -> theta`. With `theta_mean_samples: 1`, the ordinary
 orders remain: importance uses `F -> theta`, and direct Dirichlet uses
 `theta -> F`. In the latter case, `inference_theta: raw` gives `z` the old raw
@@ -158,21 +160,23 @@ theta and `F` the newly sampled raw theta. The `rescaled` choice respects
 `word_model.rescaling`; `none` and `empirical_unigram` retain their ordinary
 raw `word_theta()` behavior.
 
-`theta_mean_samples > 1` では、θ平均化と組にして
+`execution_profile: current` では、`theta_mean_samples > 1` のときθ平均化と組にして
 `z -> pi -> Gaussian -> F -> theta` 順で更新します。`theta_mean_samples: 1`
 なら従来どおりimportanceは `F -> theta`、直接Dirichletは `theta -> F` です。
 後者で `inference_theta: raw` を指定すると、`z` は更新前、`F` は更新後の
 補正前θを使います。`rescaled` は `word_model.rescaling` を尊重するため、
 `none` と `empirical_unigram` の通常の `word_theta()` は従来どおり未補正です。
 
-These options change learning only. Initialization still uses one prior theta
+In the `current` profile, these four options change learning only. Initialization
+still uses one prior theta
 draw and the configured initial covariance scale; words, KMeans, `z`, `pi`,
 `F`, and constructor RNG consumption are unchanged. GMM initialization from
 truth under `freeze.gmm` also keeps the ordinary GIW update. Frozen variables
 remain frozen. Preprocessing, communication, word generation, MH acceptance,
 prediction, and checkpoint formats retain their ordinary behavior.
 
-変更対象は学習時だけです。初期θは事前からの1標本、初期Σは既存設定のスケールで、
+`current` で4機能を選んだ場合の変更対象は学習時だけです。
+初期θは事前からの1標本、初期Σは既存設定のスケールで、
 初期語・KMeans・`z`・`pi`・`F` と初期化の乱数消費は変えません。
 `freeze.gmm` の正解ラベルによるGMM初期化も従来のGIW更新を使い、各freeze対象の
 学習更新は実行しません。前処理・通信・語生成・MH受理・予測・保存形式も維持します。
@@ -190,6 +194,138 @@ questions. See the [implementation specification](docs-for-developper/original_h
 挙動を再現することと、厳密なGibbs更新の正当性は区別します。
 [実装仕様](docs-for-developper/original_heuristics_spec.md)も参照してください。
 
+### Original execution profile / 原典実行プロファイル
+
+`execution_profile: original` switches initialization and learning together:
+uniform category assignments, the original attribute draws, 100-draw initial
+theta means, shared-RNG KMeans (`n_init=10`), initial covariance `0.05 I`, and
+GEM stick-breaking initial mixtures. Learning uses the original draw APIs and
+arithmetic order, one pi draw, and 100-draw theta and occupied-Gaussian mean
+averages. The GIW prior covariance scale and learning mixture concentrations
+remain the configured values; they are separate from initialization constants.
+
+`execution_profile: original` は初期化と学習をまとめて切り替えます。
+一様カテゴリ割当て、原典の属性抽選、初期θの100標本平均、共有乱数を使う
+KMeans（`n_init=10`）、初期共分散 `0.05 I`、GEM型の初期混合比率を使います。
+学習も原典の抽選API・演算順に揃え、πは1標本、θと占有カテゴリのμは100標本を
+平均します。GIW事前の共分散スケールと学習時の混合集中度には設定値を使い、
+初期化の定数と区別します。
+
+Each trial uses one local `numpy.random.RandomState(run.seed + experiment_id)`
+continuously from initialization through learning; INTER shares it across A,
+B, SciPy, and KMeans. The seed and every effective trial seed must be integers
+in `[0, 2**32 - 1]`. INTER draws a fresh B-to-A proposal, updates A, then draws
+a fresh updated-A-to-B proposal and updates B, without an unused final proposal.
+Missing vocabulary IDs in INTER's initial words stop the trial with its seed;
+the implementation does not redraw to fill them.
+
+各試行は `numpy.random.RandomState(run.seed + experiment_id)` を1個作り、
+初期化から学習終了まで連続して使います。INTERではA/B・SciPy・KMeansも共有します。
+seedと全試行の実効seedは `[0, 2**32 - 1]` の整数に限定します。
+INTERは新たなB→A提案、A更新、新たな更新済みA→B提案、B更新の順に進み、
+最後に未使用の提案を生成しません。初期内部語に全語IDが現れなければseedを示して
+停止し、不足語を埋めるための再抽選は行いません。
+
+This profile requires **all** settings below, plus word length 4 and
+`hyperparameters.gmm.kmeans_n_init: 10`. INTER requires `interaction: mh`.
+Incompatible settings are errors, rather than being silently changed.
+`current` continues to support the existing combinations, including freeze,
+importance sampling, and other interaction and attribute modes.
+
+このプロファイルでは以下の**全設定**に加え、語長4と
+`hyperparameters.gmm.kmeans_n_init: 10` が必要です。INTERの通信は
+`interaction: mh` に限定します。不整合は設定エラーとし、自動で値を変更しません。
+`current` では従来のfreeze・importance方式・他の通信方式・属性抽選も選択できます。
+
+```yaml
+word_model:
+  rescaling: legacy_theta_sum
+  theta_sampler: dirichlet
+original_heuristics:
+  execution_profile: original
+  theta_mean_samples: 100
+  inference_theta: raw
+  gaussian_mean_samples: 100
+  empty_component_mean: original_uniform
+attribute_model:
+  exclusivity: distinct
+freeze:
+  gmm: false
+  theta: false
+  attributes: false
+```
+
+For INTER, this profile requires the original legacy datadump. It reproduces
+the original reader's use of **B's minima and maxima for the first three action
+columns of both A and B**. Compact `agentA.npz` / `agentB.npz` alone cannot
+recover that preprocessing and are rejected. If both formats exist, `original`
+selects legacy input; `current` keeps its NPZ priority. Data validation,
+learning, analysis, and prediction use the same selected preprocessing. This
+historical behavior is reproduced for comparison; the author regards the
+current, agent-specific normalization as the more reasonable preprocessing.
+
+INTERでは元のlegacy datadumpが必要です。原典readerの挙動に合わせ、
+**A/B両方の動作先頭3列をBの最小値・最大値で正規化**します。
+compact `agentA.npz` / `agentB.npz` だけでは復元できないためエラーとします。
+両形式がある場合、`original` はlegacy入力、`current` は従来どおりNPZを優先します。
+データ検証・学習・解析・予測で同じ前処理を使います。これは比較のための歴史的挙動で、
+著者は現行の主体別正規化の方が合理的と考えています。
+
+For SINGLE, the user relayed the author's assurance that INTER reused SINGLE
+and should share its heuristics. We therefore apply the common initialization
+and learning procedures verified in INTER to one agent U. **The dedicated
+SINGLE Python 2 source is unavailable**, so this is not an independently
+verified reproduction of the complete SINGLE original. U's observed words
+remain fixed, vocabulary size 14 and per-category learning concentration 1.0
+are retained in its example, and its existing preprocessing (including tactile
+features and compact input support) remains in use. SINGLE preprocessing is
+outside the original-reader equivalence guarantee; B-based normalization and
+communication do not apply.
+
+SINGLEについては、ユーザーを通じて「INTERはSINGLEの使い回しで、ヒューリスティクス等は
+共通のはず」という著者の説明を得ています。これを根拠に、INTERで確認した共通の
+初期化・学習処理をUへ適用します。**SINGLE専用のPython 2原典は未入手**なので、
+SINGLE原典全体との独立照合済み実装とは位置付けません。Uの観測語を固定し、
+設定例の語彙14・学習時のカテゴリ当たり集中度1.0と、触覚を含む既存の前処理・
+compact入力対応を維持します。SINGLEの前処理は原典readerとの同一性の保証対象外で、
+Bの値域による正規化や通信は導入しません。
+
+The INTER compatibility target is the identified original translated under
+fixed modern Python and dependency versions, checked at initialization and
+intermediate state/RNG boundaries. It does not promise bitwise identity with
+the historical Python 2 environment or the paper's ARI values. Category counts
+and other hyperparameters remain configurable; accepting other values is not
+paper-setting reproduction. The fixed reference uses a batched 100-sample
+Normal draw, so bitwise identity with 100 separate Python 2 calls is also
+outside scope. Non-finite probabilities or invalid posterior matrices stop
+with context, without algorithm substitution or redraws.
+
+INTERの互換対象は、同定した原典を固定した現代のPython・依存版へ移した参照実装で、
+初期状態と途中の状態・RNG境界で照合します。当時のPython 2環境とのbit単位一致や
+論文ARI値は保証しません。カテゴリ数等は設定可能ですが、他の値で動くことと論文設定の
+再現は区別します。参照版はNormalの100標本を一括生成するため、Python 2原文の
+100回の逐次呼出しとのbit単位一致も保証対象外です。非有限確率や不正な事後行列では
+文脈を示して停止し、別アルゴリズムへの置換や再抽選は行いません。
+
+Compatibility covers **training**, not the complete original prediction
+program. INTER prediction retains the existing conditional algorithm and
+prediction-seed policy while sharing training's preprocessing; SINGLE
+prediction remains unsupported. Checkpoint arrays and legacy outputs keep
+their existing formats. Resolved configuration and a separate provenance
+record identify the profile, seeds, input hashes, dependency versions, and
+SINGLE/INTER scope; this does not add training resume support. Production has
+no runtime dependency on original source or audit checkouts. See the
+[execution specification](docs-for-developper/original_compatibility_spec.md)
+and [verification records](docs-for-developper/verification/original_compatibility/).
+
+互換性は**学習実行**を対象とし、原典の予測プログラム全体には拡張しません。
+INTERの予測は既存の条件付きアルゴリズムと予測seed規則を使い、前処理を学習と揃えます。
+SINGLEの予測は非対応です。checkpoint配列・legacy出力の形式を維持し、解決済み設定と
+別の出自記録へprofile・seed・入力ハッシュ・依存版・SINGLE/INTERの保証範囲を保存します。
+学習再開機能の追加ではありません。本番は原典ソースや監査checkoutへ実行時に依存しません。
+[実行仕様](docs-for-developper/original_compatibility_spec.md)と
+[検証記録](docs-for-developper/verification/original_compatibility/)も参照してください。
+
 ## Faithful inference scope / 推論の再現範囲
 
 The categorical learning kernel infers every latent variable:
@@ -204,7 +340,7 @@ The categorical learning kernel infers every latent variable:
 - one attribute sequence `F` per document; and
 - in Inter-CSL-PGM, internal words through the token-wise MH naming game.
 
-Words are observed in CSL-PGM. Their lengths may differ by document, and
+Words are observed in CSL-PGM. Under `current`, their lengths may differ by document, and
 their vocabulary is encoded in first-seen order. With `theta_mean_samples: 1`,
 the default legacy importance kernel uses the scan
 `z -> pi -> (mu, Sigma) -> F -> theta`; the optional direct Dirichlet kernel
@@ -223,7 +359,7 @@ categorical 学習 kernel は、潜在変数をすべて推論します。
 - 文書ごとの属性列 `F`
 - Inter-CSL-PGM では token 単位 MH naming game による内部単語
 
-CSL-PGM の単語は観測値です。文書ごとに発話長が異なってもよく、語彙は
+CSL-PGM の単語は観測値です。`current` では文書ごとに発話長が異なってもよく、語彙は
 初出順で符号化します。`theta_mean_samples: 1` では、既定の legacy importance kernel は
 `z -> pi -> (mu, Sigma) -> F -> theta`、任意の直接 Dirichlet kernel は後期実装の
 `z -> pi -> (mu, Sigma) -> theta -> F` という更新順です。θを複数標本で平均する場合は
@@ -231,15 +367,14 @@ CSL-PGM の単語は観測値です。文書ごとに発話長が異なっても
 `z` や `F` を流用せず、話者カテゴリ・単語、聞き手カテゴリ・聞き手観測を
 生成的に再サンプルします。
 
-The selected settings define the learning kernel; enabling the original
-heuristics does not make the whole program identical to the original code.
-It uses an explicit modern NumPy generator and is not intended to reproduce
-the old program's random stream bit-for-bit.
+The selected profile and heuristics define the learning kernel. Exact
+trajectory comparisons require the same input, settings, and numerical
+environment; the original profile's narrower provenance and prediction limits
+are described above.
 
-選択した設定が学習kernelを定めます。原典ヒューリスティクスを有効にしても、
-プログラム全体が原典コードと同一になるわけではありません。明示的な現行
-NumPy generator を使い、旧プログラムと乱数列までbit単位で一致させるものでは
-ありません。
+実行プロファイルとヒューリスティクスの設定が学習kernelを定めます。
+軌道の完全一致には同じ入力・設定・数値環境が必要です。原典プロファイルの
+出自・予測に関する保証範囲は前述のとおりです。
 
 ## Installation / インストール
 
@@ -345,28 +480,41 @@ csl predict --config examples/inter.yaml
 csl analyze --config examples/inter.yaml
 ```
 
-Choose the ordinary or original-heuristics example for either model. Both
-CSL-PGM examples keep vocabulary size 14 and category-wise mixture concentration
-1.0, matching its paper settings. Both Inter-CSL-PGM examples use vocabulary
-size 13 and concentration 0.1, matching the Inter-CSL-PGM experiments.
-The ordinary files retain the ordinary learning algorithm;
-the two new files select direct Dirichlet theta and enable all four heuristics.
+Choose the ordinary or original-profile example for either model. Both
+CSL-PGM examples keep vocabulary size 14 and per-category mixture concentration
+1.0; both Inter-CSL-PGM examples use vocabulary size 13 and concentration 0.1.
+The ordinary `single.yaml` and `inter.yaml` are unchanged. The two
+`*_original_heuristics.yaml` files now select `execution_profile: original`,
+changing their initialization, RNG, and (for INTER) preprocessing and
+communication as well as enabling all four heuristics. INTER's original
+example needs the legacy datadump, rather than the compact quick-start fixture.
 
-各モデルで通常版と論文オリジナル実装ヒューリスティクス版を選べます。
-SINGLE（CSL-PGM）の両設定は、その論文実験の値である語彙数14・カテゴリ当たり
-混合事前集中度1.0を維持します。INTERの両設定だけ、INTERの論文実験に合わせて
-語彙数13・集中度0.1とします。既存の通常版は学習方式を維持し、
-`single.yaml` は変更せず、`inter.yaml` はハイパーパラメータと、値に合わせた
-属性重複に関するコメントだけを変更します。
-新しい2ファイルは直接Dirichletと4機能すべてを有効にします。
+各モデルで通常版と原典プロファイル版を選べます。SINGLEの両設定は語彙14・
+カテゴリ当たり混合集中度1.0、INTERの両設定は語彙13・集中度0.1を維持します。
+通常の `single.yaml` と `inter.yaml` は変更しません。
+今回から2つの `*_original_heuristics.yaml` は `execution_profile: original` を選び、
+4機能に加え初期化・乱数と、INTERの前処理・通信も変わります。
+INTERの原典設定にはcompactのクイックスタートfixtureではなくlegacy datadumpが必要です。
 
-| Model / モデル | Ordinary / 通常版 | Original heuristics / 原典ヒューリスティクス版 |
+To recover the previous four-heuristic behavior, set `execution_profile:
+current` in either original example (or omit that key), leaving the four
+heuristic settings intact. Earlier experiment reports remain results for
+their recorded commits and configurations, not results of the new profile.
+The [earlier specification](docs-for-developper/original_heuristics_spec.md)
+describes the four heuristics under `current`.
+
+以前の4機能だけの動作へ戻す場合は、原典設定例の `execution_profile` を `current` にするか
+そのキーを省略し、他の4キーは維持してください。以前の実験報告は記載されたコミット・
+設定での結果として保持し、新しいプロファイルの結果とは読み替えません。
+[従来仕様](docs-for-developper/original_heuristics_spec.md)は `current` での4機能の説明です。
+
+| Model / モデル | Ordinary / 通常版 | Original profile / 原典プロファイル版 |
 |---|---|---|
 | CSL-PGM | [single.yaml](examples/single.yaml) | [single_original_heuristics.yaml](examples/single_original_heuristics.yaml) |
 | Inter-CSL-PGM | [inter.yaml](examples/inter.yaml) | [inter_original_heuristics.yaml](examples/inter_original_heuristics.yaml) |
 
 ```bash
-# Original implementation heuristics / 論文オリジナル実装ヒューリスティクス版
+# Original execution profile / 原典実行プロファイル
 csl validate-data --config examples/single_original_heuristics.yaml
 csl learn --config examples/single_original_heuristics.yaml
 csl analyze --config examples/single_original_heuristics.yaml
@@ -377,15 +525,16 @@ csl predict --config examples/inter_original_heuristics.yaml
 csl analyze --config examples/inter_original_heuristics.yaml
 ```
 
-Both heuristic examples include:
+Both original-profile examples include:
 
-両ヒューリスティクス版の設定は次を含みます。
+両原典プロファイル版の設定は次を含みます。
 
 ```yaml
 word_model:
   rescaling: legacy_theta_sum
   theta_sampler: dirichlet
 original_heuristics:
+  execution_profile: original
   theta_mean_samples: 100
   inference_theta: raw
   gaussian_mean_samples: 100
@@ -698,9 +847,15 @@ mock fixture生成時には、legacy CSV 4ファイルもagentごとの
 
 ## Reproducibility / 再現性
 
-Every stochastic operation receives an explicit NumPy generator derived from
-`run.seed`. Repeating an experiment with the same input, configuration, and
-dependency versions therefore follows the same random sequence.
+The `current` profile derives independent NumPy Generators from `run.seed`;
+`original` uses one local RandomState per trial with seed
+`run.seed + experiment_id`. Neither changes global NumPy or Python RNG state.
+Repeating an experiment with the same input, configuration, and dependency
+versions follows the same random sequence. Explicit seeds are a verification
+convention; the original OS-derived seeds and paper random streams are unknown.
 
-全確率処理は `run.seed` から派生した明示的 NumPy generator を受け取ります。
-同じ入力・設定・依存バージョンで再実行すれば、同じ乱数系列を使用します。
+`current` は `run.seed` から独立したNumPy Generatorを派生し、`original` は
+試行ごとに `run.seed + experiment_id` のローカルRandomStateを1個使います。
+グローバルなNumPy・Pythonの乱数状態は変更しません。同じ入力・設定・依存版で
+再実行すれば同じ乱数系列になります。明示seedは今回の検証規約で、原典のOS由来seedや
+論文実験の乱数列を復元したものではありません。

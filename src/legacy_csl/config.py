@@ -17,6 +17,7 @@ Rescaling: TypeAlias = Literal[
 ThetaSampler: TypeAlias = Literal["legacy_importance", "dirichlet"]
 InferenceTheta: TypeAlias = Literal["rescaled", "raw"]
 EmptyComponentMean: TypeAlias = Literal["prior", "original_uniform"]
+ExecutionProfile: TypeAlias = Literal["current", "original"]
 AttributeExclusivity: TypeAlias = Literal["distinct", "iid"]
 Interaction: TypeAlias = Literal["mh", "no_communication", "all_accept"]
 
@@ -163,12 +164,15 @@ class OriginalHeuristics:
             非空カテゴリで平均する条件付きNormal標本数。
         empty_component_mean: Prior or original-uniform empty mean update.
             空カテゴリの事前更新または原典の平均パラメータの一様生成。
+        execution_profile: Current workflow or joint original-compatible workflow.
+            現行方式または原典互換の共同初期化・学習実行方式。
     """
 
     theta_mean_samples: int = 1
     inference_theta: InferenceTheta = "rescaled"
     gaussian_mean_samples: int = 1
     empty_component_mean: EmptyComponentMean = "prior"
+    execution_profile: ExecutionProfile = "current"
 
     def __post_init__(self) -> None:
         """Validate sample counts and choices.
@@ -179,6 +183,11 @@ class OriginalHeuristics:
             ConfigError: If a count or choice is unsupported.
                 標本数または選択肢が不正な場合。
         """
+        _require_choice(
+            self.execution_profile,
+            {"current", "original"},
+            "original_heuristics.execution_profile",
+        )
         _require_positive_int(
             self.theta_mean_samples, "original_heuristics.theta_mean_samples"
         )
@@ -500,6 +509,46 @@ class Config:
             {"mh", "no_communication", "all_accept"},
             "interaction",
         )
+        if self.original_heuristics.execution_profile == "original":
+            required = {
+                "word_model.rescaling": (self.word_model.rescaling, "legacy_theta_sum"),
+                "word_model.theta_sampler": (self.word_model.theta_sampler, "dirichlet"),
+                "original_heuristics.theta_mean_samples": (
+                    self.original_heuristics.theta_mean_samples, 100
+                ),
+                "original_heuristics.inference_theta": (
+                    self.original_heuristics.inference_theta, "raw"
+                ),
+                "original_heuristics.gaussian_mean_samples": (
+                    self.original_heuristics.gaussian_mean_samples, 100
+                ),
+                "original_heuristics.empty_component_mean": (
+                    self.original_heuristics.empty_component_mean, "original_uniform"
+                ),
+                "attribute_model.exclusivity": (self.attribute_model.exclusivity, "distinct"),
+                "freeze.gmm": (self.freeze.gmm, False),
+                "freeze.theta": (self.freeze.theta, False),
+                "freeze.attributes": (self.freeze.attributes, False),
+                "hyperparameters.word_length": (self.hyperparameters.word_length, 4),
+                "hyperparameters.gmm.kmeans_n_init": (
+                    self.hyperparameters.gmm.kmeans_n_init, 10
+                ),
+            }
+            if self.mode == "inter-csl":
+                required["interaction"] = (self.interaction, "mh")
+            for key, (actual, expected) in required.items():
+                if actual != expected:
+                    raise ConfigError(
+                        "original_heuristics.execution_profile='original' requires "
+                        f"{key}={expected!r}"
+                    )
+            if not 0 <= self.run.seed <= 2**32 - 1:
+                raise ConfigError("run.seed must be in [0, 2**32-1] for original execution")
+            if self.run.seed + self.run.experiments - 1 > 2**32 - 1:
+                raise ConfigError(
+                    "run.seed + run.experiments - 1 must be at most 2**32-1 "
+                    "for original execution"
+                )
         if (
             self.original_heuristics.theta_mean_samples > 1
             and self.word_model.theta_sampler != "dirichlet"
@@ -677,10 +726,18 @@ def _parse_original_heuristics(value: Any) -> OriginalHeuristics:
             "inference_theta",
             "gaussian_mean_samples",
             "empty_component_mean",
+            "execution_profile",
         },
         "original_heuristics",
     )
     return OriginalHeuristics(
+        execution_profile=cast(
+            ExecutionProfile,
+            _string(
+                values.get("execution_profile", "current"),
+                "original_heuristics.execution_profile",
+            ),
+        ),
         theta_mean_samples=values.get("theta_mean_samples", 1),
         inference_theta=cast(
             InferenceTheta,

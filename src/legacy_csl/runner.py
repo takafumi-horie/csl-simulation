@@ -6,7 +6,10 @@
 from __future__ import annotations
 
 import csv
+import hashlib
+import importlib.metadata
 import json
+import platform
 from collections import Counter
 from pathlib import Path
 from typing import Sequence
@@ -19,8 +22,12 @@ from .analysis import category_metrics, prediction_metrics, write_analysis
 from .config import Config, dump_resolved_config
 from .data import (
     ATTRIBUTES,
+    ObservationDataset,
+    dataset_input_files,
     load_dataset,
+    load_datasets,
     load_single_words,
+    single_words_input_file,
     validate_legacy_truth_layout,
 )
 from .model import CslModel, CslState, IntArray
@@ -45,13 +52,20 @@ def learn(config: Config) -> list[Path]:
     root.mkdir(parents=True, exist_ok=True)
     dump_resolved_config(config, root / "resolved_config.yaml")
     directories: list[Path] = []
-    seeds = np.random.SeedSequence(config.run.seed).spawn(config.run.experiments)
+    original = config.original_heuristics.execution_profile == "original"
+    seeds = (
+        list(range(config.run.seed, config.run.seed + config.run.experiments))
+        if original
+        else np.random.SeedSequence(config.run.seed).spawn(config.run.experiments)
+    )
     for experiment_id, seed in enumerate(
         tqdm(seeds, desc="Experiments", unit="trial", position=0)
     ):
         directory = root / f"exp{experiment_id:03}"
         directory.mkdir(parents=True, exist_ok=True)
-        if config.mode == "single-csl":
+        if original:
+            _learn_original(config, directory, int(seed), experiment_id=experiment_id)
+        elif config.mode == "single-csl":
             _learn_single(config, directory, seed, experiment_id=experiment_id)
         else:
             _learn_inter(config, directory, seed, experiment_id=experiment_id)
@@ -88,8 +102,7 @@ def predict(config: Config) -> list[dict[str, object]]:
         raise ValueError("prediction is available only for inter-csl")
     if config.hyperparameters.word_length != len(ATTRIBUTES):
         raise ValueError("legacy Inter-CSL prediction requires word_length=4")
-    dataset_a = load_dataset(config.paths.data_root, "A")
-    dataset_b = load_dataset(config.paths.data_root, "B")
+    dataset_a, dataset_b = _configured_datasets(config)
     root = config.paths.output_root / config.run.name
     rows: list[dict[str, object]] = []
     seeds = np.random.SeedSequence(config.run.seed + 1_000_003).spawn(
@@ -155,14 +168,9 @@ def analyze(config: Config) -> list[dict[str, object]]:
     """
     root = config.paths.output_root / config.run.name
     rows: list[dict[str, object]] = []
-    dataset = load_dataset(
-        config.paths.data_root, "U" if config.mode == "single-csl" else "A"
-    )
-    other_dataset = (
-        load_dataset(config.paths.data_root, "B")
-        if config.mode == "inter-csl"
-        else None
-    )
+    datasets = _configured_datasets(config)
+    dataset = datasets[0]
+    other_dataset = datasets[1] if config.mode == "inter-csl" else None
     for experiment_id in range(config.run.experiments):
         directory = root / f"exp{experiment_id:03}"
         state = load_state(directory, "U" if config.mode == "single-csl" else "A")
@@ -193,10 +201,17 @@ def validate_data(config: Config) -> None:
             検証済み設定。
     """
     agents = ("U",) if config.mode == "single-csl" else ("A", "B")
+    original_inter = (
+        config.original_heuristics.execution_profile == "original"
+        and config.mode == "inter-csl"
+    )
+    # Explain missing raw inputs before inspecting the legacy truth layout.
+    datasets = _configured_datasets(config) if original_inter else None
     for agent in agents:
-        if not (config.paths.data_root / f"agent{agent}.npz").is_file():
+        if original_inter or not (config.paths.data_root / f"agent{agent}.npz").is_file():
             validate_legacy_truth_layout(config.paths.data_root, agent)
-    datasets = [load_dataset(config.paths.data_root, agent) for agent in agents]
+    if datasets is None:
+        datasets = _configured_datasets(config)
     if len({dataset.num_documents for dataset in datasets}) != 1:
         raise ValueError("all Inter-CSL agents must have the same document count")
     for dataset in datasets:
@@ -210,6 +225,16 @@ def validate_data(config: Config) -> None:
             raise ValueError("freeze.gmm requires full ground-truth categories")
     if config.mode == "single-csl":
         corpus = load_single_words(config.paths.data_root, datasets[0].num_documents)
+        if config.original_heuristics.execution_profile == "original":
+            configured = config.hyperparameters.vocabulary_size
+            if len(corpus.vocabulary) != configured:
+                raise ValueError(
+                    "original SINGLE hyperparameters.vocabulary_size must match "
+                    f"effective observed corpus vocabulary: {configured} != "
+                    f"{len(corpus.vocabulary)}"
+                )
+            if np.any(corpus.lengths != 4):
+                raise ValueError("original SINGLE observed utterances require word_length=4")
         if (
             config.attribute_model.exclusivity == "distinct"
             and np.any(corpus.lengths > len(ATTRIBUTES))
@@ -261,10 +286,169 @@ def accept_words(
                 assert current_counts is not None and suggested_counts is not None
                 old_probability /= current_counts[old_word]
                 new_probability /= suggested_counts[new_word]
+            original = listener.config.original_heuristics.execution_profile == "original"
+            if original and (
+                not np.isfinite(old_probability)
+                or not np.isfinite(new_probability)
+                or old_probability <= 0.0
+                or new_probability < 0.0
+            ):
+                raise ValueError(
+                    f"original MH invalid probability at document={doc_id}, "
+                    f"token={word_id}, attribute={attr}"
+                )
             ratio = min(1.0, float(new_probability / old_probability))
-            if listener.rng.random() <= ratio:
+            draw = listener.rng.rand() if original else listener.rng.random()
+            if draw <= ratio:
                 current[doc_id][word_id] = new_word
     return current
+
+
+def _configured_datasets(config: Config) -> tuple[ObservationDataset, ...]:
+    agents = ("U",) if config.mode == "single-csl" else ("A", "B")
+    if config.original_heuristics.execution_profile == "current":
+        return tuple(load_dataset(config.paths.data_root, agent) for agent in agents)
+    return load_datasets(
+        config.paths.data_root,
+        agents,
+        execution_profile=config.original_heuristics.execution_profile,
+    )
+
+
+def _learn_original(
+    config: Config, directory: Path, seed: int, *, experiment_id: int
+) -> None:
+    """Keep initialization, proposals and both half-turns on one local RNG."""
+    from .original import initialize_original_models
+
+    datasets = _configured_datasets(config)
+    rng = np.random.RandomState(seed)
+    corpus = (
+        load_single_words(config.paths.data_root, datasets[0].num_documents)
+        if config.mode == "single-csl" else None
+    )
+    models = initialize_original_models(
+        datasets, config, rng=rng,
+        initial_words=corpus.encoded if corpus is not None else None,
+        vocabulary=corpus.vocabulary if corpus is not None else None,
+        experiment_id=experiment_id,
+    )
+    _write_original_provenance(config, directory, experiment_id, seed)
+    boundary_path = directory / "rng_boundaries.jsonl"
+    boundary_path.write_text("", encoding="utf-8")
+    _record_rng_boundary(boundary_path, rng, iteration=0, boundary="initialized")
+    history: list[dict[str, object]] = []
+    agents = ("U",) if corpus is not None else ("A", "B")
+    for iteration in _iteration_progress(config, experiment_id):
+        for index, (agent, model) in enumerate(zip(agents, models)):
+            try:
+                if corpus is not None:
+                    words = corpus.encoded
+                else:
+                    proposal = models[1 - index].draw_words()
+                    words = accept_words(model, proposal, config.interaction)
+                model.step(words)
+            except (ValueError, FloatingPointError, np.linalg.LinAlgError) as error:
+                raise ValueError(
+                    f"original execution experiment={experiment_id}, seed={seed}, "
+                    f"iteration={iteration + 1}, agent={agent}: {error}"
+                ) from error
+            _record_rng_boundary(
+                boundary_path, rng, iteration=iteration + 1,
+                boundary=f"after_{agent}",
+            )
+        row: dict[str, object] = {"iteration": iteration + 1}
+        row.update(category_metrics(
+            models[0].state, datasets[0],
+            other_state=models[1].state if len(models) == 2 else None,
+            other_dataset=datasets[1] if len(models) == 2 else None,
+        ))
+        history.append(row)
+        _write_iteration_csvs(
+            directory, iteration + 1,
+            tuple((agent, model.state) for agent, model in zip(agents, models)),
+        )
+    for agent, model in zip(agents, models):
+        save_state(model.state, directory, agent)
+    write_analysis(
+        directory, models[0].state, datasets[0],
+        other_state=models[1].state if len(models) == 2 else None,
+        other_dataset=datasets[1] if len(models) == 2 else None,
+        history=history,
+    )
+
+
+def _record_rng_boundary(
+    path: Path, rng: np.random.RandomState, *, iteration: int, boundary: str
+) -> None:
+    name, keys, position, has_gaussian, cached_gaussian = rng.get_state()
+    record = {
+        "iteration": iteration, "boundary": boundary, "algorithm": name,
+        "keys": keys.tolist(), "position": position,
+        "has_gaussian": has_gaussian, "cached_gaussian": cached_gaussian,
+    }
+    with path.open("a", encoding="utf-8") as stream:
+        stream.write(json.dumps(record, separators=(",", ":")) + "\n")
+
+
+def _write_original_provenance(
+    config: Config, directory: Path, experiment_id: int, seed: int
+) -> None:
+    agents = ("U",) if config.mode == "single-csl" else ("A", "B")
+    inputs = []
+    for agent in agents:
+        paths = dataset_input_files(
+            config.paths.data_root, agent, execution_profile="original"
+        )
+        inputs.append({
+            "agent": agent,
+            "format": "compact_npz" if len(paths) == 1 and paths[0].suffix == ".npz"
+                      else "legacy_datadump",
+            "files": [_input_hash(path, config.paths.data_root) for path in paths],
+        })
+    if config.mode == "single-csl":
+        inputs.append({
+            "kind": "observed_corpus",
+            **_input_hash(single_words_input_file(config.paths.data_root), config.paths.data_root),
+        })
+    versions = {"python": platform.python_version()}
+    for package in ("legacy-csl", "numpy", "scipy", "scikit-learn", "PyYAML", "matplotlib", "tqdm"):
+        try:
+            versions[package] = importlib.metadata.version(package)
+        except importlib.metadata.PackageNotFoundError:
+            if package == "legacy-csl":
+                from . import __version__
+                versions[package] = __version__
+            else:
+                versions[package] = "not-installed"
+    provenance = {
+        "execution_profile": "original", "mode": config.mode,
+        "experiment_id": experiment_id, "base_seed": config.run.seed,
+        "effective_seed": seed, "seed_rule": "run.seed + experiment_id",
+        "rng": "numpy.random.RandomState (shared local MT19937)",
+        "inputs": inputs, "versions": versions,
+        "guarantee_scope": (
+            "INTER-derived shared initialization and learning applied to SINGLE; "
+            "observed corpus and existing U preprocessing retained. A dedicated "
+            "SINGLE original source is unavailable; neither SINGLE original "
+            "reader equivalence nor paper-value reproduction is established."
+            if config.mode == "single-csl" else
+            "INTER training execution compared with the modernized original "
+            "reference in a fixed environment; excludes historical Python 2 "
+            "bitwise identity, paper-value reproduction and the original "
+            "prediction program."
+        ),
+    }
+    (directory / "execution_provenance.json").write_text(
+        json.dumps(provenance, indent=2, sort_keys=True), encoding="utf-8"
+    )
+
+
+def _input_hash(path: Path, root: Path) -> dict[str, str]:
+    return {
+        "path": str(path.relative_to(root)),
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    }
 
 
 def _learn_single(

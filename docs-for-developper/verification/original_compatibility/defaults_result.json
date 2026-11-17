@@ -1,0 +1,85 @@
+{
+  "status": "PASS",
+  "comparison": {
+    "new_omitted": {
+      "standard": {
+        "status": "PASS",
+        "configurations": 8,
+        "boundaries_per_configuration": 5,
+        "state_pairs": 60,
+        "array_pairs": 1320,
+        "metadata_pairs": 60,
+        "rng_pairs": 60
+      },
+      "four_heuristics": {
+        "status": "PASS",
+        "configurations": 2,
+        "boundaries_per_configuration": 5,
+        "state_pairs": 15,
+        "array_pairs": 330,
+        "metadata_pairs": 15,
+        "rng_pairs": 15
+      }
+    },
+    "new_explicit_current": {
+      "standard": {
+        "status": "PASS",
+        "configurations": 8,
+        "boundaries_per_configuration": 5,
+        "state_pairs": 60,
+        "array_pairs": 1320,
+        "metadata_pairs": 60,
+        "rng_pairs": 60
+      },
+      "four_heuristics": {
+        "status": "PASS",
+        "configurations": 2,
+        "boundaries_per_configuration": 5,
+        "state_pairs": 15,
+        "array_pairs": 330,
+        "metadata_pairs": 15,
+        "rng_pairs": 15
+      }
+    }
+  },
+  "base_commit": "455b49902622b3485f2fdf935f1e17b6d128fdcc",
+  "environment": {
+    "python": "3.11.18",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "sklearn": "1.9.0"
+  },
+  "blas_threads": 1,
+  "seed": 21,
+  "steps": 4,
+  "ordinary_examples": {
+    "single.yaml": {
+      "byte_equal": true,
+      "sha256": "b46195f47a7488b586bb18201a2b722762b2a847c4ea36bf31eb9e817dc149e3"
+    },
+    "inter.yaml": {
+      "byte_equal": true,
+      "sha256": "00558ab063aca1b8aadb68cf98f14b64f48c9abbd0bb9b0505541bfa4aa21462"
+    }
+  },
+  "feature_source_sha256": {
+    "src/legacy_csl/__init__.py": "4fa3cff215a510d811b7dc7a3e136e2206de7878191decef7a89e7585636bbee",
+    "src/legacy_csl/__main__.py": "5b8d6748dea85d4ed8d954d1bf59c63cc3c72cf9c9808228790b31e0724e4ba8",
+    "src/legacy_csl/analysis.py": "d07c688e6b8c7e5bbb7b77509c72dffe2d9a1f2b2effcf49914f178804f49f95",
+    "src/legacy_csl/attributes.py": "365d7250f52c1f72dfe89f955a76da61b660030b290527cde7f70c42335210c8",
+    "src/legacy_csl/cli.py": "c8fd91df7092009b55df19f92f265b74bfde9853240a4350766f2343e0fdafd6",
+    "src/legacy_csl/config.py": "01697a713e31d4f0aa9c9fc2397c97fa1d390d4517f849233d5faeaebcc21a8b",
+    "src/legacy_csl/data.py": "a4be2dc298b865c14735d7648fe0c9da48082fcb5e0389fe64191ef1f4bbd483",
+    "src/legacy_csl/giw.py": "9d9d1a19e1b16bcfea5f39d620bfe98609256fe9705753950ae5082461ac9af4",
+    "src/legacy_csl/model.py": "20bdcdb6e4ee8260aad44f1df937c33309f48fd426b4159e99524816fe4c5a08",
+    "src/legacy_csl/original.py": "dc8f939b7cfaf49eb3598e05fc1fc83ece9dc2295538b391dc9081bbc9be84d2",
+    "src/legacy_csl/rescaling.py": "b76b56feff664d6574773e89a203dc725c5431fe23b19672726431728de91d4a",
+    "src/legacy_csl/runner.py": "b49807e3d37fae916b32a026493a99f233a8d328f100ceeaac4dbdd4328fcdc3",
+    "src/legacy_csl/state_io.py": "84f50e76484ed4a9119fa5192d684ab549677b91b0221a6e47e27e405c06a877"
+  },
+  "verification_script_sha256": {
+    "defaults_compare.py": "5f8436ae1b0fa4100296583dd9ab634169744f82d1035b78c60a717e34da0a33",
+    "defaults_run.py": "1440ebcff24772e07cefa4b1af9277774a19a1b4dd52314a694821f215e4f273",
+    "defaults_trajectory.py": "03882fa45d2715accc247f90219cfd0afe956abad0697658631421de7a446afb"
+  }
+}
