@@ -1,9 +1,16 @@
+from dataclasses import asdict, replace
 from pathlib import Path
 
 import pytest
 import yaml
 
-from legacy_csl.config import ConfigError, dump_resolved_config, load_config
+from legacy_csl.config import (
+    Config,
+    ConfigError,
+    OriginalHeuristics,
+    dump_resolved_config,
+    load_config,
+)
 
 
 def _valid_config() -> dict:
@@ -28,6 +35,7 @@ def test_loads_defaults_and_resolves_paths_relative_to_yaml(tmp_path: Path) -> N
     assert config.word_model.importance_candidates == 10_000
     assert config.attribute_model.exclusivity == "distinct"
     assert config.interaction == "mh"
+    assert config.original_heuristics == OriginalHeuristics()
     assert config.hyperparameters.category_counts.as_mapping() == {
         "a": 10,
         "p": 10,
@@ -156,6 +164,12 @@ def test_dump_writes_resolved_defaults_and_round_trips(tmp_path: Path) -> None:
     assert dumped["word_model"]["rescaling"] == "legacy_theta_sum"
     assert dumped["attribute_model"]["exclusivity"] == "distinct"
     assert dumped["interaction"] == "mh"
+    assert dumped["original_heuristics"] == {
+        "theta_mean_samples": 1,
+        "inference_theta": "rescaled",
+        "gaussian_mean_samples": 1,
+        "empty_component_mean": "prior",
+    }
     assert reloaded == config
 
 
@@ -207,10 +221,198 @@ def test_single_accepts_interaction_field_for_a_shared_schema(tmp_path: Path) ->
     assert config.interaction == "no_communication"
 
 
-@pytest.mark.parametrize("filename", ["single.yaml", "inter.yaml"])
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "single.yaml",
+        "inter.yaml",
+        "single_original_heuristics.yaml",
+        "inter_original_heuristics.yaml",
+    ],
+)
 def test_shipped_examples_are_valid(filename: str) -> None:
     example = Path(__file__).parents[1] / "examples" / filename
 
     config = load_config(example)
 
     assert config.mode in {"single-csl", "inter-csl"}
+    assert config.hyperparameters.vocabulary_size == (
+        14 if config.mode == "single-csl" else 13
+    )
+    assert set(
+        config.hyperparameters.gmm.mixture_concentration.as_mapping().values()
+    ) == ({1.0} if config.mode == "single-csl" else {0.1})
+    if "original_heuristics" in filename:
+        assert config.word_model.theta_sampler == "dirichlet"
+        assert config.original_heuristics == OriginalHeuristics(
+            theta_mean_samples=100,
+            inference_theta="raw",
+            gaussian_mean_samples=100,
+            empty_component_mean="original_uniform",
+        )
+    else:
+        assert config.word_model.theta_sampler == "legacy_importance"
+        assert config.original_heuristics == OriginalHeuristics()
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {},
+        {"theta_mean_samples": 7},
+        {"inference_theta": "raw"},
+        {"gaussian_mean_samples": 7},
+        {"empty_component_mean": "original_uniform"},
+    ],
+)
+def test_original_heuristics_partial_sections_preserve_other_defaults(
+    tmp_path: Path, overrides: dict
+) -> None:
+    values = _valid_config()
+    values["word_model"] = {"theta_sampler": "dirichlet"}
+    values["original_heuristics"] = overrides
+
+    config = load_config(_write_config(tmp_path, values))
+
+    assert config.original_heuristics == OriginalHeuristics(**overrides)
+
+
+@pytest.mark.parametrize("key", ["theta_mean_samples", "gaussian_mean_samples"])
+@pytest.mark.parametrize("value", [True, False, 0, -1, 1.0, 1.5, "100", None])
+def test_original_heuristics_reject_invalid_sample_counts(
+    tmp_path: Path, key: str, value: object
+) -> None:
+    values = _valid_config()
+    values["word_model"] = {"theta_sampler": "dirichlet"}
+    values["original_heuristics"] = {key: value}
+
+    with pytest.raises(ConfigError, match=key):
+        load_config(_write_config(tmp_path, values))
+    with pytest.raises(ConfigError, match=key):
+        OriginalHeuristics(**{key: value})
+
+
+@pytest.mark.parametrize(
+    ("key", "value"),
+    [
+        ("inference_theta", "normalized"),
+        ("inference_theta", True),
+        ("inference_theta", None),
+        ("empty_component_mean", "uniform"),
+        ("empty_component_mean", 1),
+        ("empty_component_mean", None),
+    ],
+)
+def test_original_heuristics_reject_unknown_or_nonstring_options(
+    tmp_path: Path, key: str, value: object
+) -> None:
+    values = _valid_config()
+    values["original_heuristics"] = {key: value}
+
+    with pytest.raises(ConfigError, match=key):
+        load_config(_write_config(tmp_path, values))
+    with pytest.raises(ConfigError, match=key):
+        OriginalHeuristics(**{key: value})
+
+
+@pytest.mark.parametrize("value", [None, [], True, 100])
+def test_original_heuristics_section_requires_mapping(
+    tmp_path: Path, value: object
+) -> None:
+    values = _valid_config()
+    values["original_heuristics"] = value
+
+    with pytest.raises(ConfigError, match="original_heuristics must be a mapping"):
+        load_config(_write_config(tmp_path, values))
+
+
+def test_original_heuristics_reject_unknown_key(tmp_path: Path) -> None:
+    values = _valid_config()
+    values["original_heuristics"] = {"theta_samples": 100}
+
+    with pytest.raises(ConfigError, match="unknown key.*theta_samples"):
+        load_config(_write_config(tmp_path, values))
+
+
+def test_theta_averaging_requires_dirichlet_both_yaml_and_dataclass(
+    tmp_path: Path,
+) -> None:
+    values = _valid_config()
+    values["original_heuristics"] = {"theta_mean_samples": 100}
+
+    with pytest.raises(ConfigError, match="theta_mean_samples.*requires.*dirichlet"):
+        load_config(_write_config(tmp_path, values))
+    base = load_config(_write_config(tmp_path, _valid_config()))
+    with pytest.raises(ConfigError, match="theta_mean_samples.*requires.*dirichlet"):
+        replace(base, original_heuristics=OriginalHeuristics(theta_mean_samples=100))
+
+
+def test_other_heuristics_can_use_importance_without_theta_averaging(
+    tmp_path: Path,
+) -> None:
+    values = _valid_config()
+    values["original_heuristics"] = {
+        "inference_theta": "raw",
+        "gaussian_mean_samples": 100,
+        "empty_component_mean": "original_uniform",
+    }
+
+    config = load_config(_write_config(tmp_path, values))
+
+    assert config.word_model.theta_sampler == "legacy_importance"
+    assert config.original_heuristics.theta_mean_samples == 1
+
+
+def test_enabled_original_heuristics_round_trip(tmp_path: Path) -> None:
+    values = _valid_config()
+    values["word_model"] = {"theta_sampler": "dirichlet"}
+    values["original_heuristics"] = {
+        "theta_mean_samples": 100,
+        "inference_theta": "raw",
+        "gaussian_mean_samples": 100,
+        "empty_component_mean": "original_uniform",
+    }
+    config = load_config(_write_config(tmp_path, values))
+    destination = tmp_path / "resolved.yaml"
+
+    dump_resolved_config(config, destination)
+
+    assert load_config(destination) == config
+    assert yaml.safe_load(destination.read_text())["original_heuristics"] == asdict(
+        config.original_heuristics
+    )
+
+
+def test_original_heuristics_field_preserves_existing_positional_config_api(
+    tmp_path: Path,
+) -> None:
+    base = load_config(_write_config(tmp_path, _valid_config()))
+
+    positional = Config(
+        base.mode,
+        base.run,
+        base.paths,
+        base.word_model,
+        base.attribute_model,
+        base.interaction,
+        base.freeze,
+        base.hyperparameters,
+    )
+
+    assert positional == base
+
+
+@pytest.mark.parametrize("stem", ["single", "inter"])
+def test_heuristics_examples_preserve_other_settings(stem: str) -> None:
+    examples = Path(__file__).parents[1] / "examples"
+    normal = load_config(examples / f"{stem}.yaml")
+    heuristics = load_config(examples / f"{stem}_original_heuristics.yaml")
+
+    restored = replace(
+        heuristics,
+        run=normal.run,
+        word_model=normal.word_model,
+        original_heuristics=OriginalHeuristics(),
+    )
+
+    assert restored == normal

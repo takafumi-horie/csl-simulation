@@ -1,6 +1,6 @@
-"""Mathematically faithful categorical Single-CSL inference.
+"""Categorical CSL inference with optional original averaging heuristics.
 
-数学的に旧実装と等価な categorical Single-CSL 推論。
+categorical CSL 推論と選択式の原典平均化ヒューリスティクス。
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from typing import Mapping, Sequence, TypeAlias
 
 import numpy as np
 import numpy.typing as npt
-from scipy.stats import multivariate_normal
+from scipy.stats import invwishart, multivariate_normal
 from sklearn.cluster import KMeans
 
 from .attributes import AttributeSampler
@@ -85,9 +85,9 @@ class CslState:
 
 
 class CslModel:
-    """Run the legacy categorical CSL Gibbs transition kernel.
+    """Run categorical CSL updates, optionally using original heuristics.
 
-    legacy categorical CSL の Gibbs 遷移カーネルを実行する。
+    categorical CSL の更新を実行し、任意で原典ヒューリスティクスを適用する。
 
     The categorical scope infers every variable inferred by the original code:
     all-object ``z``, ``pi``, full-covariance GIW ``(mu, Sigma)``, ``theta``,
@@ -230,9 +230,9 @@ class CslModel:
         return model
 
     def word_theta(self) -> FloatArray:
-        """Return theta used by z, F, generation, and legacy MH consumers.
+        """Return theta used by word generation, legacy MH, and prediction.
 
-        z、F、単語生成、legacy MHで使うthetaを返す。
+        単語生成・legacy MH・予測で使うthetaを返す。学習z/Fの選択は別途行う。
 
         Returns:
             Independent category-by-word probability matrix.
@@ -241,6 +241,12 @@ class CslModel:
         if self.config.word_model.rescaling == "legacy_theta_sum":
             return legacy_theta_sum_rescaling(self.state.theta)
         return self.state.theta.copy()
+
+    def _inference_theta(self) -> FloatArray:
+        """Select theta for learning z/F only. 学習z/F専用のthetaを選ぶ。"""
+        if self.config.original_heuristics.inference_theta == "raw":
+            return self.state.theta.copy()
+        return self.word_theta()
 
     def effective_theta(
         self, words: Sequence[npt.ArrayLike] | npt.ArrayLike | None = None
@@ -261,9 +267,9 @@ class CslModel:
         return self.word_theta()
 
     def step(self, words: Sequence[npt.ArrayLike] | npt.ArrayLike | None = None) -> None:
-        """Perform one legacy Gibbs sweep.
+        """Perform one learning sweep with the configured sampling rules.
 
-        legacy Gibbs sweepを1回実行する。
+        指定したサンプリング規則で学習sweepを1回実行する。
 
         Args:
             words: Optional accepted/fixed word corpus for this sweep.
@@ -274,14 +280,17 @@ class CslModel:
             assert coerced is not None
             self._validate_word_shapes(coerced)
             self.state.words = coerced
-        theta = self.word_theta()
+        theta = self._inference_theta()
         if not self.config.freeze.gmm:
             self._sample_z(theta)
             self._sample_pi()
             self._sample_gaussians()
-        # Python2 legacy importance sampled F before theta; the current
-        # Dirichlet path sampled theta before F. Preserve both reference scans.
-        if self.config.word_model.theta_sampler == "legacy_importance":
+        # Original theta averaging includes the F-before-theta scan. With one
+        # sample, preserve the existing sampler-dependent scans exactly.
+        if (
+            self.config.word_model.theta_sampler == "legacy_importance"
+            or self.config.original_heuristics.theta_mean_samples > 1
+        ):
             if not self.config.freeze.attributes:
                 self._sample_attributes(theta)
             if not self.config.freeze.theta:
@@ -290,7 +299,7 @@ class CslModel:
         if not self.config.freeze.theta:
             self._sample_theta()
         if not self.config.freeze.attributes:
-            self._sample_attributes(self.word_theta())
+            self._sample_attributes(self._inference_theta())
 
     def draw_words(self) -> tuple[IntArray, ...]:
         """Draw a ragged word corpus from the current latent state.
@@ -729,7 +738,8 @@ class CslModel:
                 self.pi_posterior_parameters(attr)
             )
 
-    def _sample_gaussians(self) -> None:
+    def _sample_gaussians(self, *, use_heuristics: bool = True) -> None:
+        heuristics = self.config.original_heuristics
         for attr in ATTRIBUTES:
             observations = self.dataset.flatten(attr)
             categories = _flatten_assignments(self.state.z[attr])
@@ -738,9 +748,51 @@ class CslModel:
             covariances = np.empty_like(self.state.covariances[attr])
             for category in range(self.category_counts[attr]):
                 selected = observations[categories == category]
-                means[category], covariances[category] = prior.sample_posterior(
-                    selected, rng=self.rng
-                )
+                dimension = observations.shape[1]
+                if (
+                    use_heuristics
+                    and len(selected) == 0
+                    and heuristics.empty_component_mean == "original_uniform"
+                ):
+                    # The original empty-component heuristic draws mu before
+                    # Sigma, with a different range for position.
+                    low, high = (-0.5, 0.5) if attr == "p" else (0.0, 1.0)
+                    means[category] = self.rng.uniform(low, high, size=dimension)
+                    covariances[category] = np.asarray(
+                        invwishart.rvs(
+                            df=prior.nu0, scale=prior.V0, random_state=self.rng
+                        ),
+                        dtype=np.float64,
+                    ).reshape(dimension, dimension)
+                elif (
+                    use_heuristics
+                    and len(selected) > 0
+                    and heuristics.gaussian_mean_samples > 1
+                ):
+                    mean, precision, scale, degrees = prior.posterior_parameters(
+                        selected
+                    )
+                    covariance = np.asarray(
+                        invwishart.rvs(
+                            df=degrees, scale=scale, random_state=self.rng
+                        ),
+                        dtype=np.float64,
+                    ).reshape(dimension, dimension)
+                    samples = np.asarray(
+                        multivariate_normal.rvs(
+                            mean=mean,
+                            cov=covariance / precision,
+                            size=heuristics.gaussian_mean_samples,
+                            random_state=self.rng,
+                        ),
+                        dtype=np.float64,
+                    ).reshape(heuristics.gaussian_mean_samples, dimension)
+                    means[category] = samples.mean(axis=0)
+                    covariances[category] = covariance
+                else:
+                    means[category], covariances[category] = prior.sample_posterior(
+                        selected, rng=self.rng
+                    )
             self.state.means[attr] = means
             self.state.covariances[attr] = covariances
 
@@ -759,6 +811,12 @@ class CslModel:
 
     def _sample_theta(self) -> None:
         alpha = self.theta_posterior_parameters()
+        sample_count = self.config.original_heuristics.theta_mean_samples
+        if sample_count > 1:
+            self.state.theta = np.asarray(
+                [self.rng.dirichlet(row, size=sample_count).mean(axis=0) for row in alpha]
+            )
+            return
         counts = np.bincount(
             np.concatenate(self.state.words), minlength=len(self.vocabulary)
         )
@@ -783,7 +841,8 @@ class CslModel:
             categories = _flatten_assignments(self.state.z[attr])
             counts = np.bincount(categories, minlength=self.category_counts[attr])
             self.state.pi[attr] = self.rng.dirichlet(counts + concentrations[attr])
-        self._sample_gaussians()
+        # Learning heuristics must not alter the existing frozen initialization.
+        self._sample_gaussians(use_heuristics=False)
 
     def _giw_prior(self, attr: str, dimension: int) -> GiwPrior:
         gmm = self.config.hyperparameters.gmm

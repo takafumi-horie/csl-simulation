@@ -15,6 +15,8 @@ Rescaling: TypeAlias = Literal[
     "legacy_theta_sum", "empirical_unigram", "none"
 ]
 ThetaSampler: TypeAlias = Literal["legacy_importance", "dirichlet"]
+InferenceTheta: TypeAlias = Literal["rescaled", "raw"]
+EmptyComponentMean: TypeAlias = Literal["prior", "original_uniform"]
 AttributeExclusivity: TypeAlias = Literal["distinct", "iid"]
 Interaction: TypeAlias = Literal["mh", "no_communication", "all_accept"]
 
@@ -144,6 +146,56 @@ class WordModel:
                 "word_model.theta_sampler='legacy_importance' requires "
                 "word_model.rescaling='legacy_theta_sum'"
             )
+
+
+@dataclass(frozen=True, slots=True)
+class OriginalHeuristics:
+    """Select optional original-code learning heuristics.
+
+    原典コードの学習ヒューリスティクスを任意に選択する。
+
+    Args:
+        theta_mean_samples: Posterior Dirichlet draws averaged per theta row.
+            thetaの各事後行で平均するDirichlet標本数。
+        inference_theta: Raw or rescaled theta supplied to z/F inference.
+            z/F推論へ渡す補正前または補正後theta。
+        gaussian_mean_samples: Conditional Normal draws averaged when occupied.
+            非空カテゴリで平均する条件付きNormal標本数。
+        empty_component_mean: Prior or original-uniform empty mean update.
+            空カテゴリの事前更新または原典の平均パラメータの一様生成。
+    """
+
+    theta_mean_samples: int = 1
+    inference_theta: InferenceTheta = "rescaled"
+    gaussian_mean_samples: int = 1
+    empty_component_mean: EmptyComponentMean = "prior"
+
+    def __post_init__(self) -> None:
+        """Validate sample counts and choices.
+
+        標本数と選択肢を検証する。
+
+        Raises:
+            ConfigError: If a count or choice is unsupported.
+                標本数または選択肢が不正な場合。
+        """
+        _require_positive_int(
+            self.theta_mean_samples, "original_heuristics.theta_mean_samples"
+        )
+        _require_choice(
+            self.inference_theta,
+            {"rescaled", "raw"},
+            "original_heuristics.inference_theta",
+        )
+        _require_positive_int(
+            self.gaussian_mean_samples,
+            "original_heuristics.gaussian_mean_samples",
+        )
+        _require_choice(
+            self.empty_component_mean,
+            {"prior", "original_uniform"},
+            "original_heuristics.empty_component_mean",
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -417,6 +469,8 @@ class Config:
             推論中に固定するモデル要素。
         hyperparameters (CoreHyperparameters): Minimal model hyperparameters.
             モデルの必要最小限のハイパーパラメータ。
+        original_heuristics (OriginalHeuristics): Optional learning heuristics.
+            任意に有効化する学習ヒューリスティクス。
     """
 
     mode: Mode
@@ -427,6 +481,7 @@ class Config:
     interaction: Interaction = "mh"
     freeze: Freeze = field(default_factory=Freeze)
     hyperparameters: CoreHyperparameters = field(default_factory=CoreHyperparameters)
+    original_heuristics: OriginalHeuristics = field(default_factory=OriginalHeuristics)
 
     def __post_init__(self) -> None:
         """Validate top-level options and cross-section invariants.
@@ -445,6 +500,14 @@ class Config:
             {"mh", "no_communication", "all_accept"},
             "interaction",
         )
+        if (
+            self.original_heuristics.theta_mean_samples > 1
+            and self.word_model.theta_sampler != "dirichlet"
+        ):
+            raise ConfigError(
+                "original_heuristics.theta_mean_samples > 1 requires "
+                "word_model.theta_sampler='dirichlet'"
+            )
         if (
             self.attribute_model.exclusivity == "distinct"
             and self.hyperparameters.word_length > 4
@@ -497,6 +560,7 @@ def load_config(path: str | Path) -> Config:
             "interaction",
             "freeze",
             "hyperparameters",
+            "original_heuristics",
         },
         "configuration",
     )
@@ -509,6 +573,9 @@ def load_config(path: str | Path) -> Config:
     attribute_model = _parse_attribute_model(root.get("attribute_model", {}))
     freeze = _parse_freeze(root.get("freeze", {}))
     hyperparameters = _parse_hyperparameters(root.get("hyperparameters", {}))
+    original_heuristics = _parse_original_heuristics(
+        root.get("original_heuristics", {})
+    )
     return Config(
         mode=cast(Mode, _string(root["mode"], "mode")),
         run=run,
@@ -520,6 +587,7 @@ def load_config(path: str | Path) -> Config:
         ),
         freeze=freeze,
         hyperparameters=hyperparameters,
+        original_heuristics=original_heuristics,
     )
 
 
@@ -597,6 +665,38 @@ def _parse_word_model(value: Any) -> WordModel:
             ),
         ),
         importance_candidates=values.get("importance_candidates", 10_000),
+    )
+
+
+def _parse_original_heuristics(value: Any) -> OriginalHeuristics:
+    values = _mapping(value, "original_heuristics")
+    _reject_unknown(
+        values,
+        {
+            "theta_mean_samples",
+            "inference_theta",
+            "gaussian_mean_samples",
+            "empty_component_mean",
+        },
+        "original_heuristics",
+    )
+    return OriginalHeuristics(
+        theta_mean_samples=values.get("theta_mean_samples", 1),
+        inference_theta=cast(
+            InferenceTheta,
+            _string(
+                values.get("inference_theta", "rescaled"),
+                "original_heuristics.inference_theta",
+            ),
+        ),
+        gaussian_mean_samples=values.get("gaussian_mean_samples", 1),
+        empty_component_mean=cast(
+            EmptyComponentMean,
+            _string(
+                values.get("empty_component_mean", "prior"),
+                "original_heuristics.empty_component_mean",
+            ),
+        ),
     )
 
 

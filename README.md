@@ -83,6 +83,9 @@ canonical `F=(a,p,o,c)` とattentionでAの単語を生成し、Bが単語から
 - theta posterior:
   - `legacy_importance` (default, 10,000 candidates / 既定1万候補)
   - `dirichlet`
+- original implementation heuristics / 原典実装のヒューリスティクス:
+  - optional posterior sample averaging, raw training theta, and uniform empty
+    component means / 事後標本平均、学習時の未補正θ、空カテゴリ平均の一様配置を選択可能
 - attribute sequence / 属性列:
   - `distinct`: simple MEC2, sampled without replacement / 単純MEC2・重複なし
   - `iid`: uniform independent assignments with replacement / 一様独立・重複可
@@ -96,12 +99,17 @@ R_w = \sum_z \theta_{z,w},\qquad
 = \frac{\theta_{z,w}/R_w}{\sum_v \theta_{z,v}/R_v}.
 \]
 
-All word-probability consumers—word generation, category updates, attribute
-updates, and Inter-CSL-PGM acceptance ratios—use the same transformed matrix.
+With the default `original_heuristics.inference_theta: rescaled`, word
+generation, category updates, attribute updates, and Inter-CSL-PGM acceptance
+ratios use this transformed matrix. Selecting `inference_theta: raw` changes
+only the training category and attribute updates; word generation, MH
+acceptance, and prediction retain their existing theta handling.
 
-legacy rescaling は上式のとおり全 `z` 行を単純加算します。単語生成、
-カテゴリ更新、属性列更新、Inter-CSL-PGM の受理率は、すべて同じ変換済み行列を
-参照します。
+legacy rescaling は上式のとおり全 `z` 行を単純加算します。既定の
+`original_heuristics.inference_theta: rescaled` では、単語生成・カテゴリ更新・
+属性列更新・Inter-CSL-PGM の受理率がこの変換済み行列を参照します。
+`inference_theta: raw` は学習時のカテゴリ・属性列更新だけを未補正θへ切り替え、
+単語生成・MH受理・予測のθの扱いは変えません。
 
 `empirical_unigram` reproduces the legacy Inter-CSL-PGM comparison condition: the
 ordinary Gibbs consumers use raw `theta`, while only the MH ratio divides the
@@ -114,6 +122,74 @@ counts. It does not add smoothing or renormalize the rows. `none` uses raw
 それぞれのコーパス snapshot 頻度で割ります。加算 smoothing と行の再正規化は
 行いません。`none` は全箇所で未補正の `theta` を使います。
 
+### Original implementation heuristics / 論文オリジナル実装ヒューリスティクス
+
+The optional top-level `original_heuristics` section selects four learning
+heuristics from the original implementation. Omitting it uses the following
+defaults and preserves the ordinary kernel and its random-draw order for the
+same input and hyperparameters. This is not a complete reproduction of the
+original program's initialization, preprocessing, RNG, or reported paper values.
+
+任意のトップレベル `original_heuristics` で、原典にある4つの学習処理を選択できます。
+省略時は次の既定値となり、同じ入力・ハイパーパラメータなら通常版の更新と
+乱数消費順を維持します。原典の初期化・前処理・乱数生成器や論文値を含む、
+プログラム全体の完全再現を意味するものではありません。
+
+```yaml
+original_heuristics:
+  theta_mean_samples: 1
+  inference_theta: rescaled
+  gaussian_mean_samples: 1
+  empty_component_mean: prior
+```
+
+| Option / 設定 | Default / 既定値 | Behavior / 動作 |
+|---|---|---|
+| `theta_mean_samples` | `1` | Positive integer. `1` preserves the configured theta sampler; N > 1 averages N actual posterior Dirichlet draws per row and requires `word_model.theta_sampler: dirichlet`. Importance sampling with averaging is rejected. / 正の整数。`1` は選択したθ抽選方式を維持し、2以上は各事後Dirichlet行から実際に指定数を生成して平均します。`dirichlet` が必須で、importance方式との併用はエラーです。 |
+| `inference_theta` | `rescaled` | `rescaled` uses the ordinary `word_theta()`; `raw` passes stored, uncorrected theta only to training `z` and `F`. / `rescaled` は通常の `word_theta()`、`raw` は保存された補正前θを学習時の `z` と `F` だけに渡します。 |
+| `gaussian_mean_samples` | `1` | Positive integer: for each occupied category, draw Sigma once, then average this many actual conditional Normal draws of mu. Applies to all four attributes, not empty categories. / 占有カテゴリでΣを1回生成後、そのΣを条件とするNormalから指定数のμを実際に生成して平均します。全4属性が対象で、空カテゴリには適用しません。 |
+| `empty_component_mean` | `prior` | `prior` keeps the GIW prior update. `original_uniform` draws each mu coordinate uniformly from `[-0.5, 0.5)` for position and `[0, 1)` for other attributes, then draws Sigma once from the existing prior inverse-Wishart. / `prior` は従来のGIW事前更新。`original_uniform` は位置を `[-0.5, 0.5)`、他属性を `[0, 1)` から座標ごとに独立一様生成し、その後に従来の事前逆WishartからΣを1回生成します。 |
+
+With `theta_mean_samples > 1`, the scan is coupled to theta averaging:
+`z -> pi -> Gaussian -> F -> theta`. With `theta_mean_samples: 1`, the ordinary
+orders remain: importance uses `F -> theta`, and direct Dirichlet uses
+`theta -> F`. In the latter case, `inference_theta: raw` gives `z` the old raw
+theta and `F` the newly sampled raw theta. The `rescaled` choice respects
+`word_model.rescaling`; `none` and `empirical_unigram` retain their ordinary
+raw `word_theta()` behavior.
+
+`theta_mean_samples > 1` では、θ平均化と組にして
+`z -> pi -> Gaussian -> F -> theta` 順で更新します。`theta_mean_samples: 1`
+なら従来どおりimportanceは `F -> theta`、直接Dirichletは `theta -> F` です。
+後者で `inference_theta: raw` を指定すると、`z` は更新前、`F` は更新後の
+補正前θを使います。`rescaled` は `word_model.rescaling` を尊重するため、
+`none` と `empirical_unigram` の通常の `word_theta()` は従来どおり未補正です。
+
+These options change learning only. Initialization still uses one prior theta
+draw and the configured initial covariance scale; words, KMeans, `z`, `pi`,
+`F`, and constructor RNG consumption are unchanged. GMM initialization from
+truth under `freeze.gmm` also keeps the ordinary GIW update. Frozen variables
+remain frozen. Preprocessing, communication, word generation, MH acceptance,
+prediction, and checkpoint formats retain their ordinary behavior.
+
+変更対象は学習時だけです。初期θは事前からの1標本、初期Σは既存設定のスケールで、
+初期語・KMeans・`z`・`pi`・`F` と初期化の乱数消費は変えません。
+`freeze.gmm` の正解ラベルによるGMM初期化も従来のGIW更新を使い、各freeze対象の
+学習更新は実行しません。前処理・通信・語生成・MH受理・予測・保存形式も維持します。
+
+Averaging is a different update distribution from a single-sample Gibbs draw,
+not merely a more accurate calculation of that draw. For a fixed conditional
+Normal distribution, averaging N independent mu samples divides its variance
+by N; a mean of Dirichlet samples likewise differs from one Dirichlet draw.
+Reproducing these heuristics and justifying an exact Gibbs sampler are separate
+questions. See the [implementation specification](docs/original_heuristics_spec.md).
+
+標本平均は単一標本Gibbs更新とは分布が異なり、単に1標本の計算精度を高める処理では
+ありません。条件付きNormal分布を固定したとき、N個の独立なμの平均の分散は
+1/Nとなり、Dirichlet標本の平均も単一標本とは異なります。このヒューリスティクスの
+挙動を再現することと、厳密なGibbs更新の正当性は区別します。
+[実装仕様](docs/original_heuristics_spec.md)も参照してください。
+
 ## Faithful inference scope / 推論の再現範囲
 
 The categorical learning kernel infers every latent variable:
@@ -121,16 +197,19 @@ The categorical learning kernel infers every latent variable:
 - category assignments `z` for every observed object, not only the attended
   object;
 - mixture proportions `pi` from all of those assignments;
-- full-covariance Gaussian parameters `(mu, Sigma)` under the conjugate
-  Gaussian--inverse-Wishart posterior;
+- full-covariance Gaussian parameters `(mu, Sigma)` using the conjugate
+  Gaussian--inverse-Wishart posterior, with optional mean averaging and empty
+  component handling described above;
 - category-to-word distributions `theta`;
 - one attribute sequence `F` per document; and
 - in Inter-CSL-PGM, internal words through the token-wise MH naming game.
 
 Words are observed in CSL-PGM. Their lengths may differ by document, and
-their vocabulary is encoded in first-seen order. The default legacy importance
-kernel uses the scan `z -> pi -> (mu, Sigma) -> F -> theta`; the optional direct
-Dirichlet kernel uses the later scan `z -> pi -> (mu, Sigma) -> theta -> F`.
+their vocabulary is encoded in first-seen order. With `theta_mean_samples: 1`,
+the default legacy importance kernel uses the scan
+`z -> pi -> (mu, Sigma) -> F -> theta`; the optional direct Dirichlet kernel
+uses `z -> pi -> (mu, Sigma) -> theta -> F`. Averaging theta over multiple
+draws uses the former, `F -> theta`, order.
 Prediction is generative: it resamples speaker categories and words, listener
 categories, and listener observations rather than reusing training `z` or `F`.
 
@@ -139,26 +218,28 @@ categorical 学習 kernel は、潜在変数をすべて推論します。
 - 注視対象だけでなく全観測物体のカテゴリ割当て `z`
 - 全物体の割当てから更新する混合比率 `pi`
 - Gaussian--inverse-Wishart 共役事後に基づく完全共分散 Gaussian パラメータ
-  `(mu, Sigma)`
+  `(mu, Sigma)`（平均化・空カテゴリ処理は上記の設定で選択可能）
 - カテゴリから単語への分布 `theta`
 - 文書ごとの属性列 `F`
 - Inter-CSL-PGM では token 単位 MH naming game による内部単語
 
 CSL-PGM の単語は観測値です。文書ごとに発話長が異なってもよく、語彙は
-初出順で符号化します。既定の legacy importance kernel は
+初出順で符号化します。`theta_mean_samples: 1` では、既定の legacy importance kernel は
 `z -> pi -> (mu, Sigma) -> F -> theta`、任意の直接 Dirichlet kernel は後期実装の
-`z -> pi -> (mu, Sigma) -> theta -> F` という更新順です。予測時には学習済みの
+`z -> pi -> (mu, Sigma) -> theta -> F` という更新順です。θを複数標本で平均する場合は
+前者の `F -> theta` 順を使います。予測時には学習済みの
 `z` や `F` を流用せず、話者カテゴリ・単語、聞き手カテゴリ・聞き手観測を
 生成的に再サンプルします。
 
-The implementation matches the probability distributions and transition
-kernel, but is not intended to reproduce the old program's random stream
-bit-for-bit: it uses an explicit modern NumPy generator and a reorganized draw
-schedule.
+The selected settings define the learning kernel; enabling the original
+heuristics does not make the whole program identical to the original code.
+It uses an explicit modern NumPy generator and is not intended to reproduce
+the old program's random stream bit-for-bit.
 
-確率分布と遷移 kernel は旧実装と等価ですが、旧プログラムと乱数列まで
-bit 単位で一致させるものではありません。明示的な現行 NumPy generator と
-再整理した乱数呼出しを使用します。
+選択した設定が学習kernelを定めます。原典ヒューリスティクスを有効にしても、
+プログラム全体が原典コードと同一になるわけではありません。明示的な現行
+NumPy generator を使い、旧プログラムと乱数列までbit単位で一致させるものでは
+ありません。
 
 ## Installation / インストール
 
@@ -264,6 +345,52 @@ csl predict --config examples/inter.yaml
 csl analyze --config examples/inter.yaml
 ```
 
+Choose the ordinary or original-heuristics example for either model. Both
+CSL-PGM examples keep vocabulary size 14 and category-wise mixture concentration
+1.0, matching its paper settings. Both Inter-CSL-PGM examples use vocabulary
+size 13 and concentration 0.1, matching the Inter-CSL-PGM experiments.
+The ordinary files retain the ordinary learning algorithm;
+the two new files select direct Dirichlet theta and enable all four heuristics.
+
+各モデルで通常版と論文オリジナル実装ヒューリスティクス版を選べます。
+SINGLE（CSL-PGM）の両設定は、その論文実験の値である語彙数14・カテゴリ当たり
+混合事前集中度1.0を維持します。INTERの両設定だけ、INTERの論文実験に合わせて
+語彙数13・集中度0.1とします。既存の通常版は学習方式を維持し、
+`single.yaml` は変更せず、`inter.yaml` はハイパーパラメータだけを変更します。
+新しい2ファイルは直接Dirichletと4機能すべてを有効にします。
+
+| Model / モデル | Ordinary / 通常版 | Original heuristics / 原典ヒューリスティクス版 |
+|---|---|---|
+| CSL-PGM | [single.yaml](examples/single.yaml) | [single_original_heuristics.yaml](examples/single_original_heuristics.yaml) |
+| Inter-CSL-PGM | [inter.yaml](examples/inter.yaml) | [inter_original_heuristics.yaml](examples/inter_original_heuristics.yaml) |
+
+```bash
+# Original implementation heuristics / 論文オリジナル実装ヒューリスティクス版
+csl validate-data --config examples/single_original_heuristics.yaml
+csl learn --config examples/single_original_heuristics.yaml
+csl analyze --config examples/single_original_heuristics.yaml
+
+csl validate-data --config examples/inter_original_heuristics.yaml
+csl learn --config examples/inter_original_heuristics.yaml
+csl predict --config examples/inter_original_heuristics.yaml
+csl analyze --config examples/inter_original_heuristics.yaml
+```
+
+Both heuristic examples include:
+
+両ヒューリスティクス版の設定は次を含みます。
+
+```yaml
+word_model:
+  rescaling: legacy_theta_sum
+  theta_sampler: dirichlet
+original_heuristics:
+  theta_mean_samples: 100
+  inference_theta: raw
+  gaussian_mean_samples: 100
+  empty_component_mean: original_uniform
+```
+
 During learning, `csl` displays an outer progress bar for completed trials and
 an inner bar labeled with the current trial ID (for example, `exp000`) and its
 inference iteration. 学習中は、全試行の進捗を示す外側のbarと、現在の試行ID
@@ -280,17 +407,21 @@ directory. The schema is intentionally strict and rejects unknown keys.
 Each sensory attribute has its own Gaussian mixture. The mixture uses a
 Dirichlet prior for category probabilities and a
 Gaussian--inverse-Wishart prior for full-covariance Gaussian parameters.
-Configure the legacy defaults under `hyperparameters.gmm` as follows:
+The Inter-CSL-PGM examples explicitly use the following hyperparameters.
+The CSL-PGM examples retain vocabulary size 14 and `mixture_concentration: 1.0`
+for every attribute; the other GMM settings below are shared:
 
 各感覚属性は個別の Gaussian mixture を持ちます。カテゴリ確率には Dirichlet
 事前分布、完全共分散 Gaussian のパラメータには
-Gaussian--inverse-Wishart 事前分布を使います。旧実装と同じ既定値は
-`hyperparameters.gmm` で次のように指定できます。
+Gaussian--inverse-Wishart 事前分布を使います。INTERの設定例では次の値を
+明示的に指定します。SINGLEの設定例は語彙数14・全属性の
+`mixture_concentration: 1.0` を維持し、以下の他のGMM設定は共通です。
 
 ```yaml
 hyperparameters:
+  vocabulary_size: 13
   gmm:
-    mixture_concentration: {a: 1.0, p: 1.0, o: 1.0, c: 1.0}
+    mixture_concentration: {a: 0.1, p: 0.1, o: 0.1, c: 0.1}
     frozen_mixture_concentration: {a: 0.1, p: 0.1, o: 0.1, c: 0.1}
     mean_prior: {a: 0.0, p: 0.0, o: 0.0, c: 0.0}
     mean_precision: {a: 0.001, p: 0.001, o: 0.001, c: 0.001}
@@ -305,6 +436,20 @@ dimension of that attribute.
 
 `a`、`p`、`o`、`c` はそれぞれ動作・触覚、位置、物体、色を表します。平均と
 共分散に対するスカラー設定は、その属性の全特徴次元へ展開されます。
+
+The original Inter-CSL-PGM nonparametric setting uses counts plus `alpha / K` in the pi
+posterior. Each YAML `mixture_concentration` value is already this per-category
+`alpha / K`; it is not divided by `category_counts` again. Thus Inter-CSL-PGM
+`alpha=1, K=10` corresponds to `0.1` in each attribute. These example values
+are explicit: omitting `mixture_concentration` still uses the schema default
+`1.0`, and `original_heuristics` does not change hyperparameters automatically.
+
+原典INTERのnonparametric設定では、piの事後分布にカウントと `alpha / K` を加えます。
+YAMLの各属性の `mixture_concentration` はこのカテゴリ当たりの `alpha / K`
+そのもので、`category_counts` で再度割りません。原典INTERの `alpha=1, K=10` は
+各属性 `0.1` に対応します。設定例では明示的に指定しており、キー省略時の
+スキーマ既定値は従来の `1.0` です。`original_heuristics` がハイパーパラメータを
+自動変更することもありません。
 
 - `mixture_concentration` is the symmetric Dirichlet concentration for the
   category proportions `pi`. Values below `1` favor using fewer categories;
@@ -346,13 +491,13 @@ dimension of that attribute.
 - `kmeans_n_init` は推論前に試す K-means 初期化回数です。増やすと初期値が
   安定しやすい一方で計算時間が増えます。Bayes事前自体は変わりません。
 
-Start from the legacy defaults, then tune one attribute at a time. Feature
+Start from the example settings, then tune one attribute at a time. Feature
 standardization should be fixed before tuning because the mean and covariance
 priors are expressed in feature-space units. Changing `category_counts` has a
 larger structural effect than changing these priors and should be evaluated
 separately.
 
-まず legacy 既定値から始め、属性ごとに調整してください。平均・共分散事前は
+まず設定例の値から始め、属性ごとに調整してください。平均・共分散事前は
 特徴空間の単位に依存するため、調整前に特徴量の標準化方法を固定します。
 `category_counts` の変更はこれらの事前分布より構造的影響が大きいため、分けて
 評価してください。
