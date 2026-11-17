@@ -312,8 +312,12 @@ program. INTER prediction retains the existing conditional algorithm and
 prediction-seed policy while sharing training's preprocessing; SINGLE
 prediction remains unsupported. Checkpoint arrays and legacy outputs keep
 their existing formats. Resolved configuration and a separate provenance
-record identify the profile, seeds, input hashes, dependency versions, and
-SINGLE/INTER scope; this does not add training resume support. Production has
+record identify the profile, seeds, input hashes, dependency versions, numerical
+thread environment and loaded BLAS/OpenMP runtimes, and SINGLE/INTER scope.
+Initialization and every completed half-turn retain the complete MT19937 state
+in losslessly compressed `rng_boundaries.jsonl.gz`; read it as gzip JSON Lines.
+A 500-iteration INTER trial records 1,001 boundaries. These records do not
+consume random draws or add training resume support. Production has
 no runtime dependency on original source or audit checkouts. See the
 [execution specification](docs-for-developper/original_compatibility_spec.md)
 and [verification records](docs-for-developper/verification/original_compatibility/).
@@ -321,7 +325,11 @@ and [verification records](docs-for-developper/verification/original_compatibili
 互換性は**学習実行**を対象とし、原典の予測プログラム全体には拡張しません。
 INTERの予測は既存の条件付きアルゴリズムと予測seed規則を使い、前処理を学習と揃えます。
 SINGLEの予測は非対応です。checkpoint配列・legacy出力の形式を維持し、解決済み設定と
-別の出自記録へprofile・seed・入力ハッシュ・依存版・SINGLE/INTERの保証範囲を保存します。
+別の出自記録へprofile・seed・入力ハッシュ・依存版・数値計算のスレッド環境と
+読込済みBLAS/OpenMPランタイム・SINGLE/INTERの保証範囲を保存します。
+初期化完了時と各半ターン完了時のMT19937状態全体は、無損失圧縮した
+`rng_boundaries.jsonl.gz` にgzip形式のJSON Linesで保存します。
+INTERの500反復では1,001境界を記録します。記録処理は乱数を消費しません。
 学習再開機能の追加ではありません。本番は原典ソースや監査checkoutへ実行時に依存しません。
 [実行仕様](docs-for-developper/original_compatibility_spec.md)と
 [検証記録](docs-for-developper/verification/original_compatibility/)も参照してください。
@@ -850,12 +858,19 @@ mock fixture生成時には、legacy CSV 4ファイルもagentごとの
 The `current` profile derives independent NumPy Generators from `run.seed`;
 `original` uses one local RandomState per trial with seed
 `run.seed + experiment_id`. Neither changes global NumPy or Python RNG state.
-Repeating an experiment with the same input, configuration, and dependency
-versions follows the same random sequence. Explicit seeds are a verification
+Repeating an experiment requires the same input, configuration, dependency
+versions, numerical runtimes, and numerical thread environment to follow the
+same trajectory. The independent parity checks use one numerical thread.
+Production records the active controls (`OPENBLAS_NUM_THREADS`,
+`OMP_NUM_THREADS`, `MKL_NUM_THREADS`, `BLIS_NUM_THREADS`,
+`VECLIB_MAXIMUM_THREADS`, and `NUMEXPR_NUM_THREADS`) and actual loaded runtime
+thread counts without changing them. Explicit seeds are a verification
 convention; the original OS-derived seeds and paper random streams are unknown.
 
 `current` は `run.seed` から独立したNumPy Generatorを派生し、`original` は
 試行ごとに `run.seed + experiment_id` のローカルRandomStateを1個使います。
-グローバルなNumPy・Pythonの乱数状態は変更しません。同じ入力・設定・依存版で
-再実行すれば同じ乱数系列になります。明示seedは今回の検証規約で、原典のOS由来seedや
-論文実験の乱数列を復元したものではありません。
+グローバルなNumPy・Pythonの乱数状態は変更しません。同じ軌道を再現するには、
+入力・設定・依存版に加え、数値計算ランタイムとスレッド環境も揃える必要があります。
+独立照合は数値計算のスレッド数を1に固定しています。本番は上記6個の環境変数と
+実際の読込済みランタイムのスレッド数を記録し、値を変更しません。
+明示seedは今回の検証規約で、原典のOS由来seedや論文実験の乱数列を復元したものではありません。

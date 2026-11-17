@@ -31,6 +31,10 @@ from .model import (
 )
 
 
+class OriginalExecutionError(ValueError):
+    """A numerical execution failure already annotated with model context."""
+
+
 class OriginalCslModel(CslModel):
     """Compatibility learning model, created only by the joint factory.
 
@@ -39,7 +43,7 @@ class OriginalCslModel(CslModel):
 
     rng: np.random.RandomState
 
-    def _error(self, message: str, **context: object) -> ValueError:
+    def _error(self, message: str, **context: object) -> OriginalExecutionError:
         details = dict(
             experiment=self.experiment_id,
             seed=self.effective_seed,
@@ -47,7 +51,7 @@ class OriginalCslModel(CslModel):
             agent=self.agent,
             **context,
         )
-        return ValueError(
+        return OriginalExecutionError(
             "original execution: "
             + ", ".join(f"{key}={value}" for key, value in details.items())
             + ": "

@@ -1,0 +1,25 @@
+{
+  "date_jst": "2026-11-17",
+  "reviewed_commit": "54a09d7",
+  "tests": {
+    "passed": 215,
+    "warnings": 10,
+    "command": "python3.11 -m pytest"
+  },
+  "ruff": {
+    "version": "0.15.21",
+    "command": "python3.11 -m ruff check .",
+    "passed": true
+  },
+  "numerical_kernel_changed": false,
+  "short_original_parity": "postreview_results/comparison.json",
+  "model_backward_compatibility": "defaults_postreview_result.json",
+  "reviewer_artifact_source": "User supplied review; reviewer full artifacts not received",
+  "source_sha256": {
+    "src/legacy_csl/original.py": "6441bb3a7320ebe4292f6fe4a4f3d3803fc764ea63f3b81cd7151c31cd1180b1",
+    "src/legacy_csl/runner.py": "fe035f26176a532824233048cd6b6c8c62f17b1827a73bb300cd23f4c0367a6d",
+    "tests/_original_reference.py": "d6f5da3d425d673c079dbec77935e5d197c48b4c036ec375a628cb58f3524311",
+    "tests/test_original_execution_reference.py": "4119f345426ef137f834306fcc09ecc3532c2827b183cbf214cce0002a8217be",
+    "tests/test_original_execution_workflows.py": "e5498d00db0dfc08c92beb690b288d4d818f40c8a4ae1ea2f0633ca38c348a48"
+  }
+}

@@ -6,9 +6,11 @@
 from __future__ import annotations
 
 import csv
+import gzip
 import hashlib
 import importlib.metadata
 import json
+import os
 import platform
 from collections import Counter
 from pathlib import Path
@@ -319,7 +321,7 @@ def _learn_original(
     config: Config, directory: Path, seed: int, *, experiment_id: int
 ) -> None:
     """Keep initialization, proposals and both half-turns on one local RNG."""
-    from .original import initialize_original_models
+    from .original import OriginalExecutionError, initialize_original_models
 
     datasets = _configured_datasets(config)
     rng = np.random.RandomState(seed)
@@ -334,8 +336,9 @@ def _learn_original(
         experiment_id=experiment_id,
     )
     _write_original_provenance(config, directory, experiment_id, seed)
-    boundary_path = directory / "rng_boundaries.jsonl"
-    boundary_path.write_text("", encoding="utf-8")
+    boundary_path = directory / "rng_boundaries.jsonl.gz"
+    with gzip.open(boundary_path, "wt", encoding="utf-8"):
+        pass
     _record_rng_boundary(boundary_path, rng, iteration=0, boundary="initialized")
     history: list[dict[str, object]] = []
     agents = ("U",) if corpus is not None else ("A", "B")
@@ -348,9 +351,11 @@ def _learn_original(
                     proposal = models[1 - index].draw_words()
                     words = accept_words(model, proposal, config.interaction)
                 model.step(words)
+            except OriginalExecutionError:
+                raise
             except (ValueError, FloatingPointError, np.linalg.LinAlgError) as error:
-                raise ValueError(
-                    f"original execution experiment={experiment_id}, seed={seed}, "
+                raise OriginalExecutionError(
+                    f"original execution: experiment={experiment_id}, seed={seed}, "
                     f"iteration={iteration + 1}, agent={agent}: {error}"
                 ) from error
             _record_rng_boundary(
@@ -387,7 +392,7 @@ def _record_rng_boundary(
         "keys": keys.tolist(), "position": position,
         "has_gaussian": has_gaussian, "cached_gaussian": cached_gaussian,
     }
-    with path.open("a", encoding="utf-8") as stream:
+    with gzip.open(path, "at", encoding="utf-8") as stream:
         stream.write(json.dumps(record, separators=(",", ":")) + "\n")
 
 
@@ -412,7 +417,7 @@ def _write_original_provenance(
             **_input_hash(single_words_input_file(config.paths.data_root), config.paths.data_root),
         })
     versions = {"python": platform.python_version()}
-    for package in ("legacy-csl", "numpy", "scipy", "scikit-learn", "PyYAML", "matplotlib", "tqdm"):
+    for package in ("legacy-csl", "numpy", "scipy", "scikit-learn", "PyYAML", "matplotlib", "tqdm", "threadpoolctl"):
         try:
             versions[package] = importlib.metadata.version(package)
         except importlib.metadata.PackageNotFoundError:
@@ -427,6 +432,7 @@ def _write_original_provenance(
         "effective_seed": seed, "seed_rule": "run.seed + experiment_id",
         "rng": "numpy.random.RandomState (shared local MT19937)",
         "inputs": inputs, "versions": versions,
+        "numeric_environment": _numeric_environment(),
         "guarantee_scope": (
             "INTER-derived shared initialization and learning applied to SINGLE; "
             "observed corpus and existing U preprocessing retained. A dedicated "
@@ -442,6 +448,24 @@ def _write_original_provenance(
     (directory / "execution_provenance.json").write_text(
         json.dumps(provenance, indent=2, sort_keys=True), encoding="utf-8"
     )
+
+
+def _numeric_environment() -> dict[str, object]:
+    """Record thread controls and loaded numerical runtimes without changing them."""
+    variables = (
+        "OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS",
+        "BLIS_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS",
+    )
+    try:
+        from threadpoolctl import threadpool_info
+    except ImportError:
+        pools = None
+    else:
+        pools = threadpool_info()
+    return {
+        "thread_environment": {name: os.environ.get(name) for name in variables},
+        "threadpools": pools,
+    }
 
 
 def _input_hash(path: Path, root: Path) -> dict[str, str]:

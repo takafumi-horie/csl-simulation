@@ -22,6 +22,13 @@
 完全一致で比較する。両候補の総計は150 state対・3300配列対となる。
 通常の `examples/single.yaml` と `examples/inter.yaml` も旧版とのbyte一致を要求する。
 
+ここでmetadataとは状態保存用の `metadata_*.json` に相当する属性列・語彙を指す。
+`learn()` やCLIを通した全出力の比較ではなく、モデル層の軌道と状態内容の
+比較である。`validate_data` の処理順、`analyze()` / `predict()` のloader選択は
+この旧版対照に含まれない。これらは通常の結合テストとコードレビューで確認した。
+`resolved_config.yaml` には新しく `execution_profile: current` が保存されるため、
+旧版とファイル全体が同一であるという意味ではない。
+
 これは小規模な短い軌道の後方互換性検証であり、原典との独立照合・実データでの
 長期比較・論文ARI値の再現を認定するものではない。本番パッケージや通常テストは
 この検証スクリプトへ依存しない。実データ・原典ソース・外部監査adapterも不要。
@@ -35,8 +42,8 @@ site-packagesを使う。`PYTHONPATH` の継承を避け、比較対象のsrcを
 3つの子プロセスともBLAS/OpenMPを1 threadへ固定する。
 
 ```bash
-python311=/tmp/csl-audit-python/cpython-3.11.18-linux-x86_64-gnu/bin/python3.11
-site_packages=/home/horie_takafumi/workspace/multi_agent_csl/legacy-csl/.venv/lib/python3.11/site-packages
+python311=/path/to/python3.11
+site_packages=/path/to/environment/lib/python3.11/site-packages
 scripts=docs-for-developper/verification/original_compatibility
 verify_parent=$(mktemp -d)
 "$python311" "$scripts/defaults_run.py" \

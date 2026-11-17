@@ -7,6 +7,7 @@ explicit inputs. Result JSON contains per-boundary array/RNG fingerprints.
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import platform
@@ -191,8 +192,13 @@ def main():
                 expected = {agent: native_payload(model)
                             for agent, model in zip(("A", "B"), models)}
                 assert_equal(expected, saved, f"native_runner/seed{seed}", args.output)
-                boundaries = [json.loads(line) for line in
-                              (directory / "rng_boundaries.jsonl").read_text().splitlines()]
+                compressed = directory / "rng_boundaries.jsonl.gz"
+                if compressed.exists():
+                    with gzip.open(compressed, "rt", encoding="utf-8") as stream:
+                        boundaries = [json.loads(line) for line in stream]
+                else:
+                    boundaries = [json.loads(line) for line in
+                                  (directory / "rng_boundaries.jsonl").read_text().splitlines()]
                 by_stage = {(item["iteration"], item["stage"]): item
                             for item in trial["boundaries"]}
                 for item in boundaries:

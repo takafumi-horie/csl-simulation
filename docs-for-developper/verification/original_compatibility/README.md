@@ -1,8 +1,9 @@
 # 原典実行プロファイルの検証記録
 
 2026年11月17日JST。[実装仕様](../../original_compatibility_spec.md)に対する
-実装者側の検証資料である。ユーザーが指名する独立レビュワのレビューは未実施。
-10試行・500反復の長期比較もレビュー後の段階として残している。
+実装者側の検証資料である。`54a09d7` はユーザー指名の独立レビュワから
+ブロッカーなしの承認を受けた。以下は初回実装の記録であり、レビュー後の追加検証は
+[レビュー指摘への対応記録](review_followup.md)を参照。
 
 ## 保存した結果
 
@@ -11,7 +12,7 @@
 | 原典readerと本番reader | A/Bの全4属性でdtype・shape・bytesが一致。物体数・注意対象も一致。正解ラベルは通常版と同じ | [comparison.json](results/comparison.json) |
 | 原典翻訳と本番カーネル | seed 0・2・10、初期化と4反復の75境界。3600状態配列、24提案配列、75共有RNG状態が完全一致 | 同上の `trials[].boundaries` |
 | 本番runnerの保存結果 | 同じ3試行の最終状態144配列、初期化・各半ターンの27 RNG境界が照合済み。各試行408入力ハッシュも再検証 | 同上の `trials[].native_runner` |
-| 通常版・従来4機能版の互換性 | 旧 `455b499` 対、新キー省略／`current` 明示が各75状態・1650配列・metadata・RNGで完全一致 | [defaults_result.json](defaults_result.json)、[手順](defaults_README.md) |
+| 通常版・従来4機能版の互換性 | モデル層の旧 `455b499` 対、新キー省略／`current` 明示が各75状態・1650配列・状態metadata・RNGで完全一致 | [defaults_result.json](defaults_result.json)、[手順と比較範囲](defaults_README.md) |
 | 全テスト | 204通過。SINGLEの固定語・触覚・ハイパラ、両モードの保存／解析、INTER予測、設定の拒否条件等を含む | [checks.json](checks.json) |
 | 静的検査 | Ruff 0.15.21 `check .` と `git diff --check` が通過 | 同上 |
 
@@ -75,9 +76,9 @@ python3.11 docs-for-developper/verification/original_compatibility/compare_origi
 各seed25境界は、初期化1個と、4反復それぞれの2方向×3境界である。
 共有RNGは内部keys・位置・正規乱数cacheの有無と値を照合する。
 
-今回の本番runnerによる短い実行の全出力はローカルの
-`/tmp/csl-original-native-parity-final/` に残しているが、検証の根拠と再実行手順は
-このブランチ内のスクリプトとJSONに保存してある。
+本番runnerによる短い実行の全出力は、再実行コマンドの `--native-output` で
+指定した場所に保存される。検証の根拠と再実行手順はこのブランチ内の
+スクリプトとJSONに保存してあり、作業マシンの一時ディレクトリを必要としない。
 
 ## レビューへの引き渡し
 

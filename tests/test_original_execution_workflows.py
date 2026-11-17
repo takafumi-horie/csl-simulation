@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import gzip
 import hashlib
 import json
 import random
@@ -34,6 +35,13 @@ from legacy_csl.data import (
 )
 from legacy_csl.runner import analyze, learn, predict, validate_data
 from legacy_csl.state_io import load_state
+
+
+def _read_rng_boundaries(directory):
+    with gzip.open(
+        directory / "rng_boundaries.jsonl.gz", "rt", encoding="utf-8"
+    ) as stream:
+        return stream.read()
 
 
 def _config(tmp_path, mode="inter-csl", *, vocabulary_size=4, seed=0):
@@ -251,7 +259,7 @@ def test_single_original_keeps_corpus_and_rejects_mismatched_vocabulary(tmp_path
     provenance = json.loads((directory / "execution_provenance.json").read_text())
     assert "SINGLE original source is unavailable" in provenance["guarantee_scope"]
     assert provenance["inputs"][0]["format"] == "compact_npz"
-    assert len((directory / "rng_boundaries.jsonl").read_text().splitlines()) == 3
+    assert len(_read_rng_boundaries(directory).splitlines()) == 3
     assert "numpy" in provenance["versions"] and "legacy-csl" in provenance["versions"]
     for item in provenance["inputs"]:
         for entry in item.get("files", [item]):
@@ -292,7 +300,7 @@ def test_original_inter_native_workflows_and_additive_trial_seed(tmp_path, monke
             record["boundary"]
             for record in map(
                 json.loads,
-                (directory / "rng_boundaries.jsonl").read_text().splitlines(),
+                _read_rng_boundaries(directory).splitlines(),
             )
         ] == ["initialized", "after_A", "after_B"]
     second = load_state(directories[1], "A")
@@ -306,8 +314,8 @@ def test_original_inter_native_workflows_and_additive_trial_seed(tmp_path, monke
     for attr in ATTRIBUTES:
         np.testing.assert_array_equal(state.means[attr], second.means[attr])
         np.testing.assert_array_equal(state.pi[attr], second.pi[attr])
-    first_rng = (directories[1] / "rng_boundaries.jsonl").read_text()
-    assert first_rng == (directory / "rng_boundaries.jsonl").read_text()
+    first_rng = _read_rng_boundaries(directories[1])
+    assert first_rng == _read_rng_boundaries(directory)
 
 
 def test_single_original_legacy_keeps_tactile_fourteen_words_and_concentration(
@@ -340,3 +348,97 @@ def test_single_original_legacy_keeps_tactile_fourteen_words_and_concentration(
         np.testing.assert_array_equal(saved, observed)
     assert state.means["a"].shape == (2, 38)
     assert not (directory / "B.npz").exists()
+
+
+def test_rng_recording_compression_is_lossless_and_does_not_consume_randomness(
+    tmp_path,
+):
+    from legacy_csl.runner import _record_rng_boundary
+
+    rng = np.random.RandomState(42)
+    path = tmp_path / "rng_boundaries.jsonl.gz"
+    before = rng.get_state()
+    _record_rng_boundary(path, rng, iteration=0, boundary="initialized")
+    _record_rng_boundary(path, rng, iteration=1, boundary="after_U")
+    after = rng.get_state()
+    np.testing.assert_array_equal(before[1], after[1])
+    assert before[0] == after[0] and before[2:] == after[2:]
+    with gzip.open(path, "rt", encoding="utf-8") as stream:
+        contents = stream.read()
+    records = [json.loads(row) for row in contents.splitlines()]
+    assert [row["boundary"] for row in records] == ["initialized", "after_U"]
+    for record in records:
+        assert record["algorithm"] == before[0]
+        assert record["keys"] == before[1].tolist()
+        assert record["position"] == before[2]
+        assert record["has_gaussian"] == before[3]
+        assert record["cached_gaussian"] == before[4]
+    assert path.stat().st_size < len(contents.encode("utf-8"))
+
+
+def test_provenance_records_thread_environment_and_runtime_without_changing_them(
+    tmp_path, monkeypatch
+):
+    from legacy_csl.runner import _write_original_provenance
+    from threadpoolctl import threadpool_info
+
+    config = _config(tmp_path, "single-csl")
+    write_compact_fixture(config.paths.data_root, num_documents=4)
+    directory = tmp_path / "provenance"
+    directory.mkdir()
+    monkeypatch.setenv("OPENBLAS_NUM_THREADS", "3")
+    monkeypatch.delenv("OMP_NUM_THREADS", raising=False)
+    before = threadpool_info()
+    _write_original_provenance(config, directory, 0, 0)
+    record = json.loads((directory / "execution_provenance.json").read_text())
+    numeric = record["numeric_environment"]
+    assert numeric["thread_environment"]["OPENBLAS_NUM_THREADS"] == "3"
+    assert numeric["thread_environment"]["OMP_NUM_THREADS"] is None
+    assert set(numeric["thread_environment"]) == {
+        "OPENBLAS_NUM_THREADS",
+        "OMP_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "BLIS_NUM_THREADS",
+        "VECLIB_MAXIMUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    }
+    assert numeric["threadpools"] == before == threadpool_info()
+    assert "threadpoolctl" in record["versions"]
+
+
+@pytest.mark.parametrize("contextual", [True, False])
+def test_original_workflow_preserves_one_error_context(
+    tmp_path, monkeypatch, contextual
+):
+    from legacy_csl.original import OriginalCslModel, OriginalExecutionError
+
+    config = _config(tmp_path, "single-csl")
+    write_compact_fixture(config.paths.data_root, num_documents=4)
+    (config.paths.data_root / "single_words.json").write_text(
+        json.dumps([["a", "b", "c", "d"]] * 4)
+    )
+    message = "invalid covariance"
+    error = (
+        OriginalExecutionError(
+            "original execution: experiment=0, seed=0, iteration=1, agent=U, "
+            "attribute=a, phase=gaussian: " + message
+        )
+        if contextual
+        else ValueError(message)
+    )
+
+    def fail(model, words):
+        raise error
+
+    monkeypatch.setattr(OriginalCslModel, "step", fail)
+    with pytest.raises(OriginalExecutionError) as raised:
+        learn(config)
+    text = str(raised.value)
+    assert text.count("original execution:") == 1
+    assert text.count("iteration=") == 1
+    assert "experiment=0, seed=0, iteration=1, agent=U" in text
+    if contextual:
+        assert raised.value is error
+        assert "attribute=a, phase=gaussian" in text
+    else:
+        assert raised.value.__cause__ is error
