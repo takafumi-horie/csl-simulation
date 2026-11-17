@@ -40,6 +40,16 @@ the model names used in this README are **CSL-PGM** and **Inter-CSL-PGM**.
 `single-csl` と `inter-csl` は設定上の mode 識別子です。本 README では、
 正式なモデル名として **CSL-PGM** と **Inter-CSL-PGM** を使用します。
 
+For the historical implementation differences and reproduction settings, see
+the [comparison guide (Japanese)](docs/original_implementation_differences.md).
+The [author's note](#author-note) distinguishes original heuristics from
+model-based posterior updates.
+
+原典実装と通常版・原典互換版の違い、再現条件、ARI集計の違いは
+[利用者向けの比較資料](docs/original_implementation_differences.md)を参照してください。
+原典のヒューリスティクスの数理上の懸念と採用判断は、
+[末尾の著者NOTE](#author-note)にまとめています。
+
 Inter-CSL-PGM prediction follows the conditional chain
 `A observation -> A category -> A word -> B category -> B observation`.
 For every action and object observed by A, it samples the speaker category
@@ -874,3 +884,89 @@ convention; the original OS-derived seeds and paper random streams are unknown.
 独立照合は数値計算のスレッド数を1に固定しています。本番は上記6個の環境変数と
 実際の読込済みランタイムのスレッド数を記録し、値を変更しません。
 明示seedは今回の検証規約で、原典のOS由来seedや論文実験の乱数列を復元したものではありません。
+
+<a id="author-note"></a>
+
+## Author's note: mathematical consistency and heuristics / 著者NOTE：数理との整合性とヒューリスティクス
+
+The following is the repository author's account and research judgment.
+The ordinary implementation removes the original sample-averaging and empty-
+component placement heuristics in favor of model-based posterior draws.
+Original-profile reproduction establishes agreement with a fixed modernized
+reference, rather than mathematical correctness of every inference step.
+Combined original settings improved color and shape ARI in the reported
+comparison; this does not isolate individual heuristics or establish improvement
+for every attribute. Later studies should state and justify their choices.
+
+以下は著者からの補足と研究上の見解です。ここでの「現行実装」は通常版
+（`execution_profile: current`、追加ヒューリスティクスなし）を指します。
+個々の実装差は[比較資料](docs/original_implementation_differences.md)を参照してください。
+
+通常の現行実装は、原典に含まれる平均化や空カテゴリの特別処理を外し、
+確率モデルに沿った事後更新を行う方針で整理しています。原典の実験実装には、
+モデルの数式とは区別して扱うべきヒューリスティクスが含まれます。
+
+本論文はarXiv版として公開され、改訂・出版が完了しないまま絶筆となった経緯があり、
+実装の詳細や、その後に議論された修正事項が本文に十分反映されていません。
+この経緯は著者による説明であり、以下の実装照合の結果とは区別します。
+
+今回の比較では、原典方式を組み合わせた構成で、従来の4機能版に比べて色・形状の
+ARI向上が観測されました。これらの処理の採用を一概に否定するものではありません。
+ただし、初期化・乱数・通信等も変えた比較なので、個々のヒューリスティクスの
+寄与や全属性での改善を確定するものではありません。後続研究では、モデルに基づく
+推論と経験的な工夫を区別し、採用の是非を研究上の判断として明示する必要があります。
+
+### Theta rescaling and posterior updates / θのリスケーリングと事後更新
+
+Using rescaled word probabilities implies theta-dependent factors in the theta
+posterior. The ordinary importance sampler accounts for the column-sum
+correction with finite candidates, but equivalence to the full conditional,
+including theta-dependent row normalizers, has not been established. It should
+not be described as an exact Gibbs update. This concerns the posterior, not a
+rescaling of the Dirichlet prior itself.
+
+原典は発話生成・MH受理に補正後のθを使う一方、θ自体は通常のDirichlet事後から
+更新しています。補正後の語生成分布をモデルの尤度として採用するなら、その補正は
+θの事後分布にも反映する必要があります。θの事前分布自体を変更するという意味では
+ありません。
+
+現行の重要度サンプリングは、この整合性を考慮する方向の実装です。ただし、
+有限候補による近似であり、補正後の行正規化係数もθに依存します。
+この係数まで含む厳密な事後分布との一致は別途検討が必要であり、現コードが
+厳密なGibbs更新を実装しているとは断定しません。
+
+この点は筆頭著者のDr. Hagiwaraとも議論し、論文記述の修正を検討していましたが、
+改訂・出版まで完了しませんでした。公開arXivの履歴はv1のみで、その
+[式(11)](https://arxiv.org/html/2306.15837v1#S2.E11)にも補正が記載されています。
+したがって、[公開版の履歴](https://arxiv.org/abs/2306.15837)と、その後の議論・修正方針は
+区別し、「原典は第1版に忠実、現行は公開最新版に忠実」とは整理していません。
+
+### Averaging theta and mu samples / θ・μの100標本平均
+
+A mean of 100 conditional draws has a different distribution from one draw;
+it is an inference heuristic, not merely a more accurate Gibbs sample.
+The author's preference is to retain posterior sampling and first consider
+hyperparameter or prior design. Studies adopting averaging should document it.
+
+原典では、θと占有カテゴリのμを100標本の平均で更新しています。この平均は、
+本来の条件付き分布から得た単一標本とは分布が異なり、通常の単一標本による
+Gibbs更新とは区別すべき処理です。
+
+実装上の工夫として採用する余地はありますが、著者としては、まずモデルに従う
+抽選を維持したうえでハイパーパラメータ等を調整することが望ましいと考えます。
+平均化を採用する場合は、更新分布を変えるヒューリスティクスとして明記されたいです。
+
+### Empty-component means / 空カテゴリのμの一様配置
+
+With no assigned feature observations, the Gaussian parameter posterior is its
+configured GIW prior. The ordinary update follows that distribution; uniform
+mu placement changes it. Prior or hyperparameter design is the author's first
+choice; otherwise, the relocation heuristic should be stated explicitly.
+
+特徴観測が割り当てられていないカテゴリでは、特徴分布の事後は設定したGIW事前と
+一致します。通常の現行実装は、この分布に従ってμ・Σを生成します。
+原典のμの一様配置は、この事後更新を変更する処理です。
+
+こちらも、ハイパーパラメータや事前分布の設計による対応をまず検討することが
+望ましいと考えます。採用する場合は、空カテゴリを再配置する明確な
+ヒューリスティクスとして記述する必要があります。
