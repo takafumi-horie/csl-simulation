@@ -1,5 +1,5 @@
 {
-  "prepared_utc": "2026-11-17T07:18:22.774534+00:00",
+  "prepared_utc": "2026-11-17T07:21:14.446006+00:00",
   "config_path": "/tmp/legacy-csl-original-compatibility/docs-for-developper/experiments/inter_original_execution_reviewed/config.yaml",
   "config_sha256": "9378e51c141132353bc090b96f359a2aa62ddac3e9bbe2dc0ca12a47156dfa07",
   "source_example_sha256": "72a88dfb5ea1d9669f7b5deba3100defb97214ad4e4363ca31a77a768b3f2f99",
@@ -68,10 +68,10 @@
       "/sys/fs/cgroup/user.slice/cpuset.cpus.effective": "0-23",
       "/sys/fs/cgroup/cpuset.cpus.effective": "0-23"
     },
-    "disk_free_bytes": 230680027136,
+    "disk_free_bytes": 230678814720,
     "memory": [
       "MemTotal:       131566812 kB",
-      "MemAvailable:   114933348 kB"
+      "MemAvailable:   115106772 kB"
     ]
   },
   "input_provenance": {

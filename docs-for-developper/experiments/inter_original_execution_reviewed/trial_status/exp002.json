@@ -1,0 +1,22 @@
+{
+  "trial": 2,
+  "effective_seed": 2,
+  "seed_rule": "run.seed + experiment_id",
+  "pid": 10,
+  "status": "complete",
+  "started_utc": "2026-11-17T07:21:16.115065+00:00",
+  "output_directory": "/tmp/legacy-csl-original-compatibility/outputs/inter_original_execution_reviewed/exp002",
+  "exit_code": 0,
+  "output_sha256": {
+    "state_A.npz": "3cc604a3d59cb71ac1e135a8038ba4328a5adcd8d76e433cac6514f385b5391f",
+    "metadata_A.json": "43c793717e6ca6f8b2c8f0e3214c04ac9e0503177f275a73efb04186a982d8a6",
+    "state_B.npz": "fa4181ed6f395ab40888a2b12a6a48b77ee974793181364891eaddb4e6227616",
+    "metadata_B.json": "50f7ae7dc9c22d590f3a3a26b7f1ebc922e8807a505af853445bf0e580070000",
+    "execution_provenance.json": "c0ae6debee304bfd570d818f1dd8a45a413f83fba501ac39ae4315c14ed48200",
+    "rng_boundaries.jsonl.gz": "71195ed47b9cab99c98611d740dbf5dc1e2ca33d92a6267ae6f1df09cab3ae61",
+    "analysis/history.csv": "4d224ef24e64f7b5c95bd4300abcb7a49392b8020946aea3cf4c91c33d44296d",
+    "analysis/metrics.json": "107173660a83a90b9e53e17bb29606dd3145499707d7a1594a38817f8312e157"
+  },
+  "finished_utc": "2026-11-17T07:29:53.603072+00:00",
+  "elapsed_seconds": 517.4878097369801
+}

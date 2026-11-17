@@ -1,0 +1,96 @@
+{
+  "status": "PASS",
+  "execution_commit": "2af44dfeff4f4140fcee9f8d2299f81563efabae",
+  "source_and_input_postrun_verified": true,
+  "reference_array_pairs_byte_equal": 400,
+  "reference_ari_values_exact": 160,
+  "tests_passed": 215,
+  "ruff_version": "0.15.21",
+  "source_frozen_during_execution": true,
+  "total_snapshot_csv_files": 210000,
+  "rng_plain_bytes": 68407939,
+  "rng_gzip_bytes": 36425512,
+  "trials": [
+    {
+      "trial": 0,
+      "rng_records": 1001,
+      "rng_plain_bytes": 6841092,
+      "rng_gzip_bytes": 3643229,
+      "snapshot_directories": 500,
+      "snapshot_csv_files": 21000
+    },
+    {
+      "trial": 1,
+      "rng_records": 1001,
+      "rng_plain_bytes": 6840718,
+      "rng_gzip_bytes": 3642360,
+      "snapshot_directories": 500,
+      "snapshot_csv_files": 21000
+    },
+    {
+      "trial": 2,
+      "rng_records": 1001,
+      "rng_plain_bytes": 6839923,
+      "rng_gzip_bytes": 3642325,
+      "snapshot_directories": 500,
+      "snapshot_csv_files": 21000
+    },
+    {
+      "trial": 3,
+      "rng_records": 1001,
+      "rng_plain_bytes": 6841759,
+      "rng_gzip_bytes": 3642923,
+      "snapshot_directories": 500,
+      "snapshot_csv_files": 21000
+    },
+    {
+      "trial": 4,
+      "rng_records": 1001,
+      "rng_plain_bytes": 6840847,
+      "rng_gzip_bytes": 3642426,
+      "snapshot_directories": 500,
+      "snapshot_csv_files": 21000
+    },
+    {
+      "trial": 5,
+      "rng_records": 1001,
+      "rng_plain_bytes": 6840465,
+      "rng_gzip_bytes": 3641873,
+      "snapshot_directories": 500,
+      "snapshot_csv_files": 21000
+    },
+    {
+      "trial": 6,
+      "rng_records": 1001,
+      "rng_plain_bytes": 6840824,
+      "rng_gzip_bytes": 3642150,
+      "snapshot_directories": 500,
+      "snapshot_csv_files": 21000
+    },
+    {
+      "trial": 7,
+      "rng_records": 1001,
+      "rng_plain_bytes": 6840151,
+      "rng_gzip_bytes": 3642342,
+      "snapshot_directories": 500,
+      "snapshot_csv_files": 21000
+    },
+    {
+      "trial": 8,
+      "rng_records": 1001,
+      "rng_plain_bytes": 6841521,
+      "rng_gzip_bytes": 3643670,
+      "snapshot_directories": 500,
+      "snapshot_csv_files": 21000
+    },
+    {
+      "trial": 9,
+      "rng_records": 1001,
+      "rng_plain_bytes": 6840639,
+      "rng_gzip_bytes": 3642214,
+      "snapshot_directories": 500,
+      "snapshot_csv_files": 21000
+    }
+  ],
+  "results_sha256": "e6c299fd589572d0c2624e67fdffea8fa0ad4085f925e5e536440bb69dbcf6e7"
+}

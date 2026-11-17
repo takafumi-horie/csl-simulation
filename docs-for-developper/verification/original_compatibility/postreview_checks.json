@@ -21,5 +21,14 @@
     "tests/_original_reference.py": "d6f5da3d425d673c079dbec77935e5d197c48b4c036ec375a628cb58f3524311",
     "tests/test_original_execution_reference.py": "4119f345426ef137f834306fcc09ecc3532c2827b183cbf214cce0002a8217be",
     "tests/test_original_execution_workflows.py": "e5498d00db0dfc08c92beb690b288d4d818f40c8a4ae1ea2f0633ca38c348a48"
+  },
+  "long_experiment": {
+    "status": "PASS",
+    "execution_commit": "2af44dfeff4f4140fcee9f8d2299f81563efabae",
+    "trials": 10,
+    "iterations": 500,
+    "reference_array_pairs_byte_equal": 400,
+    "reference_ari_values_exact": 160,
+    "report": "../../experiments/inter_original_execution_reviewed/report.md"
   }
 }
