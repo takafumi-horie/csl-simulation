@@ -1,0 +1,125 @@
+{
+  "checked_utc": "2026-11-17T05:12:34.771512+00:00",
+  "status": "PASS",
+  "head": "12ef90fc2fc0ffec402087014ba85d1b09359fc5",
+  "source_config_runner_sha256_unchanged": true,
+  "input_raw_files_verified": 408,
+  "input_processed_observation_truth_attention_fingerprints_unchanged": true,
+  "trials": [
+    {
+      "trial": 0,
+      "seed_spawn_key": [
+        0
+      ],
+      "checkpoint_metadata_pairs": 2,
+      "native_analysis_present": true,
+      "native_analysis_plot_count": 5,
+      "exit_code": 0,
+      "elapsed_seconds": 492.6958710409235
+    },
+    {
+      "trial": 1,
+      "seed_spawn_key": [
+        1
+      ],
+      "checkpoint_metadata_pairs": 2,
+      "native_analysis_present": true,
+      "native_analysis_plot_count": 5,
+      "exit_code": 0,
+      "elapsed_seconds": 490.8881296380423
+    },
+    {
+      "trial": 2,
+      "seed_spawn_key": [
+        2
+      ],
+      "checkpoint_metadata_pairs": 2,
+      "native_analysis_present": true,
+      "native_analysis_plot_count": 5,
+      "exit_code": 0,
+      "elapsed_seconds": 494.2325514268596
+    },
+    {
+      "trial": 3,
+      "seed_spawn_key": [
+        3
+      ],
+      "checkpoint_metadata_pairs": 2,
+      "native_analysis_present": true,
+      "native_analysis_plot_count": 5,
+      "exit_code": 0,
+      "elapsed_seconds": 498.7276447180193
+    },
+    {
+      "trial": 4,
+      "seed_spawn_key": [
+        4
+      ],
+      "checkpoint_metadata_pairs": 2,
+      "native_analysis_present": true,
+      "native_analysis_plot_count": 5,
+      "exit_code": 0,
+      "elapsed_seconds": 489.29130561905913
+    },
+    {
+      "trial": 5,
+      "seed_spawn_key": [
+        5
+      ],
+      "checkpoint_metadata_pairs": 2,
+      "native_analysis_present": true,
+      "native_analysis_plot_count": 5,
+      "exit_code": 0,
+      "elapsed_seconds": 489.43710989900865
+    },
+    {
+      "trial": 6,
+      "seed_spawn_key": [
+        6
+      ],
+      "checkpoint_metadata_pairs": 2,
+      "native_analysis_present": true,
+      "native_analysis_plot_count": 5,
+      "exit_code": 0,
+      "elapsed_seconds": 490.9916936350055
+    },
+    {
+      "trial": 7,
+      "seed_spawn_key": [
+        7
+      ],
+      "checkpoint_metadata_pairs": 2,
+      "native_analysis_present": true,
+      "native_analysis_plot_count": 5,
+      "exit_code": 0,
+      "elapsed_seconds": 493.22054928401485
+    },
+    {
+      "trial": 8,
+      "seed_spawn_key": [
+        8
+      ],
+      "checkpoint_metadata_pairs": 2,
+      "native_analysis_present": true,
+      "native_analysis_plot_count": 5,
+      "exit_code": 0,
+      "elapsed_seconds": 495.33025246090256
+    },
+    {
+      "trial": 9,
+      "seed_spawn_key": [
+        9
+      ],
+      "checkpoint_metadata_pairs": 2,
+      "native_analysis_present": true,
+      "native_analysis_plot_count": 5,
+      "exit_code": 0,
+      "elapsed_seconds": 493.3418975218665
+    }
+  ],
+  "final_native_checkpoints": 20,
+  "final_native_metadata": 20,
+  "all_theta_pi_normalized": true,
+  "execution_manifest_sha256": "6c11def839b75394e6b5c5827e8943af76166bca282b88191f85d7269f15c6c6",
+  "total_elapsed_seconds": 530.1313773759175
+}

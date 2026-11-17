@@ -1,0 +1,3162 @@
+{
+  "completed_utc": "2026-11-17T05:17:06.308928+00:00",
+  "git_head": "12ef90fc2fc0ffec402087014ba85d1b09359fc5",
+  "aggregation_git_head": "12ef90fc2fc0ffec402087014ba85d1b09359fc5",
+  "config_sha256": "0255183eb8a23b2da433578d6dadbfc65c240ffca84ab198f6443854ce0bd738",
+  "execution_manifest_sha256": "6c11def839b75394e6b5c5827e8943af76166bca282b88191f85d7269f15c6c6",
+  "execution_elapsed_seconds": 530.1313773759175,
+  "postrun_validation_sha256": "c8e29d93dc241bb882acbd5859b96282aab200ccb30859a3e9fabeb33c4b4403",
+  "aggregator_sha256": "5b2259ba1e0b845962f6fbfdac9467d0cd74749774ad36419fe976c9ee423140",
+  "native_output_root": "/tmp/legacy-csl-original-heuristics/outputs/inter_original_heuristics_12ef90f",
+  "recorded_native_output_root": "/tmp/legacy-csl-original-heuristics/outputs/inter_original_heuristics_12ef90f",
+  "runtime": {
+    "python": "3.11.18",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "sklearn": "1.9.0"
+  },
+  "trials": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "seed": 0,
+  "iterations": 500,
+  "sample_sd_ddof": 1,
+  "data_hashes": {
+    "A": {
+      "observations": {
+        "a": "d4b58826759ec000412b0350a26c8d91a6ed5d893057a1638eb8239e80311011",
+        "p": "d6c7d44d87f5c0e4c09e3f6ab390d11cdeaf34671ba91874725afb61b7544f76",
+        "o": "6edee354c163c2171ccc8ce432f8cf5b8979cf34428d86baf7666d68e88e80da",
+        "c": "8c50d0be3ea4e6d7d09115be6e71dbcd48fa40f52959d7ed059ab4207edeb3da"
+      },
+      "truth": {
+        "a": "847b9bfb2ad16bba810e9c5a108b5bcf436852ad73508d70148248337f7b517b",
+        "p": "453808f86a096e3f6b93bf98af166af66223d1c5c2b9f3650bf97d17803daae4",
+        "o": "22e6b93bb6b94b6196654e4ea0c3368c6b448ce3e449b24fd84b7ae23a630037",
+        "c": "e32d9f7b7dc52d73fdc0c5da44197def56b22b095ee14ee2c81d772444880f38"
+      },
+      "attentions": "4e1f1c522fb904e3cf2df7103df7a3942d0f5a4e3e0f6f8cf7e2c85d2da4bb48",
+      "num_objects": "0ea6ca751835455053459838b7fe14e3a6530ed10c72cd0f4001474a2a549358"
+    },
+    "B": {
+      "observations": {
+        "a": "cb30c14dbd6d88431fefa46c8a9f4bd9104aec9688472a9b56e24e27ea371d2f",
+        "p": "86bc01766c8716e60ac517b564d82f796f4d46a76307c300d661bd2e12d95e44",
+        "o": "239d3bfe980d0a39b15eff4d931e0cb5c693804aa6d59dbd7768fcb3b11d203b",
+        "c": "9bde006730e3d169b3721fb2618df918af2b0ad4610f7049781757d7188f98f5"
+      },
+      "truth": {
+        "a": "847b9bfb2ad16bba810e9c5a108b5bcf436852ad73508d70148248337f7b517b",
+        "p": "453808f86a096e3f6b93bf98af166af66223d1c5c2b9f3650bf97d17803daae4",
+        "o": "22e6b93bb6b94b6196654e4ea0c3368c6b448ce3e449b24fd84b7ae23a630037",
+        "c": "e32d9f7b7dc52d73fdc0c5da44197def56b22b095ee14ee2c81d772444880f38"
+      },
+      "attentions": "4e1f1c522fb904e3cf2df7103df7a3942d0f5a4e3e0f6f8cf7e2c85d2da4bb48",
+      "num_objects": "0ea6ca751835455053459838b7fe14e3a6530ed10c72cd0f4001474a2a549358"
+    }
+  },
+  "source_sha256": {
+    "src/legacy_csl/__init__.py": "4fa3cff215a510d811b7dc7a3e136e2206de7878191decef7a89e7585636bbee",
+    "src/legacy_csl/__main__.py": "5b8d6748dea85d4ed8d954d1bf59c63cc3c72cf9c9808228790b31e0724e4ba8",
+    "src/legacy_csl/analysis.py": "d07c688e6b8c7e5bbb7b77509c72dffe2d9a1f2b2effcf49914f178804f49f95",
+    "src/legacy_csl/attributes.py": "365d7250f52c1f72dfe89f955a76da61b660030b290527cde7f70c42335210c8",
+    "src/legacy_csl/cli.py": "c8fd91df7092009b55df19f92f265b74bfde9853240a4350766f2343e0fdafd6",
+    "src/legacy_csl/config.py": "ddac0764dcc0d7975bee45459958ed3ff685aa1d109d470a2c693db17e476fcd",
+    "src/legacy_csl/data.py": "18e641f3b00ac172cfb96ee976d62ad88907492c95336bfd57ab3775d80d46ea",
+    "src/legacy_csl/giw.py": "9d9d1a19e1b16bcfea5f39d620bfe98609256fe9705753950ae5082461ac9af4",
+    "src/legacy_csl/model.py": "8c72b4e6a82da43f8e168f2555ab92661bbbe644da45f8e0bea7b22fedd95ccc",
+    "src/legacy_csl/rescaling.py": "b76b56feff664d6574773e89a203dc725c5431fe23b19672726431728de91d4a",
+    "src/legacy_csl/runner.py": "bc6e72f4e0fd0848f78667b874f540f283f63978bd71a4dfceccf80a367ebe48",
+    "src/legacy_csl/state_io.py": "84f50e76484ed4a9119fa5192d684ab549677b91b0221a6e47e27e405c06a877"
+  },
+  "paper_reference": {
+    "source": "https://arxiv.org/html/2306.15837v1#S3.T3",
+    "arxiv_version": "2306.15837v1",
+    "table": 3,
+    "model": "Inter-CSL-PGM (Proposed)",
+    "verified_date_jst": "2026-11-17",
+    "ari": {
+      "a": 0.309,
+      "p": 0.794,
+      "o": 0.286,
+      "c": 0.949
+    },
+    "table_trials_column": 30,
+    "notes": [
+      "The Trials column is not used as the number of independent random-seed repetitions in this report.",
+      "Table 3 does not provide standard deviations for these ARI values.",
+      "The paper does not establish the exact object subset or A/B aggregation needed to equate its ARI column with either evaluation reported here."
+    ]
+  },
+  "summary": [
+    {
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "a",
+      "n": 10,
+      "mean": 0.28951822691914686,
+      "sample_sd": 0.07936620895729096,
+      "values": [
+        0.3734072022160665,
+        0.407569349867393,
+        0.26371022342586325,
+        0.347135163767988,
+        0.3788613518442594,
+        0.23833824695829156,
+        0.204295035215832,
+        0.25394760186882726,
+        0.23828535406598025,
+        0.18963273996096752
+      ],
+      "difference_from_paper": -0.019481773080853138
+    },
+    {
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "p",
+      "n": 10,
+      "mean": 0.7437813859404953,
+      "sample_sd": 0.13733150226971302,
+      "values": [
+        0.8493897688911971,
+        0.8493897688911971,
+        0.5818544809228039,
+        0.8493897688911971,
+        0.5542918619841697,
+        0.8493897688911971,
+        0.5818544809228039,
+        0.6234744222279928,
+        0.8493897688911971,
+        0.8493897688911971
+      ],
+      "difference_from_paper": -0.050218614059504785
+    },
+    {
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "o",
+      "n": 10,
+      "mean": 0.2713486671338378,
+      "sample_sd": 0.08724621218127179,
+      "values": [
+        0.2900524400684932,
+        0.24799031895583024,
+        0.2295249945107224,
+        0.44115511366810034,
+        0.28975726570153476,
+        0.18823629966238836,
+        0.3733252657965252,
+        0.13640975868001942,
+        0.27906841508446484,
+        0.23796679921029948
+      ],
+      "difference_from_paper": -0.014651332866162159
+    },
+    {
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "c",
+      "n": 10,
+      "mean": 0.9363258458368473,
+      "sample_sd": 0.081887170991212,
+      "values": [
+        0.8495176107317198,
+        0.9183691341498506,
+        0.9183691341498506,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9183691341498506,
+        0.7586334451872011
+      ],
+      "difference_from_paper": -0.012674154163152651
+    },
+    {
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "a",
+      "n": 10,
+      "mean": 0.32581301622441083,
+      "sample_sd": 0.0965822035505933,
+      "values": [
+        0.3247715557638238,
+        0.3454441863522812,
+        0.3533389687235841,
+        0.5158193505300943,
+        0.3026204564666103,
+        0.3883420682602582,
+        0.34065934065934067,
+        0.1701782358635613,
+        0.3246148333930491,
+        0.19234116623150566
+      ],
+      "difference_from_paper": 0.016813016224410837
+    },
+    {
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "p",
+      "n": 10,
+      "mean": 0.7216492223553069,
+      "sample_sd": 0.13727165824423315,
+      "values": [
+        0.5818544809228039,
+        0.8493897688911971,
+        0.7295406854744696,
+        0.7295406854744696,
+        0.8493897688911971,
+        0.5818544809228039,
+        0.8493897688911971,
+        0.4666021297192643,
+        0.8493897688911971,
+        0.7295406854744696
+      ],
+      "difference_from_paper": -0.07235077764469311
+    },
+    {
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "o",
+      "n": 10,
+      "mean": 0.26034899715816634,
+      "sample_sd": 0.09159546821553353,
+      "values": [
+        0.16140904311251314,
+        0.21488080627229017,
+        0.2592831079630822,
+        0.18162083936324167,
+        0.30609412893770993,
+        0.20146856356126663,
+        0.16717484719129805,
+        0.3475307768501486,
+        0.3272164862266438,
+        0.4368113721034692
+      ],
+      "difference_from_paper": -0.025651002841833637
+    },
+    {
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "c",
+      "n": 10,
+      "mean": 0.8565954798714112,
+      "sample_sd": 0.11459914286291284,
+      "values": [
+        1.0,
+        0.7772598962778179,
+        0.7710767287653931,
+        0.7013368156056058,
+        0.8670402445236882,
+        0.9624949192624617,
+        0.8670402445236882,
+        0.9183691341498506,
+        1.0,
+        0.7013368156056058
+      ],
+      "difference_from_paper": -0.0924045201285888
+    },
+    {
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "n": 10,
+      "mean": 0.3076656215717789,
+      "sample_sd": 0.07271751505164117,
+      "values": [
+        0.3490893789899452,
+        0.3765067681098371,
+        0.3085245960747237,
+        0.43147725714904117,
+        0.34074090415543484,
+        0.31334015760927486,
+        0.27247718793758635,
+        0.21206291886619427,
+        0.2814500937295147,
+        0.1909869530962366
+      ],
+      "difference_from_paper": -0.0013343784282210946
+    },
+    {
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "n": 10,
+      "mean": 0.7327153041479011,
+      "sample_sd": 0.09228646801163225,
+      "values": [
+        0.7156221249070005,
+        0.8493897688911971,
+        0.6556975831986367,
+        0.7894652271828333,
+        0.7018408154376834,
+        0.7156221249070005,
+        0.7156221249070005,
+        0.5450382759736285,
+        0.8493897688911971,
+        0.7894652271828333
+      ],
+      "difference_from_paper": -0.06128469585209895
+    },
+    {
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "n": 10,
+      "mean": 0.2658488321460021,
+      "sample_sd": 0.045332376512727625,
+      "values": [
+        0.22573074159050316,
+        0.2314355626140602,
+        0.2444040512369023,
+        0.311387976515671,
+        0.2979256973196224,
+        0.1948524316118275,
+        0.27025005649391165,
+        0.241970267765084,
+        0.30314245065555434,
+        0.33738908565688436
+      ],
+      "difference_from_paper": -0.020151167853997898
+    },
+    {
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "n": 10,
+      "mean": 0.8964606628541292,
+      "sample_sd": 0.07707084995998209,
+      "values": [
+        0.92475880536586,
+        0.8478145152138342,
+        0.8447229314576219,
+        0.8506684078028028,
+        0.9335201222618441,
+        0.9812474596312308,
+        0.9335201222618441,
+        0.9591845670749253,
+        0.9591845670749253,
+        0.7299851303964034
+      ],
+      "difference_from_paper": -0.05253933714587078
+    },
+    {
+      "scope": "all",
+      "agent": "A",
+      "attribute": "a",
+      "n": 10,
+      "mean": 0.28951822691914686,
+      "sample_sd": 0.07936620895729096,
+      "values": [
+        0.3734072022160665,
+        0.407569349867393,
+        0.26371022342586325,
+        0.347135163767988,
+        0.3788613518442594,
+        0.23833824695829156,
+        0.204295035215832,
+        0.25394760186882726,
+        0.23828535406598025,
+        0.18963273996096752
+      ],
+      "difference_from_paper": null
+    },
+    {
+      "scope": "all",
+      "agent": "A",
+      "attribute": "p",
+      "n": 10,
+      "mean": 0.5134075156185299,
+      "sample_sd": 0.10569938221878826,
+      "values": [
+        0.5918345008756567,
+        0.5918345008756567,
+        0.40892111505308726,
+        0.5918345008756567,
+        0.39634146341463417,
+        0.5918345008756567,
+        0.3255712824097546,
+        0.4522342900538833,
+        0.5918345008756567,
+        0.5918345008756567
+      ],
+      "difference_from_paper": null
+    },
+    {
+      "scope": "all",
+      "agent": "A",
+      "attribute": "o",
+      "n": 10,
+      "mean": 0.26556836837536774,
+      "sample_sd": 0.05850686051881643,
+      "values": [
+        0.26137906949672113,
+        0.23889144741728938,
+        0.24000521815919398,
+        0.334867784848408,
+        0.32368238697485435,
+        0.2252841283075168,
+        0.37511968258653433,
+        0.19636213311285655,
+        0.2424483487510512,
+        0.21764348409925163
+      ],
+      "difference_from_paper": null
+    },
+    {
+      "scope": "all",
+      "agent": "A",
+      "attribute": "c",
+      "n": 10,
+      "mean": 0.9339713819000113,
+      "sample_sd": 0.08753236924716883,
+      "values": [
+        0.8317053077556785,
+        0.921459987433598,
+        0.921459987433598,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.921459987433598,
+        0.7436285489436406
+      ],
+      "difference_from_paper": null
+    },
+    {
+      "scope": "all",
+      "agent": "B",
+      "attribute": "a",
+      "n": 10,
+      "mean": 0.32581301622441083,
+      "sample_sd": 0.0965822035505933,
+      "values": [
+        0.3247715557638238,
+        0.3454441863522812,
+        0.3533389687235841,
+        0.5158193505300943,
+        0.3026204564666103,
+        0.3883420682602582,
+        0.34065934065934067,
+        0.1701782358635613,
+        0.3246148333930491,
+        0.19234116623150566
+      ],
+      "difference_from_paper": null
+    },
+    {
+      "scope": "all",
+      "agent": "B",
+      "attribute": "p",
+      "n": 10,
+      "mean": 0.49787083425008527,
+      "sample_sd": 0.11323701775388798,
+      "values": [
+        0.40892111505308726,
+        0.5918345008756567,
+        0.5100157527247956,
+        0.5185763532368544,
+        0.5918345008756567,
+        0.40892111505308726,
+        0.5918345008756567,
+        0.24635964969354693,
+        0.5918345008756567,
+        0.5185763532368544
+      ],
+      "difference_from_paper": null
+    },
+    {
+      "scope": "all",
+      "agent": "B",
+      "attribute": "o",
+      "n": 10,
+      "mean": 0.2927617205832772,
+      "sample_sd": 0.09037374949857051,
+      "values": [
+        0.23353797674671303,
+        0.28708948961231184,
+        0.24256830032831697,
+        0.22711514542038266,
+        0.3100553707546481,
+        0.2186524921626642,
+        0.1937171347040171,
+        0.3265241651479561,
+        0.4276990248872071,
+        0.46065810606855473
+      ],
+      "difference_from_paper": null
+    },
+    {
+      "scope": "all",
+      "agent": "B",
+      "attribute": "c",
+      "n": 10,
+      "mean": 0.8541858036666633,
+      "sample_sd": 0.1212602352966796,
+      "values": [
+        1.0,
+        0.7794601711652402,
+        0.7472487604305237,
+        0.6920568510428844,
+        0.865572625698324,
+        0.9784301641548546,
+        0.865572625698324,
+        0.921459987433598,
+        1.0,
+        0.6920568510428844
+      ],
+      "difference_from_paper": null
+    },
+    {
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "n": 10,
+      "mean": 0.3076656215717789,
+      "sample_sd": 0.07271751505164117,
+      "values": [
+        0.3490893789899452,
+        0.3765067681098371,
+        0.3085245960747237,
+        0.43147725714904117,
+        0.34074090415543484,
+        0.31334015760927486,
+        0.27247718793758635,
+        0.21206291886619427,
+        0.2814500937295147,
+        0.1909869530962366
+      ],
+      "difference_from_paper": null
+    },
+    {
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "n": 10,
+      "mean": 0.5056391749343075,
+      "sample_sd": 0.07358994968204785,
+      "values": [
+        0.5003778079643719,
+        0.5918345008756567,
+        0.45946843388894143,
+        0.5552054270562555,
+        0.49408798214514543,
+        0.5003778079643719,
+        0.4587028916427056,
+        0.3492969698737151,
+        0.5918345008756567,
+        0.5552054270562555
+      ],
+      "difference_from_paper": null
+    },
+    {
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "n": 10,
+      "mean": 0.27916504447932244,
+      "sample_sd": 0.04008850793804906,
+      "values": [
+        0.24745852312171707,
+        0.2629904685148006,
+        0.24128675924375548,
+        0.2809914651343953,
+        0.31686887886475124,
+        0.2219683102350905,
+        0.28441840864527573,
+        0.26144314913040634,
+        0.3350736868191292,
+        0.33915079508390317
+      ],
+      "difference_from_paper": null
+    },
+    {
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "n": 10,
+      "mean": 0.8940785927833373,
+      "sample_sd": 0.0818154566538343,
+      "values": [
+        0.9158526538778393,
+        0.8504600792994191,
+        0.8343543739320609,
+        0.8460284255214422,
+        0.932786312849162,
+        0.9892150820774273,
+        0.932786312849162,
+        0.960729993716799,
+        0.960729993716799,
+        0.7178426999932626
+      ],
+      "difference_from_paper": null
+    }
+  ],
+  "trial_metrics": [
+    {
+      "trial": 0,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.3734072022160665
+    },
+    {
+      "trial": 0,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.3247715557638238
+    },
+    {
+      "trial": 0,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.3490893789899452
+    },
+    {
+      "trial": 0,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.8493897688911971
+    },
+    {
+      "trial": 0,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.5818544809228039
+    },
+    {
+      "trial": 0,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.7156221249070005
+    },
+    {
+      "trial": 0,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.2900524400684932
+    },
+    {
+      "trial": 0,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.16140904311251314
+    },
+    {
+      "trial": 0,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.22573074159050316
+    },
+    {
+      "trial": 0,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 0.8495176107317198
+    },
+    {
+      "trial": 0,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 0,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.92475880536586
+    },
+    {
+      "trial": 0,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.3734072022160665
+    },
+    {
+      "trial": 0,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.3247715557638238
+    },
+    {
+      "trial": 0,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.3490893789899452
+    },
+    {
+      "trial": 0,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.5918345008756567
+    },
+    {
+      "trial": 0,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.40892111505308726
+    },
+    {
+      "trial": 0,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.5003778079643719
+    },
+    {
+      "trial": 0,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.26137906949672113
+    },
+    {
+      "trial": 0,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.23353797674671303
+    },
+    {
+      "trial": 0,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.24745852312171707
+    },
+    {
+      "trial": 0,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 0.8317053077556785
+    },
+    {
+      "trial": 0,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 0,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.9158526538778393
+    },
+    {
+      "trial": 1,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.407569349867393
+    },
+    {
+      "trial": 1,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.3454441863522812
+    },
+    {
+      "trial": 1,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.3765067681098371
+    },
+    {
+      "trial": 1,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.8493897688911971
+    },
+    {
+      "trial": 1,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.8493897688911971
+    },
+    {
+      "trial": 1,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.8493897688911971
+    },
+    {
+      "trial": 1,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.24799031895583024
+    },
+    {
+      "trial": 1,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.21488080627229017
+    },
+    {
+      "trial": 1,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.2314355626140602
+    },
+    {
+      "trial": 1,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 0.9183691341498506
+    },
+    {
+      "trial": 1,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.7772598962778179
+    },
+    {
+      "trial": 1,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.8478145152138342
+    },
+    {
+      "trial": 1,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.407569349867393
+    },
+    {
+      "trial": 1,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.3454441863522812
+    },
+    {
+      "trial": 1,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.3765067681098371
+    },
+    {
+      "trial": 1,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.5918345008756567
+    },
+    {
+      "trial": 1,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.5918345008756567
+    },
+    {
+      "trial": 1,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.5918345008756567
+    },
+    {
+      "trial": 1,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.23889144741728938
+    },
+    {
+      "trial": 1,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.28708948961231184
+    },
+    {
+      "trial": 1,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.2629904685148006
+    },
+    {
+      "trial": 1,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 0.921459987433598
+    },
+    {
+      "trial": 1,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.7794601711652402
+    },
+    {
+      "trial": 1,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.8504600792994191
+    },
+    {
+      "trial": 2,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.26371022342586325
+    },
+    {
+      "trial": 2,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.3533389687235841
+    },
+    {
+      "trial": 2,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.3085245960747237
+    },
+    {
+      "trial": 2,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.5818544809228039
+    },
+    {
+      "trial": 2,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.7295406854744696
+    },
+    {
+      "trial": 2,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.6556975831986367
+    },
+    {
+      "trial": 2,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.2295249945107224
+    },
+    {
+      "trial": 2,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.2592831079630822
+    },
+    {
+      "trial": 2,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.2444040512369023
+    },
+    {
+      "trial": 2,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 0.9183691341498506
+    },
+    {
+      "trial": 2,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.7710767287653931
+    },
+    {
+      "trial": 2,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.8447229314576219
+    },
+    {
+      "trial": 2,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.26371022342586325
+    },
+    {
+      "trial": 2,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.3533389687235841
+    },
+    {
+      "trial": 2,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.3085245960747237
+    },
+    {
+      "trial": 2,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.40892111505308726
+    },
+    {
+      "trial": 2,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.5100157527247956
+    },
+    {
+      "trial": 2,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.45946843388894143
+    },
+    {
+      "trial": 2,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.24000521815919398
+    },
+    {
+      "trial": 2,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.24256830032831697
+    },
+    {
+      "trial": 2,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.24128675924375548
+    },
+    {
+      "trial": 2,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 0.921459987433598
+    },
+    {
+      "trial": 2,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.7472487604305237
+    },
+    {
+      "trial": 2,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.8343543739320609
+    },
+    {
+      "trial": 3,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.347135163767988
+    },
+    {
+      "trial": 3,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.5158193505300943
+    },
+    {
+      "trial": 3,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.43147725714904117
+    },
+    {
+      "trial": 3,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.8493897688911971
+    },
+    {
+      "trial": 3,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.7295406854744696
+    },
+    {
+      "trial": 3,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.7894652271828333
+    },
+    {
+      "trial": 3,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.44115511366810034
+    },
+    {
+      "trial": 3,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.18162083936324167
+    },
+    {
+      "trial": 3,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.311387976515671
+    },
+    {
+      "trial": 3,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 3,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.7013368156056058
+    },
+    {
+      "trial": 3,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.8506684078028028
+    },
+    {
+      "trial": 3,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.347135163767988
+    },
+    {
+      "trial": 3,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.5158193505300943
+    },
+    {
+      "trial": 3,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.43147725714904117
+    },
+    {
+      "trial": 3,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.5918345008756567
+    },
+    {
+      "trial": 3,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.5185763532368544
+    },
+    {
+      "trial": 3,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.5552054270562555
+    },
+    {
+      "trial": 3,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.334867784848408
+    },
+    {
+      "trial": 3,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.22711514542038266
+    },
+    {
+      "trial": 3,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.2809914651343953
+    },
+    {
+      "trial": 3,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 3,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.6920568510428844
+    },
+    {
+      "trial": 3,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.8460284255214422
+    },
+    {
+      "trial": 4,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.3788613518442594
+    },
+    {
+      "trial": 4,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.3026204564666103
+    },
+    {
+      "trial": 4,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.34074090415543484
+    },
+    {
+      "trial": 4,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.5542918619841697
+    },
+    {
+      "trial": 4,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.8493897688911971
+    },
+    {
+      "trial": 4,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.7018408154376834
+    },
+    {
+      "trial": 4,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.28975726570153476
+    },
+    {
+      "trial": 4,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.30609412893770993
+    },
+    {
+      "trial": 4,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.2979256973196224
+    },
+    {
+      "trial": 4,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 4,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.8670402445236882
+    },
+    {
+      "trial": 4,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.9335201222618441
+    },
+    {
+      "trial": 4,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.3788613518442594
+    },
+    {
+      "trial": 4,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.3026204564666103
+    },
+    {
+      "trial": 4,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.34074090415543484
+    },
+    {
+      "trial": 4,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.39634146341463417
+    },
+    {
+      "trial": 4,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.5918345008756567
+    },
+    {
+      "trial": 4,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.49408798214514543
+    },
+    {
+      "trial": 4,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.32368238697485435
+    },
+    {
+      "trial": 4,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.3100553707546481
+    },
+    {
+      "trial": 4,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.31686887886475124
+    },
+    {
+      "trial": 4,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 4,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.865572625698324
+    },
+    {
+      "trial": 4,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.932786312849162
+    },
+    {
+      "trial": 5,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.23833824695829156
+    },
+    {
+      "trial": 5,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.3883420682602582
+    },
+    {
+      "trial": 5,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.31334015760927486
+    },
+    {
+      "trial": 5,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.8493897688911971
+    },
+    {
+      "trial": 5,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.5818544809228039
+    },
+    {
+      "trial": 5,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.7156221249070005
+    },
+    {
+      "trial": 5,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.18823629966238836
+    },
+    {
+      "trial": 5,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.20146856356126663
+    },
+    {
+      "trial": 5,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.1948524316118275
+    },
+    {
+      "trial": 5,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 5,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.9624949192624617
+    },
+    {
+      "trial": 5,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.9812474596312308
+    },
+    {
+      "trial": 5,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.23833824695829156
+    },
+    {
+      "trial": 5,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.3883420682602582
+    },
+    {
+      "trial": 5,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.31334015760927486
+    },
+    {
+      "trial": 5,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.5918345008756567
+    },
+    {
+      "trial": 5,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.40892111505308726
+    },
+    {
+      "trial": 5,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.5003778079643719
+    },
+    {
+      "trial": 5,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.2252841283075168
+    },
+    {
+      "trial": 5,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.2186524921626642
+    },
+    {
+      "trial": 5,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.2219683102350905
+    },
+    {
+      "trial": 5,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 5,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.9784301641548546
+    },
+    {
+      "trial": 5,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.9892150820774273
+    },
+    {
+      "trial": 6,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.204295035215832
+    },
+    {
+      "trial": 6,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.34065934065934067
+    },
+    {
+      "trial": 6,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.27247718793758635
+    },
+    {
+      "trial": 6,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.5818544809228039
+    },
+    {
+      "trial": 6,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.8493897688911971
+    },
+    {
+      "trial": 6,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.7156221249070005
+    },
+    {
+      "trial": 6,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.3733252657965252
+    },
+    {
+      "trial": 6,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.16717484719129805
+    },
+    {
+      "trial": 6,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.27025005649391165
+    },
+    {
+      "trial": 6,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 6,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.8670402445236882
+    },
+    {
+      "trial": 6,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.9335201222618441
+    },
+    {
+      "trial": 6,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.204295035215832
+    },
+    {
+      "trial": 6,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.34065934065934067
+    },
+    {
+      "trial": 6,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.27247718793758635
+    },
+    {
+      "trial": 6,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.3255712824097546
+    },
+    {
+      "trial": 6,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.5918345008756567
+    },
+    {
+      "trial": 6,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.4587028916427056
+    },
+    {
+      "trial": 6,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.37511968258653433
+    },
+    {
+      "trial": 6,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.1937171347040171
+    },
+    {
+      "trial": 6,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.28441840864527573
+    },
+    {
+      "trial": 6,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 6,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.865572625698324
+    },
+    {
+      "trial": 6,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.932786312849162
+    },
+    {
+      "trial": 7,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.25394760186882726
+    },
+    {
+      "trial": 7,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.1701782358635613
+    },
+    {
+      "trial": 7,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.21206291886619427
+    },
+    {
+      "trial": 7,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.6234744222279928
+    },
+    {
+      "trial": 7,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.4666021297192643
+    },
+    {
+      "trial": 7,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.5450382759736285
+    },
+    {
+      "trial": 7,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.13640975868001942
+    },
+    {
+      "trial": 7,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.3475307768501486
+    },
+    {
+      "trial": 7,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.241970267765084
+    },
+    {
+      "trial": 7,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 7,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.9183691341498506
+    },
+    {
+      "trial": 7,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.9591845670749253
+    },
+    {
+      "trial": 7,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.25394760186882726
+    },
+    {
+      "trial": 7,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.1701782358635613
+    },
+    {
+      "trial": 7,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.21206291886619427
+    },
+    {
+      "trial": 7,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.4522342900538833
+    },
+    {
+      "trial": 7,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.24635964969354693
+    },
+    {
+      "trial": 7,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.3492969698737151
+    },
+    {
+      "trial": 7,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.19636213311285655
+    },
+    {
+      "trial": 7,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.3265241651479561
+    },
+    {
+      "trial": 7,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.26144314913040634
+    },
+    {
+      "trial": 7,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 7,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.921459987433598
+    },
+    {
+      "trial": 7,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.960729993716799
+    },
+    {
+      "trial": 8,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.23828535406598025
+    },
+    {
+      "trial": 8,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.3246148333930491
+    },
+    {
+      "trial": 8,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.2814500937295147
+    },
+    {
+      "trial": 8,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.8493897688911971
+    },
+    {
+      "trial": 8,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.8493897688911971
+    },
+    {
+      "trial": 8,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.8493897688911971
+    },
+    {
+      "trial": 8,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.27906841508446484
+    },
+    {
+      "trial": 8,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.3272164862266438
+    },
+    {
+      "trial": 8,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.30314245065555434
+    },
+    {
+      "trial": 8,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 0.9183691341498506
+    },
+    {
+      "trial": 8,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 8,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.9591845670749253
+    },
+    {
+      "trial": 8,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.23828535406598025
+    },
+    {
+      "trial": 8,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.3246148333930491
+    },
+    {
+      "trial": 8,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.2814500937295147
+    },
+    {
+      "trial": 8,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.5918345008756567
+    },
+    {
+      "trial": 8,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.5918345008756567
+    },
+    {
+      "trial": 8,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.5918345008756567
+    },
+    {
+      "trial": 8,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.2424483487510512
+    },
+    {
+      "trial": 8,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.4276990248872071
+    },
+    {
+      "trial": 8,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.3350736868191292
+    },
+    {
+      "trial": 8,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 0.921459987433598
+    },
+    {
+      "trial": 8,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 1.0
+    },
+    {
+      "trial": 8,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.960729993716799
+    },
+    {
+      "trial": 9,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.18963273996096752
+    },
+    {
+      "trial": 9,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.19234116623150566
+    },
+    {
+      "trial": 9,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.1909869530962366
+    },
+    {
+      "trial": 9,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.8493897688911971
+    },
+    {
+      "trial": 9,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.7295406854744696
+    },
+    {
+      "trial": 9,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.7894652271828333
+    },
+    {
+      "trial": 9,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.23796679921029948
+    },
+    {
+      "trial": 9,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.4368113721034692
+    },
+    {
+      "trial": 9,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.33738908565688436
+    },
+    {
+      "trial": 9,
+      "scope": "attended",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 0.7586334451872011
+    },
+    {
+      "trial": 9,
+      "scope": "attended",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.7013368156056058
+    },
+    {
+      "trial": 9,
+      "scope": "attended",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.7299851303964034
+    },
+    {
+      "trial": 9,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "a",
+      "ari": 0.18963273996096752
+    },
+    {
+      "trial": 9,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "a",
+      "ari": 0.19234116623150566
+    },
+    {
+      "trial": 9,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "a",
+      "ari": 0.1909869530962366
+    },
+    {
+      "trial": 9,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "p",
+      "ari": 0.5918345008756567
+    },
+    {
+      "trial": 9,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "p",
+      "ari": 0.5185763532368544
+    },
+    {
+      "trial": 9,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "p",
+      "ari": 0.5552054270562555
+    },
+    {
+      "trial": 9,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "o",
+      "ari": 0.21764348409925163
+    },
+    {
+      "trial": 9,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "o",
+      "ari": 0.46065810606855473
+    },
+    {
+      "trial": 9,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "o",
+      "ari": 0.33915079508390317
+    },
+    {
+      "trial": 9,
+      "scope": "all",
+      "agent": "A",
+      "attribute": "c",
+      "ari": 0.7436285489436406
+    },
+    {
+      "trial": 9,
+      "scope": "all",
+      "agent": "B",
+      "attribute": "c",
+      "ari": 0.6920568510428844
+    },
+    {
+      "trial": 9,
+      "scope": "all",
+      "agent": "AB_mean",
+      "attribute": "c",
+      "ari": 0.7178426999932626
+    }
+  ],
+  "validations": [
+    {
+      "trial": 0,
+      "native_metrics": {
+        "ari_agents_a": 0.2547808764940239,
+        "ari_agents_c": 0.8495176107317198,
+        "ari_agents_o": 0.3204160951074531,
+        "ari_agents_p": 0.7078576225654802,
+        "ari_truth_A_a": 0.3734072022160665,
+        "ari_truth_A_c": 0.8495176107317198,
+        "ari_truth_A_o": 0.2900524400684932,
+        "ari_truth_A_p": 0.8493897688911971,
+        "ari_truth_B_a": 0.3247715557638238,
+        "ari_truth_B_c": 1.0,
+        "ari_truth_B_o": 0.16140904311251314,
+        "ari_truth_B_p": 0.5818544809228039,
+        "ari_truth_a": 0.3734072022160665,
+        "ari_truth_c": 0.8495176107317198,
+        "ari_truth_o": 0.2900524400684932,
+        "ari_truth_p": 0.8493897688911971,
+        "kappa_agents_a": -0.008403361344537785,
+        "kappa_agents_c": -0.08695652173913038,
+        "kappa_agents_o": -0.07407407407407418,
+        "kappa_agents_p": -0.06382978723404253,
+        "utterance_exact_agreement": 0.5333333333333333,
+        "word_exact_agreement": 0.875
+      },
+      "history_rows": 500,
+      "final_checkpoint_sha256": {
+        "A": "81aad11db61905d9be41a1b1333df41e6258d84dde67b05a5a751b37455e90ca",
+        "B": "efcb49279e8c17f4807b3bb2dc5f758e1f2599fe0e16614783d514ca88b3f898"
+      },
+      "final_metadata_sha256": {
+        "A": "ff70d62caa610a32a49cd94d97e28c3f31db4717b4b4dc4774a72e3688007cda",
+        "B": "37cd556fe813bb1b70aaf15c40aeaa3f145fb0db1d4768f63b8117621c0e31f1"
+      },
+      "final_csv_sha256": {
+        "F_A.csv": "4cbf0095f0038b0ce755138b59fca0348da97d8bedce4d85c0b26a7f471c199d",
+        "F_B.csv": "a8d6f1d9730eb19e4330a60e61933e0b766312d6d3bdf02a06aae415d7a2de25",
+        "Mu_a_A.csv": "48371e2b1246a40dbb0873e7e8024fda50822cccfdca64488f02c1c9ae67656f",
+        "Mu_a_B.csv": "d359a05364a735e0a72094f104454b607b8ef399c3724815d6ff787df1bb671d",
+        "Mu_c_A.csv": "cdaff23465662815847c65213077435567b659344c3be9ab18cc59b61fdc1fac",
+        "Mu_c_B.csv": "afa5c09a4d4abe8f07f2588ff50a82b4aff4963c69ff00d61690ecaa87f5f87f",
+        "Mu_o_A.csv": "f5548e82cffdd7e308db7561740c76a1cdc700d2a07bdf5a807ec48b11519564",
+        "Mu_o_B.csv": "9641311c7ca86eaa73254f232387b25d9b4fd483848ee56856834c0c4cf9c48d",
+        "Mu_p_A.csv": "330c7d80c8e3beb519f115479e1a38f12d5ddc2b91afe80055e6097981a99b34",
+        "Mu_p_B.csv": "480856bdbdd7831c6613f083319143d39b64360e1157bfdc5b876fcb60782e08",
+        "Sig_a_A.csv": "7d367ccf6b1d10ce3f719f17cee9c3cc36c7ad7fe0910ed1b787849317ee6bbb",
+        "Sig_a_B.csv": "80e1b88be9f2e62cd302441ce69affb80b9e37855a569b5647b03552e46dd96b",
+        "Sig_c_A.csv": "9c7b01fd1fd76274cba0a0ca08fbec2c052acc5fb9e4880c8658776b34b0edcd",
+        "Sig_c_B.csv": "ec0485b2475f233f21a30da97ff5dfea49bb36f95acab045c37b08a963c86c59",
+        "Sig_o_A.csv": "2aa882aa4aae390d4a3fc94747d5d95f4ae28a1547975762640a287583238a01",
+        "Sig_o_B.csv": "d85d2d51a106b53f358d4800b9ec8ca0fb9834b35954431e0cb02d771a158bad",
+        "Sig_p_A.csv": "436738b8c29121d10908ffeb51d1a980e0951a20947368c2fd9772a4daac2902",
+        "Sig_p_B.csv": "059546c78cd02bf9642bfc41fe14f067d617f17f949a2a8d4a1f80bb732c5039",
+        "W_list_A.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "W_list_B.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "pi_a_A.csv": "4faed5c33c63b03d29ee412b8c25e1e43fba2fc56bf64ce65eed5a580d43d819",
+        "pi_a_B.csv": "3a74dc25a5c35883f660373597a57623dcc6f47e802d0c198c2bdd6c93c859c1",
+        "pi_c_A.csv": "1405dd780067c87487755bd39b077fafd0b4ee84aaaa366a9194554aa7fa558d",
+        "pi_c_B.csv": "40d50c9744146ff9603f6b510b25059966df680ae88cf9bcc8dab6aaf27813c1",
+        "pi_o_A.csv": "763fc57fde5abe775e8929ff7c9109ee095f336e97cc315cf6a3ee272ddd9b54",
+        "pi_o_B.csv": "5b104bc4e5db03603ffec57644c05dd698e2f0a830586330bfe6c9e3661aa909",
+        "pi_p_A.csv": "b81793dd84e1920b6a0f42cc87c854a9b378709a5fd1f091370c4bf73fe7de7e",
+        "pi_p_B.csv": "58b159ff96f053af5c6a304bc7b86cdd5d372faee487a050d4ad25c7aceb2e35",
+        "theta_A.csv": "1f734f956eec651ca97db2e94dc44ccf49591b661116b7c48c6d409c8dd25f6e",
+        "theta_B.csv": "273e400f00e5edf3849366c01174b0a8e89da5926a165813b325992f66917de3",
+        "uttered_words_A.csv": "ea2023fc31ebead2305597f9e307ad5e0517cec6b6b31b14163d0de62eaa3fb8",
+        "uttered_words_B.csv": "1564727e048a2d6a1c195b7c3427056d227a792b01f1477c5f4d3004e42b8def",
+        "word_length_A.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "word_length_B.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "za_A.csv": "d4d69711877250d5473caf3646eb397a37d37ec4d0417fb2aa1a6af654e5764b",
+        "za_B.csv": "36e645caf345a6e54e36b76413c4a35e05475aa941602543da1e6f9a9478a3d7",
+        "zc_A.csv": "f7aa37087d7b40d750170f55c1274c0808311cf9bf91fb1997a7a531b8932c7f",
+        "zc_B.csv": "e5f91df25c36e134ae3eca310c2f14b89809ca22993d8fa3487a97aa48c198c2",
+        "zo_A.csv": "1c0aea4c6e823b45dcb28b12f53a048663cd81c6941b43c1a284c4bccc1cb8a7",
+        "zo_B.csv": "c3502006a06cc1cac684f3236457103dbda9e5be9a460d9ae1ee210186471d94",
+        "zp_A.csv": "62336940be1475e88ca5de04455745e45b4d53ed196b276ed3178a6882a245a3",
+        "zp_B.csv": "cea9b21dcbb2fa4a11515ae0b4f7159ecc9f32a44d7926f8ea19efed8834d0ca"
+      },
+      "native_metrics_sha256": "a399989f263b3b20dbbc1eb25ded5b889712d9bbd91c54d70af3a64ed7d42b4c",
+      "native_history_sha256": "f1c1e1059da7d68471808adf665fb4af513afc9b07aad8fc60f8cd73daa91bcc",
+      "snapshots_verified": 500,
+      "csv_files_per_snapshot": 42,
+      "intermediate_check": "all z CSVs and all truth/agent ARIs; other intermediate CSVs checked for presence",
+      "final_check": "all numeric checkpoint arrays finite; shapes, theta/pi normalization, SPD covariance; all final CSVs match checkpoint"
+    },
+    {
+      "trial": 1,
+      "native_metrics": {
+        "ari_agents_a": 0.3331143232588699,
+        "ari_agents_c": 0.8562775330396476,
+        "ari_agents_o": 0.3999438872132987,
+        "ari_agents_p": 1.0,
+        "ari_truth_A_a": 0.407569349867393,
+        "ari_truth_A_c": 0.9183691341498506,
+        "ari_truth_A_o": 0.24799031895583024,
+        "ari_truth_A_p": 0.8493897688911971,
+        "ari_truth_B_a": 0.3454441863522812,
+        "ari_truth_B_c": 0.7772598962778179,
+        "ari_truth_B_o": 0.21488080627229017,
+        "ari_truth_B_p": 0.8493897688911971,
+        "ari_truth_a": 0.407569349867393,
+        "ari_truth_c": 0.9183691341498506,
+        "ari_truth_o": 0.24799031895583024,
+        "ari_truth_p": 0.8493897688911971,
+        "kappa_agents_a": 0.14507772020725396,
+        "kappa_agents_c": -0.07526881720430123,
+        "kappa_agents_o": 0.25280199252802005,
+        "kappa_agents_p": -0.06382978723404253,
+        "utterance_exact_agreement": 0.8333333333333334,
+        "word_exact_agreement": 0.95
+      },
+      "history_rows": 500,
+      "final_checkpoint_sha256": {
+        "A": "e2f1fa5af668d1a8c47643b2ab6438ea699a5d88165edea73e793a7db65e0b31",
+        "B": "a22df8ee416d28d8c8eb59c92aa778f1b62bb129effbfb81f0d81a4911b28f0c"
+      },
+      "final_metadata_sha256": {
+        "A": "049777d6c045d283901bc9ed17040d7b3f759fd32282fdf716fe2366c6f8fb5f",
+        "B": "750d38e96478e5e72ce3599e08a2168903c1a55c0e6387b442525887d1fa52f0"
+      },
+      "final_csv_sha256": {
+        "F_A.csv": "d7846dc3f4fae3627e1b45e0550289762b65762309fb7b68d052246f650ce41a",
+        "F_B.csv": "9c6d7a49eb19fd379eeef779fd80d017955a4fceff8be9428f72234a60967d81",
+        "Mu_a_A.csv": "7ca6860afc71fa3416470694095d47a45eab1df7138a00d71cbbde7ae0d11bc0",
+        "Mu_a_B.csv": "fd387f9f0495d39615772e3b26a10f1654f57e08470dc6dd2f0c859592284642",
+        "Mu_c_A.csv": "d33cae9d081cbdbc47a85dd2b76d6183bfe1ad28f268a2c2c8fe76a020fd19c5",
+        "Mu_c_B.csv": "e55decea9db027b6c7c9f2c82709a60eb85db20837dde4aa23c54a09122ee4d0",
+        "Mu_o_A.csv": "9fcc13c4fadbe072d1d63696a9cc90e1caf3e52218f3b17a004a5a5548d29f36",
+        "Mu_o_B.csv": "73d802c0e8f267fd016511ba1ddd2012d74d30ece3970293c113bcd8e7a7907e",
+        "Mu_p_A.csv": "10a9a01511d3456d5417c9138e161c24195d9831492948f06c83cb37acdfa3d2",
+        "Mu_p_B.csv": "db0136229e39358c2fbdd7bb79a5defc040be2383a40b17bf8684d0d81996b4f",
+        "Sig_a_A.csv": "43865865205c73f968678cbc1b130b34ac1b4789c52e953586ef13189d1e3f27",
+        "Sig_a_B.csv": "3ad932f23008b7d0152ea4c1e95111be958637b78241233fa9702512bfe24f8b",
+        "Sig_c_A.csv": "b778ad350d721665d52e295a15512abcd79d8c508472a0a774426fa10d7e37a0",
+        "Sig_c_B.csv": "7400ccb5bc2510de49e7ab4d90db9a945426d3c29cf61cb453ef644d5387a25b",
+        "Sig_o_A.csv": "b1f01cf32d6ca7109f3fda22e9cc2844ab045d5a7aa5a216c9fd223c200d8531",
+        "Sig_o_B.csv": "8c5b124310c58088f8f2bf8ec304a5f6ea463a0aff7d3e53c4e31c215b9b5754",
+        "Sig_p_A.csv": "d99af3eb59c119ffc6748d03af045ac57cc13e77015097e396a49eda7875424f",
+        "Sig_p_B.csv": "88d495fa38ad7af4de09c1416e881b0f967ad577ae72c8bd4fa41c4a211b7af0",
+        "W_list_A.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "W_list_B.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "pi_a_A.csv": "9ec45b852ae2ddf68f36447c16059e50c37a7abae6cba3d52ceea473acf3e4f3",
+        "pi_a_B.csv": "106e75bd3d2ba0a234e9e5ae63e10a3501d7ecaeb0827f7a3694b3e0e194222d",
+        "pi_c_A.csv": "5ba174fecb8417d11b9e0c93242ce758fd8cd941954d684ce30f564be275e882",
+        "pi_c_B.csv": "cc40d46ba3cb7ea58b29863ea6cb16a86b249b2ed32009f848f0028a8e89da75",
+        "pi_o_A.csv": "aaaf410394e5a19c90bbc918707ccff42957e77365129cb838a3f9b40de6a227",
+        "pi_o_B.csv": "0b5cb6b66cfe329fa11082bf56bf2a8db735f0868955be14837c4f324508c47b",
+        "pi_p_A.csv": "e9f1e5020a30b1d854a0a5ebcf4a7ac86dce9307bc641ccadbd827889017e54e",
+        "pi_p_B.csv": "02d4e4d06dcf90814b313e6664af9201e0dea22c41c760abc220e8419431e88c",
+        "theta_A.csv": "673cb235917db7d15156b9a311977f65ea6f42d812c532dbda8586d50545b5a8",
+        "theta_B.csv": "684101b44b7e9e76d10947dd5ea7dd5f4c9f0a1c9209af18063f5ef0646a2a26",
+        "uttered_words_A.csv": "e1da8ed84fa779dbe42e74c289526a326f74564e6b4e8e16b09873cca4ba7333",
+        "uttered_words_B.csv": "e52f4bd8c39fde26362ab4ad9069448169daa549570c60b1158485860a5420d4",
+        "word_length_A.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "word_length_B.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "za_A.csv": "718eee2a9f941cb7ae0c8243ac940d04d469069c9a167df2355e4fc23aeb70c4",
+        "za_B.csv": "05a1db3bfe0e5181c53a5b09de5af5d8942db8037e6367c152f72a838c6cb8ef",
+        "zc_A.csv": "734e8c154795797dfbeeaffd06fbc066be16876cc92b5354f62a2636645854d0",
+        "zc_B.csv": "6530c994f82deffeac2142289dc636057ef0c259f666c96f0cbe4e977bdfebec",
+        "zo_A.csv": "ea95ba0501768ec74ae069028fbd0f04742421c8414abde8837e01585efe336b",
+        "zo_B.csv": "22558e0a744dfb49dd2a08a30b80f2b834aa7a24637022efe370341a49edba8f",
+        "zp_A.csv": "b7c49b0be4413ba649251dbbe273794b9a44d30bce0e0d944d956c890b3869a5",
+        "zp_B.csv": "c368038f17b3c41144e11f5ae7ca3a6148ee29c8fd0c32d8178d2af3e84c2a64"
+      },
+      "native_metrics_sha256": "a0038d918a4bbd18b78f4c69a0e817249c9c7dff74f1389046fc1caf23d263b1",
+      "native_history_sha256": "11142d0fd4422c178c31e08d733cb5b0b83549a4533e589f27ac7763e917d047",
+      "snapshots_verified": 500,
+      "csv_files_per_snapshot": 42,
+      "intermediate_check": "all z CSVs and all truth/agent ARIs; other intermediate CSVs checked for presence",
+      "final_check": "all numeric checkpoint arrays finite; shapes, theta/pi normalization, SPD covariance; all final CSVs match checkpoint"
+    },
+    {
+      "trial": 2,
+      "native_metrics": {
+        "ari_agents_a": 0.3140794223826715,
+        "ari_agents_c": 0.8499026955405573,
+        "ari_agents_o": 0.2724014336917563,
+        "ari_agents_p": 0.5385105028644176,
+        "ari_truth_A_a": 0.26371022342586325,
+        "ari_truth_A_c": 0.9183691341498506,
+        "ari_truth_A_o": 0.2295249945107224,
+        "ari_truth_A_p": 0.5818544809228039,
+        "ari_truth_B_a": 0.3533389687235841,
+        "ari_truth_B_c": 0.7710767287653931,
+        "ari_truth_B_o": 0.2592831079630822,
+        "ari_truth_B_p": 0.7295406854744696,
+        "ari_truth_a": 0.26371022342586325,
+        "ari_truth_c": 0.9183691341498506,
+        "ari_truth_o": 0.2295249945107224,
+        "ari_truth_p": 0.5818544809228039,
+        "kappa_agents_a": -0.04477611940298498,
+        "kappa_agents_c": -0.05058365758754846,
+        "kappa_agents_o": -0.030674846625766916,
+        "kappa_agents_p": 0.17647058823529416,
+        "utterance_exact_agreement": 0.5666666666666667,
+        "word_exact_agreement": 0.8833333333333333
+      },
+      "history_rows": 500,
+      "final_checkpoint_sha256": {
+        "A": "0f4a4f8ec9e42a592a63da71f6662fd6ed4edeb78ba6ac2ec98868b14b917c29",
+        "B": "40ef97b1c3852f8cbc0ceb66dc6e0def9f27dcc7c568221654f7e5681459f037"
+      },
+      "final_metadata_sha256": {
+        "A": "b478c6ad51bd338862350baa650541f1ed7ca1d32a582a5f2499b55e273bc599",
+        "B": "40effd85d2999af64c9a46f1d46b05229c86ec70b85dc403b25b7651b0adfb0f"
+      },
+      "final_csv_sha256": {
+        "F_A.csv": "ff8f79ef0519bed3e36ceea82e804e89e91025d70d2f27b9cb6f667c34b7958e",
+        "F_B.csv": "57d81aeca599b23ed6851b99fc28c791daf8aab23332586ac88c95dea6e1f470",
+        "Mu_a_A.csv": "bd94c8783216e58d993c140be6935adc6aea798b9bb8a082f618ce5e778fd72d",
+        "Mu_a_B.csv": "0ef7e8575f95e86ffca8878364355fa00b2244ddb32a9a0f49bef22005c7a151",
+        "Mu_c_A.csv": "b5d060c34ce90055a76b3a4467b8da8809b14a79ca40beae673537955bfe4766",
+        "Mu_c_B.csv": "5795f8bb8323123471dc7bb8227d05a3887134f52bd21bd752cd794483f478fe",
+        "Mu_o_A.csv": "b941b7ef4cb9e4d4ab29c5814a227295212e8d302ec38bdd4dd39e0a17e71d2d",
+        "Mu_o_B.csv": "b364ea183e4a0207d8cba2ca2b9b9923a040ac1c881ee34c08d5c362fc001f80",
+        "Mu_p_A.csv": "5b56332b7f2ef3387f3f4ae15f9bb1fefae11b278c99dda10458fa0c78e60a5c",
+        "Mu_p_B.csv": "b7124e84be233a4380fbc939f568b7c73e0c4f63532d49b4dcb94464d33abeac",
+        "Sig_a_A.csv": "501aa249aede35c3ba2e2382a685bfccfc82f247b7affa1b2f1e463b02a3362d",
+        "Sig_a_B.csv": "95b3fa86e31fdb51e082de38664f4dcb2969594ae7c0c3fcc5789fbc9b9e9291",
+        "Sig_c_A.csv": "65ec5f712d764e27263167075821ed0431ccb82002b466c9077d6e9570ad0c90",
+        "Sig_c_B.csv": "aad989a3af2ab0742df3fd89b99c56046a22f2b91a0cc11f40466e5c1c38b8e7",
+        "Sig_o_A.csv": "2bcb377f9e06e5409263d0fcc95adb53e87f54cf9f101969d5159dd0a53e8ffb",
+        "Sig_o_B.csv": "97d5e8637b7a1bdacfbf71b2f60a47314f8dd9b8cb0e4b2a8830be1980a4e1f1",
+        "Sig_p_A.csv": "10939ae7adb03f9a4c2866805b2002ccad1fcae370af501ddbb134c0a9a17b6b",
+        "Sig_p_B.csv": "1e160410f2562dd5e7fa793aadab75ba583cf4a50bd50e4c6e37abf507eb32e1",
+        "W_list_A.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "W_list_B.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "pi_a_A.csv": "77d326e0cbd111323254e3b5bcec856d87ef07cb115109b8b1988aac23e2fcdb",
+        "pi_a_B.csv": "309d4bfb0a3d59f7601a06d7993ac3150270cc57e9f77600eb0b80e7101e2e43",
+        "pi_c_A.csv": "d221011632355917badcaa3eba3406988e7a0c971335459a9f9da7aa10e3888b",
+        "pi_c_B.csv": "a38e98321e40b80bd3599066d63d06fc242ad8867896464a017408d44977f7dc",
+        "pi_o_A.csv": "66417aa0a478284ab74491734b89b4d320b4c1ea2717b42d5a0480cf9f8f4775",
+        "pi_o_B.csv": "85a028c6e97eac2bd5e426d383fa8fe1dfd89b7810c0c30fcf30baa0405696d8",
+        "pi_p_A.csv": "d0dbb21843407678806f4140a3b3fc203a2a06df564d5d7b176866918c928e5c",
+        "pi_p_B.csv": "755ee44ddc7f953ef839c43fe3bfaf3a59710033ed8bb18d2801bcec05bc3bad",
+        "theta_A.csv": "b78c5ff34049dbd43bffc79ba260b4803f1865e2b3f69eaa4e8472a5e90baa1f",
+        "theta_B.csv": "78027be628e0025255cccf4eaceac2b9ecbd76b7f5f3805ba7cdf4d19c8de9ea",
+        "uttered_words_A.csv": "7bca571a9c3634e7ecb30ff78c3414ddeb2f0049bcb835d83c07b597cfa7b3d2",
+        "uttered_words_B.csv": "dcea558427a732e9a26e885b2e619fc017c03ae963124ac8e0e0bb132ef77cf4",
+        "word_length_A.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "word_length_B.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "za_A.csv": "2da804bb1025df7f647e2dd638ea100cd4aba88ae37486df8a30b071a926c79b",
+        "za_B.csv": "f11952497f216bae5955a4626562fbfd2acb9b891d0d2c658809abab849c8c0f",
+        "zc_A.csv": "8677a3d0151906a7dda36c8a37312d4bb19621c9eedf6a2713ce5b7fc427a470",
+        "zc_B.csv": "2e5f5cb06daa6d3f64793c9a2cca4c8c837551915febbd4181f60546345de52a",
+        "zo_A.csv": "1c1ea0ea79185aaf415ca9e1e0c4baf74b697831ed9a8ce93ac46c8094fa11cf",
+        "zo_B.csv": "e0bfae99687a6fa401ae658e846e67606c9794abdeaee0de538f763c58400f39",
+        "zp_A.csv": "90fddfda232ce87c50d726a6ab3f29de89049a72a2aefbe6f2c316da4ba8acde",
+        "zp_B.csv": "b6dedb8392978d1515afeb5a722a9e63bdab191e1166386d16826df2606229e4"
+      },
+      "native_metrics_sha256": "6622c69d9eda1ffa236e26d26e2aa8548e92d31ad994f555264ed8728296bd5d",
+      "native_history_sha256": "e9360dfdee7c175728761c2a459f4f3e698107ffb8cce11968de7dff501700e6",
+      "snapshots_verified": 500,
+      "csv_files_per_snapshot": 42,
+      "intermediate_check": "all z CSVs and all truth/agent ARIs; other intermediate CSVs checked for presence",
+      "final_check": "all numeric checkpoint arrays finite; shapes, theta/pi normalization, SPD covariance; all final CSVs match checkpoint"
+    },
+    {
+      "trial": 3,
+      "native_metrics": {
+        "ari_agents_a": 0.37852069556698503,
+        "ari_agents_c": 0.7013368156056058,
+        "ari_agents_o": 0.25957446808510637,
+        "ari_agents_p": 0.7946175637393768,
+        "ari_truth_A_a": 0.347135163767988,
+        "ari_truth_A_c": 1.0,
+        "ari_truth_A_o": 0.44115511366810034,
+        "ari_truth_A_p": 0.8493897688911971,
+        "ari_truth_B_a": 0.5158193505300943,
+        "ari_truth_B_c": 0.7013368156056058,
+        "ari_truth_B_o": 0.18162083936324167,
+        "ari_truth_B_p": 0.7295406854744696,
+        "ari_truth_a": 0.347135163767988,
+        "ari_truth_c": 1.0,
+        "ari_truth_o": 0.44115511366810034,
+        "ari_truth_p": 0.8493897688911971,
+        "kappa_agents_a": 0.18287937743190663,
+        "kappa_agents_c": 0.0625,
+        "kappa_agents_o": -0.04868913857677892,
+        "kappa_agents_p": -0.06382978723404253,
+        "utterance_exact_agreement": 0.5666666666666667,
+        "word_exact_agreement": 0.8666666666666667
+      },
+      "history_rows": 500,
+      "final_checkpoint_sha256": {
+        "A": "881ea48f9f83f58769d335d1ea1ccda561b25b5a954371ac5bdf3b392467d3f9",
+        "B": "9c4078613d96e010c79834b6b2c1686fe2077db0b4211cdf1bc5224a387cd9fa"
+      },
+      "final_metadata_sha256": {
+        "A": "706e05b6e06a7d6bd80148b83fdd23bcb23411746d1b455cbd23495885b258b6",
+        "B": "adf22f7add2f16e64ea2cbf95a0e7768e5853ee5a6c99342ae4d16df20e3c0ff"
+      },
+      "final_csv_sha256": {
+        "F_A.csv": "138ab1e0f0e192d488b93520c852e371ed5be4801bef01d727eb61f0548bf75b",
+        "F_B.csv": "910020dd1d3f401ae77923afe570b6173e740c67586ed31b8b9e93ef742b374b",
+        "Mu_a_A.csv": "1b890a3d0c08e7e5f42295a7b23fa59ad428973911a94134dd05d80c1c202235",
+        "Mu_a_B.csv": "7bdddcb79c58fa1d410378ed583a2a649321885d3e3c6303a112813b501c4c36",
+        "Mu_c_A.csv": "efec3c6af5f81636f61b5354891e86f44b9c2933d4405eb538dc05e93b34714e",
+        "Mu_c_B.csv": "768d947343b0858732bd61df210fbea8ab93300b3c4f63515ee5381a44ec14f2",
+        "Mu_o_A.csv": "0693c8d81b9c4cbc2db80541b689b882d3a4abb49cad87ece0bdf6cc5f12923f",
+        "Mu_o_B.csv": "3334f477bcc5fdfff7f36f99f6edfa8cd31c678cd976df5182656c80717983f1",
+        "Mu_p_A.csv": "2598831203f7cdead67afd527e55a8b7a06a3b4281d3e31969ba9308b0118ee5",
+        "Mu_p_B.csv": "ac8a6fecd3063341057ae642638f0ea48c3a7319b93316a522e306fb6b97a663",
+        "Sig_a_A.csv": "4e92f360c6e0df4ae3358ca3f91aaddbaca63e9645bd4edb003759b64a59549f",
+        "Sig_a_B.csv": "b958ddc680f8531c8801ed1bc33f6d17b48bebf91f4255b588c2964bac66b47f",
+        "Sig_c_A.csv": "42730ee9e761196a7b04d470eeae29d2b7ba8e99525d69b3f3ac08a85ea44601",
+        "Sig_c_B.csv": "4b4549483533fc49befe6a26c00b473e332159bfe9414931e452ab122ec0c281",
+        "Sig_o_A.csv": "0a1724f3a3337999daccca00540d884a79923fae54dc60157fd37a2814739f61",
+        "Sig_o_B.csv": "87f4a74cbd1654fc2a60e666ddb18cefeed543dbe52ff93c90a369d1ed46718d",
+        "Sig_p_A.csv": "d0f99dc52acafbdde7ad674f2bdb64d537ee3bb3fab45f94675a1d0e2c22af8d",
+        "Sig_p_B.csv": "fc4370a9c61a817d496b7e54dbe9bd97e3969c505c6ec09cce6f48182056a79c",
+        "W_list_A.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "W_list_B.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "pi_a_A.csv": "d812c9afc5d2ec6010222151805bcee5307142a05f9bc13e584744a29fd9f7ed",
+        "pi_a_B.csv": "0bb6a4b71042badc99d17edf673c79902cc234ced6b31a4b9c9c4f553a025ddb",
+        "pi_c_A.csv": "69c70427bb7b487246d7bd4eca5e7490547d03fb4db9a4e97b1e29037a487b09",
+        "pi_c_B.csv": "f47cba6c20332640a5f1ebf280768a0b6f41f06ea8515f35284fc19296bbfa66",
+        "pi_o_A.csv": "ffb28bfc1aca2ad4de3816a0c4740ad197daf32106f5f7acd0e4c925104757af",
+        "pi_o_B.csv": "beb823710566f6204de67d27019f4a70f84da67adb4dd38dd840d41131fcb6bd",
+        "pi_p_A.csv": "828c9a55be9d74175a5cfc282e8fa03be5f9c440385cb790984591dfd7e819e7",
+        "pi_p_B.csv": "a284a6fc7caf05736b0fc1d7a7b5f292cb647284450dc15319509660790460a3",
+        "theta_A.csv": "3585597bdead3ae1386ce2e3225c95b42e2acdaddd622c0512ef415922362435",
+        "theta_B.csv": "3f5c7eb7f020ea6cbe9af242c9ffa0cbde622a300db919d2d0c2c54b440b08cd",
+        "uttered_words_A.csv": "81738a58c63599bad7db855b6a152ac2c990bf8cc40127e306daf73716793d41",
+        "uttered_words_B.csv": "e6ff42909b2ac40bd560036741e2ca401151ffc03a0aa13c401e806098baab83",
+        "word_length_A.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "word_length_B.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "za_A.csv": "45b0c53c08184253a2f21aa7bb7244733a7816cc3542db41db56c5d4a76893fe",
+        "za_B.csv": "a3b07dd1f5c339e1d937ff3474f5f240917e228a99d8d261cb5f3aad06eb6a5c",
+        "zc_A.csv": "7f300ffd6db26bd7294d4dd9844487238096a02d049aba71822990863ea6b254",
+        "zc_B.csv": "124d71d5ca9cce9a1696a809beee451de372591f8f5feae17943e62f22492558",
+        "zo_A.csv": "8730e4bd35c358629b76b45c0274fda47136b2a5282d7ff55942cccd5207e460",
+        "zo_B.csv": "e8144a8f35cbbd3865bdd88078a5f252caff1a4c4f171c40bbb6a0b1bca2bf16",
+        "zp_A.csv": "ace69e30fc2d9bf9b77ff282cfc360387e00bfcb2aa5eb80dd7b8f81a986eed3",
+        "zp_B.csv": "a93512f60dbdd344b9e60ae295c32f6e7bc1ca1f0f66478dc1eba1b08f164bd1"
+      },
+      "native_metrics_sha256": "894c8c60e044cd7291e4015555c5156f9c2cbf98d890c16cd7d7e7c8d63f9a5b",
+      "native_history_sha256": "adb8633deadf81a0ffec862225932773d6c52bbc146d48640394952046f6fd52",
+      "snapshots_verified": 500,
+      "csv_files_per_snapshot": 42,
+      "intermediate_check": "all z CSVs and all truth/agent ARIs; other intermediate CSVs checked for presence",
+      "final_check": "all numeric checkpoint arrays finite; shapes, theta/pi normalization, SPD covariance; all final CSVs match checkpoint"
+    },
+    {
+      "trial": 4,
+      "native_metrics": {
+        "ari_agents_a": 0.3185947910357359,
+        "ari_agents_c": 0.8670402445236882,
+        "ari_agents_o": 0.2797010167288259,
+        "ari_agents_p": 0.6843414709998445,
+        "ari_truth_A_a": 0.3788613518442594,
+        "ari_truth_A_c": 1.0,
+        "ari_truth_A_o": 0.28975726570153476,
+        "ari_truth_A_p": 0.5542918619841697,
+        "ari_truth_B_a": 0.3026204564666103,
+        "ari_truth_B_c": 0.8670402445236882,
+        "ari_truth_B_o": 0.30609412893770993,
+        "ari_truth_B_p": 0.8493897688911971,
+        "ari_truth_a": 0.3788613518442594,
+        "ari_truth_c": 1.0,
+        "ari_truth_o": 0.28975726570153476,
+        "ari_truth_p": 0.5542918619841697,
+        "kappa_agents_a": -0.06870229007633588,
+        "kappa_agents_c": -0.2295081967213115,
+        "kappa_agents_o": 0.07110091743119273,
+        "kappa_agents_p": 0.1954022988505748,
+        "utterance_exact_agreement": 0.7333333333333333,
+        "word_exact_agreement": 0.925
+      },
+      "history_rows": 500,
+      "final_checkpoint_sha256": {
+        "A": "5b3760f75f179a8c8f536acdfc49710d8818bf75548942d7e209585fda2af555",
+        "B": "dbb2730428292ab64a21fa38398f8c365f87b778eaa6541df6188f23b188558e"
+      },
+      "final_metadata_sha256": {
+        "A": "75cb718630240b1046e5e6194fea5bc5fa125317cb497f70c5c516f81bb1da32",
+        "B": "564cc18a8542f460c23f2d0e0994123af437507159c41863584335566c9559f6"
+      },
+      "final_csv_sha256": {
+        "F_A.csv": "d530422f1f1f89cf8f95971612aecaa7b7bb3f08d0426d701d3cdbdd06aa162e",
+        "F_B.csv": "d33df379a5ed4e7b659a8fb9e717e7bdb69ad900f59006bfa7dd0e4a88848549",
+        "Mu_a_A.csv": "0d7752b35a7fa1bd6102443d2bb690d48ae4c891d0cc36450bbef32636ca30b5",
+        "Mu_a_B.csv": "1546ca16cd292029e77545761a87e0bdc9da2e1e8423e61c28bf69e988927159",
+        "Mu_c_A.csv": "74310f6e62eeb127863f147d096a0064f2f7ba44b40c8991dda8346cb188a978",
+        "Mu_c_B.csv": "5653f89dc61bf23d220ad401acb0184ba7d07c4406e44c46e7e629844b2d379e",
+        "Mu_o_A.csv": "78197c661544020b1b97159ea6947b31e0f6e39be8c777c3b8c48874416ce0f7",
+        "Mu_o_B.csv": "7158bff71e904306a83caf25eeda2bba7423fc253e9de7d90054a68270d92a7c",
+        "Mu_p_A.csv": "bf70cdd73da236d2879982a2c1bbb740deaa883841b616b5e8df3875c4a535d9",
+        "Mu_p_B.csv": "c18852d4d5402e5b6fd78c29fb8e53b8884d81b4ad11e03ebe9d9ccf9cca2f1b",
+        "Sig_a_A.csv": "e1d2d33e02d6f25326c26f6fddeaa93e52d44d5ac02e747fc16212511f582a6d",
+        "Sig_a_B.csv": "c24fb9c8d11092eae7ace74dbe03752c9007f8a391d5ee6886632ecd6b0dca7f",
+        "Sig_c_A.csv": "3bae8bb83a0a89d36fd93e338dfda3c037086761eaef1084bd3375a96338eec2",
+        "Sig_c_B.csv": "e2ee71224f7c27a10932e72a89d36f7e25484707ec494fff912aaa3fb62e82e6",
+        "Sig_o_A.csv": "a8641504b68fd5cb35d741aea4815db320facd9a3db1b46a6a1c0a22377413f5",
+        "Sig_o_B.csv": "3ee9b1c9be9f9d807f7ef4c3afd0f7b48ffecf682e9de36faaa8262bdb2e735e",
+        "Sig_p_A.csv": "68a21a1220c0825cf1d5a26f4cac2674fd3d06f55144292ca89b1040c4628584",
+        "Sig_p_B.csv": "77be3e8311df322f09c7d56fa8cf3409cc54c0c32a3e94cc90358ce5a7990124",
+        "W_list_A.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "W_list_B.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "pi_a_A.csv": "a4323404243b73193fa87c762ac6fc9314fe12201e88eef1cfcc0001a8e186a7",
+        "pi_a_B.csv": "781ce7351fb1da932af1615288d57c95285a400e8f7de97a5734f70521f3721b",
+        "pi_c_A.csv": "261790c6dfea718e4df4c4dd46c34b6983441c2341af1425b8125d90cfdd6390",
+        "pi_c_B.csv": "e569a83407d5172612c6436463b3d5ccd708825647bf151cc0e464ec56b63d40",
+        "pi_o_A.csv": "6a4439f5ad07477a87d8ea7da824396bf4c684098a74a45fc4537676361f1850",
+        "pi_o_B.csv": "34c7e74d2e9d9be5a22962b20e3ba8620f66c17bfe64e35184bade25d0f250c5",
+        "pi_p_A.csv": "6fcc49387e8595bb801e2d2662652c7306e6fa1908414c94509b5c352027cb63",
+        "pi_p_B.csv": "d5ec52e2863dda47678fa8872c3e2c25818612e66e4d204dfad08cd21bf7dd2b",
+        "theta_A.csv": "84df02f0878887a16f0dca573eedcf8431915fff94100bcd15d20b8642773c60",
+        "theta_B.csv": "a0d0511a491f2fd3659769cb0f816c4c4be9d383875cb51a8f3a64354e57d4f1",
+        "uttered_words_A.csv": "e815b235f8ae8fb963993cecf87a658777d9f90a2d92881eb65681d062639f8d",
+        "uttered_words_B.csv": "de7490ab6c3875996379b7b2f31f29b10ef07c9ab06c9484d86f3d8627abbdc5",
+        "word_length_A.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "word_length_B.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "za_A.csv": "1794e35dd02c03316c7d1288be7141ba4494946017a1daafbd8a3e19c6d417d4",
+        "za_B.csv": "fc9ecb66d361ff84fcf43201d29d4b476f77e1fb10c7d8851737bc85c4d3b68b",
+        "zc_A.csv": "19f6b302b194b1eb54929d7a1788a740bc1ad8fa574767e8b8fb40b667e3c4f7",
+        "zc_B.csv": "dc24af71bf3bb8088ebcd91d5f4d6f381a27ce0fc66783bad7127c97285972f1",
+        "zo_A.csv": "a7cb16075cafafbdfd1e3847f9fb3feca55ad2a965bb4450fdcb0472a91e8d80",
+        "zo_B.csv": "a18d47dfc93ae38d5351db0924b8a7e1b95eaf77b7c1cb8e4f6a870d3c5b30c6",
+        "zp_A.csv": "866d4f20fa0b518968aba772ee27ed0fd8fe8089f0725889ef6eb70af0842324",
+        "zp_B.csv": "7fddeea1214e7659e046074f02f310427723b07a55776dd37adbe4513bcfa838"
+      },
+      "native_metrics_sha256": "b3cec9361b1c6464c82b23276b7dfb181f95d22acc802dc8162c80eb2ba54de7",
+      "native_history_sha256": "e4351bf5f7cdbf6a62d5d8044dbd079e0d8374b3e91e6997c130af3b9a22aef7",
+      "snapshots_verified": 500,
+      "csv_files_per_snapshot": 42,
+      "intermediate_check": "all z CSVs and all truth/agent ARIs; other intermediate CSVs checked for presence",
+      "final_check": "all numeric checkpoint arrays finite; shapes, theta/pi normalization, SPD covariance; all final CSVs match checkpoint"
+    },
+    {
+      "trial": 5,
+      "native_metrics": {
+        "ari_agents_a": 0.4856051303042707,
+        "ari_agents_c": 0.9624949192624617,
+        "ari_agents_o": 0.5680619607670072,
+        "ari_agents_p": 0.7078576225654802,
+        "ari_truth_A_a": 0.23833824695829156,
+        "ari_truth_A_c": 1.0,
+        "ari_truth_A_o": 0.18823629966238836,
+        "ari_truth_A_p": 0.8493897688911971,
+        "ari_truth_B_a": 0.3883420682602582,
+        "ari_truth_B_c": 0.9624949192624617,
+        "ari_truth_B_o": 0.20146856356126663,
+        "ari_truth_B_p": 0.5818544809228039,
+        "ari_truth_a": 0.23833824695829156,
+        "ari_truth_c": 1.0,
+        "ari_truth_o": 0.18823629966238836,
+        "ari_truth_p": 0.8493897688911971,
+        "kappa_agents_a": -0.06097560975609739,
+        "kappa_agents_c": 0.0,
+        "kappa_agents_o": -0.10406091370558368,
+        "kappa_agents_p": 0.11392405063291144,
+        "utterance_exact_agreement": 0.8,
+        "word_exact_agreement": 0.9416666666666667
+      },
+      "history_rows": 500,
+      "final_checkpoint_sha256": {
+        "A": "6cc304ca0ff9b5fc68815e050469c6b45842d98e59a3739cf7389d3e9de05784",
+        "B": "a9aa6a7618ad13501da06277f019f65c0016b322f83973082e90675cccb72963"
+      },
+      "final_metadata_sha256": {
+        "A": "cb2d21ac09bd953b670afff37d86dc1da63525df1d68b0425bff8c2de03013f5",
+        "B": "d442e8029b57a35d17857ea6bcdafc14dafc87cc5a646395817b0a911fef9849"
+      },
+      "final_csv_sha256": {
+        "F_A.csv": "036d0c161a979d1f77439d4fd2aff92adffb336034f0ae74735961b38be85126",
+        "F_B.csv": "5d2ace0b7e968d8a54c80145cfcc54f886acb2fdd4999a23756376a5c6828d30",
+        "Mu_a_A.csv": "ddcbc8652c97199ceddc5d976aa563b82ee22709c9671f7c4345a883005efd58",
+        "Mu_a_B.csv": "1fe107fc3d3e16d15fd26a844d7c53def039db18f1fb66e7ebf2a13aff5d2ae4",
+        "Mu_c_A.csv": "541591637948fc1d203c5a14bf61f3303b66271696e18a4db203b526ec0891c7",
+        "Mu_c_B.csv": "909c7bdf7665905a0e3c5e1908ae7fddf0afbc20f80f5c30fd37bf351c7b39fb",
+        "Mu_o_A.csv": "0be064212ab7d18c5230c6549ca763e16fb906b6cb022d9f86c85786be35e082",
+        "Mu_o_B.csv": "8a84ceb1efd7440889639edaa2ec714725e2bd99e18c97ec29ff8405ab8a21f4",
+        "Mu_p_A.csv": "40e3173df7e6f63406d0b0e05f30b57f062899b3c694bb2b64f4d27f2d5812ac",
+        "Mu_p_B.csv": "3fd33fd047baf9d772baa7780940c2811af256286379d49e46a30cc52da7cf38",
+        "Sig_a_A.csv": "b133345408678b632f8e62b951c3606100c8cebe0af1b4f3b5eb0954cee96133",
+        "Sig_a_B.csv": "8260f91b15b2776cefc40b78aea915c3a18d3e48ab00ded142a8bd80a0e71f0e",
+        "Sig_c_A.csv": "33f3ed47fa589e5c6cbc5a877a4140f76cad667518f7761b2e469d23facb4af8",
+        "Sig_c_B.csv": "02a36b2b0761e13f735b3b553f5e6229595e61a482c1590e5cb7d8828d2cfadb",
+        "Sig_o_A.csv": "a606620968c942e0ed35e54a158c27da4c9c1ef5bb54c7bfc4358e5452c44cf3",
+        "Sig_o_B.csv": "d6734f71f9206ff0762b953639673ebe1a656430988bd31c6bf09e86b1f58bb5",
+        "Sig_p_A.csv": "d864a5d0ced8dd309cd9fb226897fab64022e022894e6fbc4a3fe58e89ef7486",
+        "Sig_p_B.csv": "4f86fd7a6038c8fdd346a006263aa039d47e7142ba31e3699c9b07ed682c53ea",
+        "W_list_A.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "W_list_B.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "pi_a_A.csv": "a8adb237033dc23bcf308e89787958c3ff5af7fba22799722fb05fd4253cc4ab",
+        "pi_a_B.csv": "601bd90cef43b4a53deae37a26981e2cfe74c66fbc117295a59d63bbb76cf899",
+        "pi_c_A.csv": "059b8398d170cca8ed8b74f1c5b30c091d669b360f6d17120647321e42a2c38c",
+        "pi_c_B.csv": "b07ecb29340c435596024564219246517954318cc933c18f58a8e7ae721c1976",
+        "pi_o_A.csv": "42ff69d87ef35eb0f4c444c12cebe5f413949ad50d8a1d2660623c9a0c0d3151",
+        "pi_o_B.csv": "7210b2581c92752b6c7e49d995d8a6cffc3ce69bec04c704a0d4e92fbcb40f29",
+        "pi_p_A.csv": "79cda5f192868a54476892cf00c8159a21fe4eb0a0f839e226be2e9dd38e120f",
+        "pi_p_B.csv": "c1c45e8b024d47b2bce7041f118e9b4ed843116399e70814ea8b5d0b255bc444",
+        "theta_A.csv": "42263281f1fd4806a26bdaf7b837bb540cbf2510ddef9b811c032400c82c9ed2",
+        "theta_B.csv": "a4ed36bef86dfb8f2fa84b1c65946f987538d8867fa330f1bba5351f2421cdae",
+        "uttered_words_A.csv": "7da7d5b9b4682a63f2ac0546255eb56269e6c42dd791730daf0c1d6e06028cd1",
+        "uttered_words_B.csv": "d553116634f46772ec23a8281b2532eaf3215a13f6a7fba332715604d336fa7d",
+        "word_length_A.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "word_length_B.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "za_A.csv": "d43efd57b5d15f0cd6487a7e49fac9a2b7d793968014226b92fdb23463aea7a7",
+        "za_B.csv": "ed96e08384f1f002b5296343723ad3fca2f4878a0791f0e3757790f3a15dee1b",
+        "zc_A.csv": "aba6e07ad370232ef90f597a6d8da0ed8b2c2770a9739a5ae131eb23df9a1a24",
+        "zc_B.csv": "d98b192d4c61c6af58800bcf7e3487e7134fb62222c7c1e3e4ca5145e55f61a9",
+        "zo_A.csv": "ee6da4389573c9ed54d78dbb2b3771f6947b8bfdfcfd2a578422468cf2cf4142",
+        "zo_B.csv": "3b1da05b14380d77fc6102866c02e8c368179f7090712b0fde4bbdfeabf19084",
+        "zp_A.csv": "a110f6cf55667e2f6722ec939270d934d426dc81419787158a7d588a6a27c6b1",
+        "zp_B.csv": "0c465badf4f3681add744dc09c1e9af0e0614692d184cb56e62c77856abcdd12"
+      },
+      "native_metrics_sha256": "becd7ca5362b36af98715a6a541e38e8491632a15223c2f5a17ea10b1dfd232f",
+      "native_history_sha256": "11ff5e99de3ff0d27750cadd0a24787e2d9df8706e5f847521bc308e52ee4627",
+      "snapshots_verified": 500,
+      "csv_files_per_snapshot": 42,
+      "intermediate_check": "all z CSVs and all truth/agent ARIs; other intermediate CSVs checked for presence",
+      "final_check": "all numeric checkpoint arrays finite; shapes, theta/pi normalization, SPD covariance; all final CSVs match checkpoint"
+    },
+    {
+      "trial": 6,
+      "native_metrics": {
+        "ari_agents_a": 0.3378119001919386,
+        "ari_agents_c": 0.8670402445236882,
+        "ari_agents_o": 0.31879838549593065,
+        "ari_agents_p": 0.7078576225654802,
+        "ari_truth_A_a": 0.204295035215832,
+        "ari_truth_A_c": 1.0,
+        "ari_truth_A_o": 0.3733252657965252,
+        "ari_truth_A_p": 0.5818544809228039,
+        "ari_truth_B_a": 0.34065934065934067,
+        "ari_truth_B_c": 0.8670402445236882,
+        "ari_truth_B_o": 0.16717484719129805,
+        "ari_truth_B_p": 0.8493897688911971,
+        "ari_truth_a": 0.204295035215832,
+        "ari_truth_c": 1.0,
+        "ari_truth_o": 0.3733252657965252,
+        "ari_truth_p": 0.5818544809228039,
+        "kappa_agents_a": -0.07274969173859436,
+        "kappa_agents_c": -0.2295081967213115,
+        "kappa_agents_o": 0.02877697841726612,
+        "kappa_agents_p": -0.17647058823529416,
+        "utterance_exact_agreement": 0.6333333333333333,
+        "word_exact_agreement": 0.8833333333333333
+      },
+      "history_rows": 500,
+      "final_checkpoint_sha256": {
+        "A": "384be9e5f9ef8df7097a1d2de9f104165fa4b64d6039ac84622d8b128119411b",
+        "B": "ddc88d41ce17a00f35c1a73e9d4705753c4b29b58f39def40237d0239bdecd4a"
+      },
+      "final_metadata_sha256": {
+        "A": "ab734844ae4b408e5d364564cf8150820e5425bee9dedf2d76e881aa5ffa17f5",
+        "B": "2a58197126955f8cd1837ef4b92e8e24afce835bedce7089fe02e09ea6d7562c"
+      },
+      "final_csv_sha256": {
+        "F_A.csv": "1b7e463afbd41a1e9fb6eade0779a789f692165876e2dcc74e05fd2fba45439e",
+        "F_B.csv": "c564247ce23c174165126e440eda5cc0d0adac633ee74280e88278a295b23bfc",
+        "Mu_a_A.csv": "5cfd11609601653fbf89dd022a8e243c1c5339bd0d126ae44f02b91575085439",
+        "Mu_a_B.csv": "3d5f54a5484cab3ae84bd93286fd751cee4746e90d306bb8d4a0c6a0f95de87c",
+        "Mu_c_A.csv": "5050efafe1e70ac5b3cdae4117cd2fc972e8fcd951ad655c3b330e9b8ddf3af1",
+        "Mu_c_B.csv": "e24b802eeb512b6608715625b3913d9feb57e4401cea52a99ce33ade745c84c0",
+        "Mu_o_A.csv": "c77207549a3aeae5f3cd50c169adc67e16639c80c5882d8d47fa44d2b2c57d67",
+        "Mu_o_B.csv": "8e31ff8a142747c653a3c9f75e526144586c430daff3ba1aa45407a3c447da70",
+        "Mu_p_A.csv": "f9af6107a00281c44834a9f13def97c40b7980e1f3027b812883fb8a4b263666",
+        "Mu_p_B.csv": "34be19cba50dec57d537acbdab9fae22ec2084001c8ad6b8defe4f0d53c1c12b",
+        "Sig_a_A.csv": "0f7684a433c9f7b9a9abef5e3363e911f0effb574b97992b336293bc7c7412fb",
+        "Sig_a_B.csv": "96f43edd685b420b6463525160d88e052de3e2ff4f1c7d332d2fc606aeaf5edd",
+        "Sig_c_A.csv": "582a910a6ecd9635874c14717c4862ef59929eb2047fb0c27f72706800a60297",
+        "Sig_c_B.csv": "e85395773067ffa8f3b1b479f75896ee434f4b3bb88e5ef6fcfb1e4d176ddfe7",
+        "Sig_o_A.csv": "4c7709958db5bea6dcd1e96504c36affa3e16de1f58494c6adb276878d4a6956",
+        "Sig_o_B.csv": "4405147328295a7d1fc200974f9aee32c2de69888a4c3f4867c7a7b6989ef04d",
+        "Sig_p_A.csv": "4ad41fea5b70bdb70b547efc3774d7246f65d6f43c3c30a6095bd7f49bf3e521",
+        "Sig_p_B.csv": "bfd138fc9e24ad401adf558b27f08c11969dab21e97b0da95cdde09ec4a4083a",
+        "W_list_A.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "W_list_B.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "pi_a_A.csv": "8568b381d8d265a74d4e630d7cdbddeca33dd7eb5a4ab3b1ecb4be20c102c00b",
+        "pi_a_B.csv": "71c15a1efa68bcac0864d2f5d367dc8ec98786dc215d92ea67c9bb59c5342cc2",
+        "pi_c_A.csv": "18360fa45a8665914e473413d25f7683e1deba4511a1b3088c5a47c974581e5a",
+        "pi_c_B.csv": "c8a78fc5de91ceeb25fb7433550b0089dba5df0bbcbb65b89f82b7e1d33d72af",
+        "pi_o_A.csv": "b53bb3a9fd12d918f8e81e74026a41fc6df3188581d714795a6d9525ac046a94",
+        "pi_o_B.csv": "b760b438b9097a99038bf8d0f222ca01ab4064a49e83714abd20e37b0d368533",
+        "pi_p_A.csv": "d87d73420d2b8e1ea552bab0fc043b4ae578db6a67a08adf82a90eb255ec0132",
+        "pi_p_B.csv": "a036d355966f415470bd2f09d7353634d398d36e05ab420623dccd5d941994a8",
+        "theta_A.csv": "96b5e239428d0aa13d6cca4c9311159e2f5f6b458beeeceec5c8d7dc367e2fd6",
+        "theta_B.csv": "a576a1b48440ced7925937ec60311306de6ad9da3cda4e3c01cb514e5b7dd25d",
+        "uttered_words_A.csv": "b78c3cab9ab22f7d26b8bc172dd930785f8bafbe548ac970dcefb2e542a84ff3",
+        "uttered_words_B.csv": "da6dee69bb946aab466defe8d19b77815955d647d984cb3c38ed78fd80d605db",
+        "word_length_A.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "word_length_B.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "za_A.csv": "d5a728d8462b2a9038a2476c608e9712d9e3df3fe9fc44876089cd309e5f1342",
+        "za_B.csv": "3607aa4b4432c769d24520be75515c958705b3365e05ea8a4c0d62204a55fdad",
+        "zc_A.csv": "4e736882ff1d7f16160130b649305a253ce1217b662b34b6304426d02ac1e70f",
+        "zc_B.csv": "e93ea0d457988a6ce17fdac6b12d509cd06fb14313d2b781bb2d8eb55489f102",
+        "zo_A.csv": "776485f13a517c072db41554ac1926a96e0d647418ef8aa9026319a2408a1672",
+        "zo_B.csv": "b6355ea306133e0e99dee728d9b4f61ac160294367ad3d28adf97823dcca40ef",
+        "zp_A.csv": "0f5ee390fcacaecb6ebc26b7e09a0296700ec5aa9ee76a599048b51ec3e6760a",
+        "zp_B.csv": "29a7bdff4a344436c9e806f6e29a84bbf1ee4914cc2a3746c738fafce1bb8cf1"
+      },
+      "native_metrics_sha256": "0913c414648d7c39f17d5694b6bcb87ef728211f7bb443ee88230fc8ee674d1c",
+      "native_history_sha256": "8b23f37783e641eb32a3e396942b645b4b91d5f55acb1a7e99276022489c8998",
+      "snapshots_verified": 500,
+      "csv_files_per_snapshot": 42,
+      "intermediate_check": "all z CSVs and all truth/agent ARIs; other intermediate CSVs checked for presence",
+      "final_check": "all numeric checkpoint arrays finite; shapes, theta/pi normalization, SPD covariance; all final CSVs match checkpoint"
+    },
+    {
+      "trial": 7,
+      "native_metrics": {
+        "ari_agents_a": 0.2866956213437334,
+        "ari_agents_c": 0.9183691341498506,
+        "ari_agents_o": 0.564138413142258,
+        "ari_agents_p": 0.32558139534883723,
+        "ari_truth_A_a": 0.25394760186882726,
+        "ari_truth_A_c": 1.0,
+        "ari_truth_A_o": 0.13640975868001942,
+        "ari_truth_A_p": 0.6234744222279928,
+        "ari_truth_B_a": 0.1701782358635613,
+        "ari_truth_B_c": 0.9183691341498506,
+        "ari_truth_B_o": 0.3475307768501486,
+        "ari_truth_B_p": 0.4666021297192643,
+        "ari_truth_a": 0.25394760186882726,
+        "ari_truth_c": 1.0,
+        "ari_truth_o": 0.13640975868001942,
+        "ari_truth_p": 0.6234744222279928,
+        "kappa_agents_a": 0.07635467980295552,
+        "kappa_agents_c": -0.11111111111111116,
+        "kappa_agents_o": -0.043165467625899234,
+        "kappa_agents_p": 0.11111111111111116,
+        "utterance_exact_agreement": 0.5333333333333333,
+        "word_exact_agreement": 0.8583333333333333
+      },
+      "history_rows": 500,
+      "final_checkpoint_sha256": {
+        "A": "9cbbe336b14e64fb3f82bcabfa8a94fe518a60bbb89cceec2c1cc2f9503d9669",
+        "B": "102a1cd4afb4410705401a301a1c75e87b01dd5c6be3291b8564d043be91af1f"
+      },
+      "final_metadata_sha256": {
+        "A": "a6b5c424011d3edc2a87d07debd180d6ca60ddc21ff3a0b3a1fd28c830fe15c9",
+        "B": "9338f695f3fcedb167a223c40e752a3b6f1c8d28d5220d0ae2547ce36b548352"
+      },
+      "final_csv_sha256": {
+        "F_A.csv": "5a555e263635176a1aade1ffd67fd2743731a795b8030cb99f05cddeef65e9a7",
+        "F_B.csv": "4febfaea3c9d3314a2f2ec92c888100193d0b457a39d31691cc565b3bd49f9d8",
+        "Mu_a_A.csv": "34780973f44fa9c15107f99f795c64e497761b64be1a1c700d0ca0248ad6419c",
+        "Mu_a_B.csv": "f6b6d80f6a4f2fed686b790575295adcc326b63019bed08a41b698b4b35ac8f1",
+        "Mu_c_A.csv": "30a82b70013e7823fa80dc3570701d7e70cced12e7edd3c639252240dfccc45f",
+        "Mu_c_B.csv": "95c4a68b2b66f82101cf46f386d55633809c206c37f7d69046e11446df49b3e0",
+        "Mu_o_A.csv": "3a81d7b0668100b5c84f7e44c55330205115d92ed42729902f37558c125a7de6",
+        "Mu_o_B.csv": "ecec1b9022c1dda5a06636dadc77bfe2140a2c7fd28918b63dbf306aaf1f5636",
+        "Mu_p_A.csv": "dba86625097b40b68fb961c358a9a93fd79ed1d1d8e5c4d6f96b688b7cab8f58",
+        "Mu_p_B.csv": "9f2c30721741a7f575558df976f8a00aa673ec8ed1756b183d0dc3cf29483912",
+        "Sig_a_A.csv": "c17049c2ffe83be4c11da054abf36dcb1ba456221b71c8a89e00d53a12cfbff8",
+        "Sig_a_B.csv": "c4d4c990d91a7026c47662d582132e64cdb67d3bdd7c7a52c92f90ccded823a9",
+        "Sig_c_A.csv": "872de25ee1513899871022a85a776e9eb21b8e14921cbb38fc4d582f27440f11",
+        "Sig_c_B.csv": "fd2cff38d41930d01cd08cf419b5dbe41aa5277550acbca6247fcfdb0dad27b5",
+        "Sig_o_A.csv": "fe1e7040fa5e7dc4169d8538b3d1643ea166ced7426b5523399cd853c6985ee8",
+        "Sig_o_B.csv": "159999690ae131a8757af7cea3d17e48ba514ccc271e412b98f99e4655dc1e90",
+        "Sig_p_A.csv": "21b32e9c7523db03747f15435b1df7fb2e1bb36851307d8a6544472092c466d6",
+        "Sig_p_B.csv": "d1aa5ea93690a1304b6433ea1b6b6363fb1da847524d7692dadf308def95ecc8",
+        "W_list_A.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "W_list_B.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "pi_a_A.csv": "bc320938a173de07b78e7b66649b84e05b31dcbd58f22cddfe6caf03da9b6e15",
+        "pi_a_B.csv": "f15c239a0f551f010116d7900919e2abab89fc6dee918050cb4110db8202c7e1",
+        "pi_c_A.csv": "c0ad9779841f8ff103b1d9911101a44a21782678cc305a28c5b82671ed30a872",
+        "pi_c_B.csv": "2e8ce36c641a44a7ddaf4ecc26de4a565eee0958601c3a100cb4baf3eeb7ce88",
+        "pi_o_A.csv": "4a506261724490c81588bc9e623b42229fe8203e84873779a36f786b21688c7a",
+        "pi_o_B.csv": "cabb40cd4283e2b98b71c5d034528153e3f336d65fd119ede3f426ac8cf6cae8",
+        "pi_p_A.csv": "4bc64cd0b2562b13c2845a5c29e04c7297c8fdbd1557fe3eb337891e9594ac90",
+        "pi_p_B.csv": "ecfe2cf688aa4bcc6c19ad1974d2dae55393c9807bf8c4495ed2007f68c2e37e",
+        "theta_A.csv": "2a73e991c13fa4e53a7529e266a5fe5252ec9ecc3238bd4864431a19a64e87c7",
+        "theta_B.csv": "8998d341aa87ef15f456b1ce2603efc2b1083596694dfcd34444be94f7cf7b77",
+        "uttered_words_A.csv": "0329a1a2bf5bad37cf3150172092feacbf2171ae09c9e9cc0389e9f23fb4d77f",
+        "uttered_words_B.csv": "0f59daef76415404609315507add76dbfe5a16720433a91ec44a289b3b53e97a",
+        "word_length_A.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "word_length_B.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "za_A.csv": "23fb0866e827f04a304f5eaaacd07fc33757e74592fa410ed88f35d9ec185765",
+        "za_B.csv": "47bba80611e7502b4e609063fdb6727734bb05e066cf8d83675cc4e3f66fc240",
+        "zc_A.csv": "6477542cb1d8f1c62a8931160b5fa0bcd538d307f2cff64539d8741b014cbc62",
+        "zc_B.csv": "0b57a8aedf0750bb5dc1cf73e37fbf0237c79148e36965cc636991c6cb56c621",
+        "zo_A.csv": "32736c65a9cd1cbdd554c37982fe8b004c2766af573a8733d7d13db5bad2cab3",
+        "zo_B.csv": "9a66b4306282632d34b1b3fb713bdcf6fd101c24c64c4091722daec6a3e0fe78",
+        "zp_A.csv": "5b6ea029af244719a50ed84f9a29fb4f71fc74c45ab5f3444555d637757b48e0",
+        "zp_B.csv": "9abb2fb7b5f3869a1285d4e24bbfd0b1632b4c9fa6f9708d79c79da074b3000d"
+      },
+      "native_metrics_sha256": "c758b2f156e48490d728467d446a3ba6a47ae2185db5dc1e1e668df2552091be",
+      "native_history_sha256": "3e6405fd316360303ee9edbde2b6da2c8743a92d528c1fb41fee4b138ce26d0e",
+      "snapshots_verified": 500,
+      "csv_files_per_snapshot": 42,
+      "intermediate_check": "all z CSVs and all truth/agent ARIs; other intermediate CSVs checked for presence",
+      "final_check": "all numeric checkpoint arrays finite; shapes, theta/pi normalization, SPD covariance; all final CSVs match checkpoint"
+    },
+    {
+      "trial": 8,
+      "native_metrics": {
+        "ari_agents_a": 0.14512471655328799,
+        "ari_agents_c": 0.9183691341498506,
+        "ari_agents_o": 0.4695462422180861,
+        "ari_agents_p": 1.0,
+        "ari_truth_A_a": 0.23828535406598025,
+        "ari_truth_A_c": 0.9183691341498506,
+        "ari_truth_A_o": 0.27906841508446484,
+        "ari_truth_A_p": 0.8493897688911971,
+        "ari_truth_B_a": 0.3246148333930491,
+        "ari_truth_B_c": 1.0,
+        "ari_truth_B_o": 0.3272164862266438,
+        "ari_truth_B_p": 0.8493897688911971,
+        "ari_truth_a": 0.23828535406598025,
+        "ari_truth_c": 0.9183691341498506,
+        "ari_truth_o": 0.27906841508446484,
+        "ari_truth_p": 0.8493897688911971,
+        "kappa_agents_a": -0.050724637681159424,
+        "kappa_agents_c": 0.12790697674418605,
+        "kappa_agents_o": 0.08745247148288993,
+        "kappa_agents_p": 0.0,
+        "utterance_exact_agreement": 0.6333333333333333,
+        "word_exact_agreement": 0.9
+      },
+      "history_rows": 500,
+      "final_checkpoint_sha256": {
+        "A": "eb2d24dd2694234d9814b75848718ff1c4231a34d17f347859c45d881d380325",
+        "B": "41b9e29f40d44d53ad167a82dfe0165ae232cd7dca52a7a58aa75682962e8121"
+      },
+      "final_metadata_sha256": {
+        "A": "0c4074812b740e3be759e0db89095c2b24502c88336d3d00bef68dd2228ca5d5",
+        "B": "612588479762a9b43f5ada3cdbeebb6232309b514e62f8cc210e9b594a87bb83"
+      },
+      "final_csv_sha256": {
+        "F_A.csv": "d2756c9d62722540c8071c1843171756f6466a94bfbc91fce3043b459fcfceef",
+        "F_B.csv": "1e37989e928dc5013adc4605c6248933fd551fa6aabb4000ff6d5a30e0c6a4ae",
+        "Mu_a_A.csv": "56690c8e96e6ce7eb78db576eded2b17ce24e09a076890caa207631c8b15e286",
+        "Mu_a_B.csv": "f8cae3e46a6326fe2356356cb77dc2ff561720f2d3c47cc0037559282c98ef68",
+        "Mu_c_A.csv": "4f7c24b5c30a525cb9f4096f37435d0f3a0556fcf85d62db57a76cbbc0b0ceda",
+        "Mu_c_B.csv": "63526232e8989e0dc86dccd16995b8667ae8e4e181dbe9841f287e9c580feba4",
+        "Mu_o_A.csv": "05f774a6d47104c7626f6d82bab270720076fea17d5bed5948d3f0438c31869f",
+        "Mu_o_B.csv": "683371e53fdc1cf18d1f3a20449044fb13a1ca6398458af1ff11d587c5aa15c0",
+        "Mu_p_A.csv": "aef20f80972724760e02c9f73eb05379b40114aee3b860591455fddfc84fb4f4",
+        "Mu_p_B.csv": "df84b8d11f70b50cc64a1363e3d22dad13ad3232bbbb0f7d56d5dc6b5d409009",
+        "Sig_a_A.csv": "0b348c878187c8d473aa47b54789ce0dbc4d1872919b74af836953cba7d65cc5",
+        "Sig_a_B.csv": "33b2afac40696de2bb45c501082ed60993657136c92de167b12503b562cefb8c",
+        "Sig_c_A.csv": "731f25a6a72494d646dcd3eefb594fd728489b4356316eebf7b1e532b1e86abf",
+        "Sig_c_B.csv": "7d89dc058a51a087f4c9d927f9535297d71ddf07000b49f273c1d1537788281a",
+        "Sig_o_A.csv": "8e1fceb80eb29e3ed2ecfd6f70342d024b2c4b72cb5d3a2e7c745ee115901904",
+        "Sig_o_B.csv": "ffb6237da883becf0d16f45dd9713be16fa0347a026ef296cfaae1a1e2f9f4a3",
+        "Sig_p_A.csv": "acf7ee181a9b6e6e0c0d94c718dd0f29ff0ceea608beebc3b358f63b4f1aec46",
+        "Sig_p_B.csv": "f65a36f2d12fe50b9bc0d99c89524d3802e675d130a1ef6136d87afb6811f92e",
+        "W_list_A.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "W_list_B.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "pi_a_A.csv": "8d09ab835a4f837a15fd4f026a99ac8426c90f9cc210cadb54b88691916b2648",
+        "pi_a_B.csv": "8370a4fad999b06c4f9134311d4a58c0d1a7a6303e03f8e1c41fb331b78bdb4f",
+        "pi_c_A.csv": "55ead71232c06cc9b844bfc598a1040bf01a2aea20599c3347880c64992ea74f",
+        "pi_c_B.csv": "b70ba364ec2f1274efc6afbcaa3d133914d3ac289b290ca47de200f3cfaca548",
+        "pi_o_A.csv": "1d534df53537cfb2fa5a8333a9b735621f0c71d7e49c6954e89ad6043905b217",
+        "pi_o_B.csv": "a87136a6bf7d2db2b1b91d126007b98ec1a28285e1c42e5a672ed6d0d1e5be05",
+        "pi_p_A.csv": "0bb5d6911be49aea72cf2a1022ec96f0550ac438debc568074077adc969336f1",
+        "pi_p_B.csv": "e2dbdaa9d38f6a448e41dfb790136c325fb53f11c96705bb063127a68c94442e",
+        "theta_A.csv": "20fddaf487cfb7dea8b0189cf5d7b7150427dc1cb0f2c2a78162aff5e018b7e2",
+        "theta_B.csv": "0bf4d4921bc2c14a341a6cc6270f1b819ab9d929b6ed4486016a0e00b35e6f50",
+        "uttered_words_A.csv": "b13c57b0040c2dd3359493d341dec7d5e072a65416dd1ea08c5aba428dc676c6",
+        "uttered_words_B.csv": "8465d3efad61ea0454355ab46b5640609ee3e2bb2b3627d5dd566881c2c914d3",
+        "word_length_A.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "word_length_B.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "za_A.csv": "0755d04260fcda289071082290a0a9bfe5eb6cd9c4119d9897b2f911588cedb0",
+        "za_B.csv": "5e199e7219ba9066997056ad201934db44d2ad4edaeb8b044600b17d567a3861",
+        "zc_A.csv": "febb31face2631f65553ce6719d671316df02a4664f018bd43df4837aa7d46a8",
+        "zc_B.csv": "710d3fb91f7820fc97f860dc7cce8ad6eddd59cd0f897147a63a79ca5919eddd",
+        "zo_A.csv": "743c97ee7832d4eac56afee2245db5d28fb857b5c803345fadfc32d921ec1292",
+        "zo_B.csv": "2b96ac1bf895319c58d0efec1e4b15c15e5b78b5d9458272ef84da1f9617350e",
+        "zp_A.csv": "d05e0b016cbf5a2c8dadd317c5a4649271a05e5ad399b35cce41248ddf51c900",
+        "zp_B.csv": "3c26f5bffbe9e2593aafea00de4df60dca362da75f8a8ae2c61e59135e3ea6d8"
+      },
+      "native_metrics_sha256": "431bc46921499553b80f4d29dcebf1a54990af5877d364c177a22bf4632bd207",
+      "native_history_sha256": "3e908ac7802c157fa732cbe61d5b0fc2500f2f7a90c8946e2379a46b91e2f6ad",
+      "snapshots_verified": 500,
+      "csv_files_per_snapshot": 42,
+      "intermediate_check": "all z CSVs and all truth/agent ARIs; other intermediate CSVs checked for presence",
+      "final_check": "all numeric checkpoint arrays finite; shapes, theta/pi normalization, SPD covariance; all final CSVs match checkpoint"
+    },
+    {
+      "trial": 9,
+      "native_metrics": {
+        "ari_agents_a": 0.20127118644067796,
+        "ari_agents_c": 0.7324259104458779,
+        "ari_agents_o": 0.6507660400080284,
+        "ari_agents_p": 0.7946175637393768,
+        "ari_truth_A_a": 0.18963273996096752,
+        "ari_truth_A_c": 0.7586334451872011,
+        "ari_truth_A_o": 0.23796679921029948,
+        "ari_truth_A_p": 0.8493897688911971,
+        "ari_truth_B_a": 0.19234116623150566,
+        "ari_truth_B_c": 0.7013368156056058,
+        "ari_truth_B_o": 0.4368113721034692,
+        "ari_truth_B_p": 0.7295406854744696,
+        "ari_truth_a": 0.18963273996096752,
+        "ari_truth_c": 0.7586334451872011,
+        "ari_truth_o": 0.23796679921029948,
+        "ari_truth_p": 0.8493897688911971,
+        "kappa_agents_a": -0.057579318448883754,
+        "kappa_agents_c": -0.05633802816901423,
+        "kappa_agents_o": -0.02594339622641506,
+        "kappa_agents_p": 1.1102230246251565e-16,
+        "utterance_exact_agreement": 0.7666666666666667,
+        "word_exact_agreement": 0.9416666666666667
+      },
+      "history_rows": 500,
+      "final_checkpoint_sha256": {
+        "A": "29c40edf1737e62e73535ea435beca3c2c75c8c1af7a56aa769946e7290df036",
+        "B": "4e40660eefedf5ae6ae6a98972d3b446454b4f46e8493f7d20696eb4db24f684"
+      },
+      "final_metadata_sha256": {
+        "A": "9f0575dae73fe4517a8981281ef0e32fb768c7aef6b839471491da8734a6b67b",
+        "B": "23d6308dfaadf0cc599ba1adf264379bb3a21c90fb8b73a303152619be677555"
+      },
+      "final_csv_sha256": {
+        "F_A.csv": "be0792eaad68db306b777abf3310537b01aa0d0f0dbd1a4b847478762b346c45",
+        "F_B.csv": "60ddc0619ad4f2b7c9cbb0696aaebd3415e34b1debfc6b76b4f45cf0c0b47e3d",
+        "Mu_a_A.csv": "95743a646dd69c14a693c44c9aeb9df5c624efecdb0c33b42a7640e7a93aadab",
+        "Mu_a_B.csv": "2ae778fb952aeed67f9ebcecd7aa6be3cd0080d586e1264a5f7fab18fc32c142",
+        "Mu_c_A.csv": "47f517d1f4bd83457d21033496018be114f11ce7cb82bdebc01659d09ead0bab",
+        "Mu_c_B.csv": "273dde1d04db0030b089abae09fe29c5149c3cb558cf3dee6fafdf4219250c53",
+        "Mu_o_A.csv": "438bfeb54a2383eb1bd1a91be92e9182d6de51df815b8cb737166818e5e297c7",
+        "Mu_o_B.csv": "09efc3972af6e34744ad39a9cd538d424c286aac6573bd4efd1c9e11a7f913ab",
+        "Mu_p_A.csv": "f159486cdef49afc91ef598086ca0f8adf933c7ba09ed0d6b5e2afa1df80f0d5",
+        "Mu_p_B.csv": "4ee1d7df53ac82d6a3c1c7aef72e505730e827616ae38a929fd57df37997a736",
+        "Sig_a_A.csv": "89e8928e1a31c6779a971201e72f9f5667f3c7ad7b5bb667aaa4ac2f3f865d98",
+        "Sig_a_B.csv": "d529c80fe15d5b5e451a1d9790e23ecf6eb906c5feb5f3d544bb27b0f52812e3",
+        "Sig_c_A.csv": "e6ae8df50f0a2ccc83f2c7719a4f04d770c43f44798b6a8f7be206723f7e2ba2",
+        "Sig_c_B.csv": "4ff08237fe571916480cf63c24437a14d906c7cccd143d7344ff8f8ca094d621",
+        "Sig_o_A.csv": "ba4793247a0c2966a843045367d244833bb5ab5ac5fe4e8701f74705eff19414",
+        "Sig_o_B.csv": "d1eb28b087250e499ad90bdfcc9c8237b40cba64990e6a9639b3c72f992382f8",
+        "Sig_p_A.csv": "ead5910532c1ca76dfe9ba774c211946ba1740f0c73dcb6a6c66e07b5674c8e3",
+        "Sig_p_B.csv": "fb54d6f53cb9b3239c63eca4d7b97619f556bbb49abf158d5a37245e058def7e",
+        "W_list_A.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "W_list_B.csv": "518e2842de51109e0065fbce6509a95b59f24f8b6cdab04b0c5a9ffd48dc9178",
+        "pi_a_A.csv": "f1f23bcc0b8b31b80552bdfb16a66dea26048ab8821cbfff3ac8ddbfba655528",
+        "pi_a_B.csv": "2b3ace1b7097fef4a5bde739bda62073dcf576f2a6a9bb920d928253bcf034f4",
+        "pi_c_A.csv": "85f867e450fdc4ab895b53d08eb036637ec2c7443f46cc02d41e680f2eb12037",
+        "pi_c_B.csv": "1b23fe5eed7e2f85c86b4b447bdf5e795a24ee4c59c0391fded904088e78b155",
+        "pi_o_A.csv": "f1aa806aaae19c12aaa1eb3241e451c379f12aa563b3fb3a672925807a5dd0cb",
+        "pi_o_B.csv": "9e32181cfceeef20592f79878aa041626d6a67d76656ba1d3058c4fed7f884b6",
+        "pi_p_A.csv": "367a57d1a7cfc5c7f5a32d7569ea9d16c0f89b64751f30e20fb4ce20b66ef0d3",
+        "pi_p_B.csv": "870fc18dd4a60433811ecadf2ed6eeb8aab51506fc53af712a22522e4310ed7f",
+        "theta_A.csv": "4512974ed39d4451e17a5061a2241c3580cd0bfae0516bc3a328cd44b25be7d9",
+        "theta_B.csv": "7e65de07d5f74cffc03502e8b661b1596c3d638b9fde6274dcf52d5a85c867f7",
+        "uttered_words_A.csv": "2bfbbff0f343e8169d2a28ed029acff199ca04c7e03646aa50674e4713233ade",
+        "uttered_words_B.csv": "785be997a10b615c6fc169efb73aab7cabc3b0c16a176a43b230e3fe3d49635c",
+        "word_length_A.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "word_length_B.csv": "f0bdbb9cee31a1db091cfc0cfb323c4ff482bebb9f288f21fc60f1e4d55470e1",
+        "za_A.csv": "22d9631f506524b8423218174c92f8971ef6f306c3283f15c2d2c0585ae2e916",
+        "za_B.csv": "c51eed47d17d71d329f7a5bf091ac942365c96f94e40b08a0f5f99a36bf20790",
+        "zc_A.csv": "778b235ebd898c0ea08a6879a43495fd9ee28c38ceffffb14d9a0ba1d1283ada",
+        "zc_B.csv": "5cf340491ab5fa9bb14f18500a244279612a0df913a65e54df6427bec4e7b3d3",
+        "zo_A.csv": "89b471b4843fde66bd71fb3c3200e1aad19efec0a425038756ec852ce516b09f",
+        "zo_B.csv": "e151adec55b44e771c381f3907359027bc09624d8f84a130ffc37673745cbb3b",
+        "zp_A.csv": "2e7571732e4fdc93e2a66b758709ff3ea2be04dc5176ade6b350f83bf67a78ee",
+        "zp_B.csv": "2b5014cdfec7c9206adddd75151a5c140c99968a3c1d8dc97625a0ab6ac2b671"
+      },
+      "native_metrics_sha256": "ade0095a3690999fa9eb6cdaaf5562ed2eabe5937d8972bf642ebcd097d13214",
+      "native_history_sha256": "d5fb02db8609f0af2265bf107ff852913a81ed595ac0bcf5d344186f170c228d",
+      "snapshots_verified": 500,
+      "csv_files_per_snapshot": 42,
+      "intermediate_check": "all z CSVs and all truth/agent ARIs; other intermediate CSVs checked for presence",
+      "final_check": "all numeric checkpoint arrays finite; shapes, theta/pi normalization, SPD covariance; all final CSVs match checkpoint"
+    }
+  ],
+  "validation_summary": {
+    "all_passed": true,
+    "completed_trials": 10,
+    "final_checkpoints": 20,
+    "history_rows": 5000,
+    "csv_snapshots": 5000,
+    "csv_files_present": 210000,
+    "independently_verified_history_ari_fields": 80000,
+    "final_native_ari_fields": 160,
+    "raw_input_files_verified": 408
+  },
+  "limitation": "Research-informed configuration rerun; not blinded confirmation. Paper object subset and A/B aggregation unresolved; no best-seed selection."
+}

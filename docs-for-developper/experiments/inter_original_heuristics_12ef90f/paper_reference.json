@@ -1,0 +1,19 @@
+{
+  "source": "https://arxiv.org/html/2306.15837v1#S3.T3",
+  "arxiv_version": "2306.15837v1",
+  "table": 3,
+  "model": "Inter-CSL-PGM (Proposed)",
+  "verified_date_jst": "2026-11-17",
+  "ari": {
+    "a": 0.309,
+    "p": 0.794,
+    "o": 0.286,
+    "c": 0.949
+  },
+  "table_trials_column": 30,
+  "notes": [
+    "The Trials column is not used as the number of independent random-seed repetitions in this report.",
+    "Table 3 does not provide standard deviations for these ARI values.",
+    "The paper does not establish the exact object subset or A/B aggregation needed to equate its ARI column with either evaluation reported here."
+  ]
+}

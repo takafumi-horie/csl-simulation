@@ -1,0 +1,26 @@
+{
+  "trial": 7,
+  "pid": 17,
+  "status": "complete",
+  "started_utc": "2026-11-17T05:03:21.348412+00:00",
+  "seed_entropy": 0,
+  "seed_spawn_key": [
+    7
+  ],
+  "output_directory": "/tmp/legacy-csl-original-heuristics/outputs/inter_original_heuristics_12ef90f/exp007",
+  "exit_code": 0,
+  "final_state_checks": {
+    "A": {
+      "checkpoint_sha256": "9cbbe336b14e64fb3f82bcabfa8a94fe518a60bbb89cceec2c1cc2f9503d9669",
+      "metadata_sha256": "a6b5c424011d3edc2a87d07debd180d6ca60ddc21ff3a0b3a1fd28c830fe15c9",
+      "normalized_theta_pi": true
+    },
+    "B": {
+      "checkpoint_sha256": "102a1cd4afb4410705401a301a1c75e87b01dd5c6be3291b8564d043be91af1f",
+      "metadata_sha256": "9338f695f3fcedb167a223c40e752a3b6f1c8d28d5220d0ae2547ce36b548352",
+      "normalized_theta_pi": true
+    }
+  },
+  "finished_utc": "2026-11-17T05:11:34.569142+00:00",
+  "elapsed_seconds": 493.22054928401485
+}
