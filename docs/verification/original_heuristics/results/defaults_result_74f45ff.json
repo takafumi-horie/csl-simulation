@@ -1,0 +1,24 @@
+{
+  "base_commit": "c076b8b",
+  "comparison": {
+    "new_omitted_v3": {
+      "status": "PASS",
+      "configurations": 8,
+      "boundaries_per_configuration": 5,
+      "state_pairs": 60,
+      "array_pairs_byte_equal": 1320,
+      "rng_pairs_byte_equal": 60,
+      "metadata_pairs_byte_equal": 60
+    },
+    "new_explicit_v3": {
+      "status": "PASS",
+      "configurations": 8,
+      "boundaries_per_configuration": 5,
+      "state_pairs": 60,
+      "array_pairs_byte_equal": 1320,
+      "rng_pairs_byte_equal": 60,
+      "metadata_pairs_byte_equal": 60
+    }
+  },
+  "feature_model_sha256": "0103943005244f583b863be0387da629a31439194eea12f7496eca480c0f721e"
+}

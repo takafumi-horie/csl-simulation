@@ -543,8 +543,12 @@ class CslModel:
                 文書番号。
             object_id: Object index; action always uses zero.
                 物体番号。Actionは常に0。
-            theta: Optional word-consumer theta, defaulting to current theta.
-                任意の単語consumer用theta。省略時は現在値。
+            theta: Optional word-consumer theta. If omitted, uses
+                ``word_theta()`` regardless of ``inference_theta``. Learning
+                explicitly supplies the configured raw/rescaled theta.
+                任意の単語consumer用theta。省略時は ``inference_theta`` に
+                関わらず ``word_theta()`` を使う。学習時には設定に応じた
+                補正前・補正後thetaを明示的に渡す。
             include_observation: Include the Gaussian likelihood.
                 Gaussian尤度を含めるか。
 

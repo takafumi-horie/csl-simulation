@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import replace
+from itertools import permutations
 
 import numpy as np
 import pytest
@@ -24,7 +25,7 @@ from legacy_csl.model import CslModel
 from legacy_csl.runner import accept_words
 
 
-def _model(tmp_path, *, dimension=2, freeze=None, **heuristics):
+def _model(tmp_path, *, dimension=2, freeze=None, sampler="dirichlet", **heuristics):
     # Every attribute has an occupied category and an empty one, including
     # one-dimensional observations where scipy squeezes its return values.
     values = np.arange(6 * dimension, dtype=float).reshape(6, dimension) / 20
@@ -46,7 +47,7 @@ def _model(tmp_path, *, dimension=2, freeze=None, **heuristics):
         mode="inter-csl",
         run=Run("heuristics", iterations=1, experiments=1, seed=0),
         paths=Paths(tmp_path / "data", tmp_path / "out"),
-        word_model=WordModel(theta_sampler="dirichlet"),
+        word_model=WordModel(theta_sampler=sampler, importance_candidates=32),
         freeze=freeze or Freeze(),
         hyperparameters=CoreHyperparameters(
             category_counts=AttributeCategoryCounts(a=2, p=2, o=2, c=2),
@@ -129,10 +130,20 @@ def test_gaussian_draws_and_empty_components(tmp_path, dimension, empty, count):
     assert model.rng.bit_generator.state == oracle.bit_generator.state
 
 
-@pytest.mark.parametrize("count", [1, 100])
+@pytest.mark.parametrize(
+    ("sampler", "count"),
+    [("dirichlet", 1), ("dirichlet", 100), ("legacy_importance", 1)],
+)
 @pytest.mark.parametrize("consumer", ["raw", "rescaled"])
-def test_inference_theta_selection_and_scan_order(tmp_path, monkeypatch, count, consumer):
-    model = _model(tmp_path, theta_mean_samples=count, inference_theta=consumer)
+def test_inference_theta_selection_and_scan_order(
+    tmp_path, monkeypatch, sampler, count, consumer
+):
+    model = _model(
+        tmp_path,
+        sampler=sampler,
+        theta_mean_samples=count,
+        inference_theta=consumer,
+    )
     old_raw, old_scaled = model.state.theta.copy(), model.word_theta()
     new_raw = np.roll(old_raw, 1, axis=1)
     calls = []
@@ -156,7 +167,7 @@ def test_inference_theta_selection_and_scan_order(tmp_path, monkeypatch, count, 
     np.testing.assert_array_equal(
         received["z"], old_raw if consumer == "raw" else old_scaled
     )
-    if count > 1:
+    if count > 1 or sampler == "legacy_importance":
         assert calls == ["z", "pi", "gaussians", "F", "theta"]
         np.testing.assert_array_equal(received["F"], received["z"])
     else:
@@ -188,6 +199,104 @@ def test_frozen_initialization_and_updates_ignore_learning_heuristics(tmp_path):
     np.testing.assert_array_equal(other.state.theta, before.theta)
     assert other.state.attributes == before.attributes
     assert other.rng.bit_generator.state == rng_before
+
+
+def test_frozen_gmm_initialization_matches_defaults_and_step_updates_F_theta(
+    tmp_path, monkeypatch
+):
+    defaults = _model(tmp_path, freeze=Freeze(gmm=True))
+    enabled = replace(
+        defaults.config,
+        original_heuristics=OriginalHeuristics(100, "raw", 100, "original_uniform"),
+    )
+    model = CslModel(defaults.dataset, enabled, rng=np.random.default_rng(17))
+    before = model.state.copy()
+    for attr in ATTRIBUTES:
+        for field in ("pi", "means", "covariances"):
+            np.testing.assert_array_equal(
+                getattr(before, field)[attr], getattr(defaults.state, field)[attr]
+            )
+        if attr == "a":
+            np.testing.assert_array_equal(before.z[attr], defaults.state.z[attr])
+        else:
+            for actual, expected in zip(before.z[attr], defaults.state.z[attr], strict=True):
+                np.testing.assert_array_equal(actual, expected)
+    np.testing.assert_array_equal(before.theta, defaults.state.theta)
+    assert before.attributes == defaults.state.attributes
+    for actual, expected in zip(before.words, defaults.state.words, strict=True):
+        np.testing.assert_array_equal(actual, expected)
+    assert model.rng.bit_generator.state == defaults.rng.bit_generator.state
+
+    # Enumerate raw-theta likelihood products independently of AttributeSampler.
+    # After those F draws, posterior theta counts must use the newly drawn F.
+    oracle = deepcopy(model.rng)
+    expected_attributes = []
+    alpha = np.full_like(before.theta, model.config.hyperparameters.gamma)
+    for doc_id, words in enumerate(before.words):
+        candidates = tuple(permutations(ATTRIBUTES, len(words)))
+        likelihoods = []
+        for candidate in candidates:
+            factors = []
+            for word, attr in zip(words, candidate, strict=True):
+                category = (
+                    before.z[attr][doc_id]
+                    if attr == "a"
+                    else before.z[attr][doc_id][model.dataset.attentions[doc_id]]
+                )
+                factors.append(before.theta[model.offsets[attr] + category, word])
+            likelihoods.append(np.prod(factors))
+        probabilities = np.asarray(likelihoods) / np.sum(likelihoods)
+        sampled = candidates[oracle.choice(len(candidates), p=probabilities)]
+        expected_attributes.append(sampled)
+        for word, attr in zip(words, sampled, strict=True):
+            category = (
+                before.z[attr][doc_id]
+                if attr == "a"
+                else before.z[attr][doc_id][model.dataset.attentions[doc_id]]
+            )
+            alpha[model.offsets[attr] + category, word] += 1
+    expected_theta = np.asarray(
+        [oracle.dirichlet(row, size=100).mean(axis=0) for row in alpha]
+    )
+    calls = []
+    sample_attributes, sample_theta = model._sample_attributes, model._sample_theta
+
+    def forbidden_gmm_update(*args, **kwargs):
+        pytest.fail("freeze.gmm must skip every GMM update")
+
+    def update_attributes(theta):
+        calls.append("F")
+        np.testing.assert_array_equal(theta, before.theta)
+        sample_attributes(theta)
+
+    def update_theta():
+        calls.append("theta")
+        assert model.state.attributes == expected_attributes
+        sample_theta()
+
+    for method in ("_sample_z", "_sample_pi", "_sample_gaussians"):
+        monkeypatch.setattr(model, method, forbidden_gmm_update)
+    monkeypatch.setattr(model, "_sample_attributes", update_attributes)
+    monkeypatch.setattr(model, "_sample_theta", update_theta)
+    model.step()
+
+    assert calls == ["F", "theta"]
+    assert model.state.attributes == expected_attributes
+    np.testing.assert_array_equal(model.state.theta, expected_theta)
+    assert not np.array_equal(model.state.theta, before.theta)
+    assert model.rng.bit_generator.state == oracle.bit_generator.state
+    for attr in ATTRIBUTES:
+        for field in ("pi", "means", "covariances"):
+            np.testing.assert_array_equal(
+                getattr(model.state, field)[attr], getattr(before, field)[attr]
+            )
+        if attr == "a":
+            np.testing.assert_array_equal(model.state.z[attr], before.z[attr])
+        else:
+            for actual, expected in zip(model.state.z[attr], before.z[attr], strict=True):
+                np.testing.assert_array_equal(actual, expected)
+    for actual, expected in zip(model.state.words, before.words, strict=True):
+        np.testing.assert_array_equal(actual, expected)
 
 
 def test_learning_options_do_not_change_word_and_prediction_consumers(tmp_path):

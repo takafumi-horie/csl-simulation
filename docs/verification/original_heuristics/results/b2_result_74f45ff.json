@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "adapter_sha256": "0a0cddafcdcac09fe7ad78656a85c9dbf9a7c670c7180c37d49b0c343b940dba",
+  "trials": [
+    0,
+    2,
+    10
+  ],
+  "boundaries_per_trial": 5,
+  "agents": 2,
+  "arrays_byte_equal": 660,
+  "metadata_and_rng_byte_equal": true,
+  "feature_model_sha256": "0103943005244f583b863be0387da629a31439194eea12f7496eca480c0f721e"
+}

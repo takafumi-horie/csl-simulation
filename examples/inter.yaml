@@ -12,7 +12,7 @@ word_model:
   theta_sampler: legacy_importance
   importance_candidates: 10000
 attribute_model:
-  # Uniform attribute sampling with replacement (duplicates are allowed).
+  # Attribute sampling without replacement (no duplicate attributes).
   exclusivity: distinct
 interaction: mh
 freeze:

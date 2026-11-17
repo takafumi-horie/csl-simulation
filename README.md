@@ -356,7 +356,8 @@ the two new files select direct Dirichlet theta and enable all four heuristics.
 SINGLE（CSL-PGM）の両設定は、その論文実験の値である語彙数14・カテゴリ当たり
 混合事前集中度1.0を維持します。INTERの両設定だけ、INTERの論文実験に合わせて
 語彙数13・集中度0.1とします。既存の通常版は学習方式を維持し、
-`single.yaml` は変更せず、`inter.yaml` はハイパーパラメータだけを変更します。
+`single.yaml` は変更せず、`inter.yaml` はハイパーパラメータと、値に合わせた
+属性重複に関するコメントだけを変更します。
 新しい2ファイルは直接Dirichletと4機能すべてを有効にします。
 
 | Model / モデル | Ordinary / 通常版 | Original heuristics / 原典ヒューリスティクス版 |
