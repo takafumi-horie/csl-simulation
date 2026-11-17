@@ -182,13 +182,13 @@ not merely a more accurate calculation of that draw. For a fixed conditional
 Normal distribution, averaging N independent mu samples divides its variance
 by N; a mean of Dirichlet samples likewise differs from one Dirichlet draw.
 Reproducing these heuristics and justifying an exact Gibbs sampler are separate
-questions. See the [implementation specification](docs/original_heuristics_spec.md).
+questions. See the [implementation specification](docs-for-developper/original_heuristics_spec.md).
 
 標本平均は単一標本Gibbs更新とは分布が異なり、単に1標本の計算精度を高める処理では
 ありません。条件付きNormal分布を固定したとき、N個の独立なμの平均の分散は
 1/Nとなり、Dirichlet標本の平均も単一標本とは異なります。このヒューリスティクスの
 挙動を再現することと、厳密なGibbs更新の正当性は区別します。
-[実装仕様](docs/original_heuristics_spec.md)も参照してください。
+[実装仕様](docs-for-developper/original_heuristics_spec.md)も参照してください。
 
 ## Faithful inference scope / 推論の再現範囲
 

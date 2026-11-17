@@ -113,7 +113,7 @@ Gibbs更新とは異なることを説明する。全く同一の論文実装と
 原典初期化への切替、初期Σ/θの追加設定、属性別標本数、任意の一様範囲、
 独立の更新順序設定、探索runner、ARI探索の実験結果、原典コードの同梱は追加しない。
 整合性検証のスクリプトと比較結果は、通常のテストから独立した
-`docs/verification/original_heuristics/` に保存する。
+`docs-for-developper/verification/original_heuristics/` に保存する。
 
 ## 実施した検証
 

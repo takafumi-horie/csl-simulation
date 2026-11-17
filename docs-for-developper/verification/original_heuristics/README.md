@@ -74,7 +74,7 @@ BLAS等は以下のとおり単一threadに固定する。
 python311=/tmp/csl-audit-python/cpython-3.11.18-linux-x86_64-gnu/bin/python3.11
 site_packages=/home/horie_takafumi/workspace/multi_agent_csl/legacy-csl/.venv/lib/python3.11/site-packages
 repo="$PWD"
-scripts="$repo/docs/verification/original_heuristics"
+scripts="$repo/docs-for-developper/verification/original_heuristics"
 verify_run=$(mktemp -d)
 export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 export MPLCONFIGDIR="$verify_run/mpl"
