@@ -1,12 +1,12 @@
 {
-  "completed_utc": "2026-11-17T05:17:06.308928+00:00",
+  "completed_utc": "2026-11-17T05:20:30.917039+00:00",
   "git_head": "12ef90fc2fc0ffec402087014ba85d1b09359fc5",
-  "aggregation_git_head": "12ef90fc2fc0ffec402087014ba85d1b09359fc5",
+  "aggregation_git_head": "30dc8a2ca449b68e40736181a7c245dd6ae89bce",
   "config_sha256": "0255183eb8a23b2da433578d6dadbfc65c240ffca84ab198f6443854ce0bd738",
   "execution_manifest_sha256": "6c11def839b75394e6b5c5827e8943af76166bca282b88191f85d7269f15c6c6",
   "execution_elapsed_seconds": 530.1313773759175,
   "postrun_validation_sha256": "c8e29d93dc241bb882acbd5859b96282aab200ccb30859a3e9fabeb33c4b4403",
-  "aggregator_sha256": "5b2259ba1e0b845962f6fbfdac9467d0cd74749774ad36419fe976c9ee423140",
+  "aggregator_sha256": "5fa4ac0e2363e4296c885d0fc4e2f28e7f156f759e192dcaa68fb8ba41fd8421",
   "native_output_root": "/tmp/legacy-csl-original-heuristics/outputs/inter_original_heuristics_12ef90f",
   "recorded_native_output_root": "/tmp/legacy-csl-original-heuristics/outputs/inter_original_heuristics_12ef90f",
   "runtime": {

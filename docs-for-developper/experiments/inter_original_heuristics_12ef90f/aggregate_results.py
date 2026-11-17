@@ -610,7 +610,7 @@ def main():
         json.dumps(result, indent=2, allow_nan=False), encoding="utf-8"
     )
     with (DEST / "trial_metrics.csv").open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(records[0]))
+        writer = csv.DictWriter(handle, fieldnames=list(records[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(records)
     write_report(result, DEST / "report.md")
