@@ -136,12 +136,12 @@ counts. It does not add smoothing or renormalize the rows. `none` uses raw
 
 The optional top-level `original_heuristics` section selects an execution
 profile and four learning heuristics. Omitting `execution_profile` selects
-`current`: the existing initialization, preprocessing, independent NumPy
+`current`: ordinary initialization, preprocessing, independent NumPy
 Generators, and communication order. Omitting the whole section also disables
 the four heuristics, as shown below. The ordinary examples keep this behavior.
 
 任意のトップレベル `original_heuristics` で、実行プロファイルと4つの学習処理を
-選択できます。`execution_profile` の省略時は `current` で、従来の初期化・前処理・
+選択できます。`execution_profile` の省略時は `current` で、通常版の初期化・前処理・
 独立したNumPy Generator・通信順を使います。セクション全体を省略すると、
 4機能も以下の既定値となります。通常版の設定例はこの動作を維持します。
 
@@ -156,7 +156,7 @@ original_heuristics:
 
 | Option / 設定 | Default / 既定値 | Behavior / 動作 |
 |---|---|---|
-| `execution_profile` | `current` | `current` preserves the existing execution; `original` selects the complete training profile described below. / `current` は従来方式、`original` は後述の学習実行方式一式を選択します。 |
+| `execution_profile` | `current` | `current` uses ordinary execution; `original` selects the complete training profile described below. / `current` は通常版、`original` は後述の学習実行方式一式を選択します。 |
 | `theta_mean_samples` | `1` | Positive integer. `1` preserves the configured theta sampler; N > 1 averages N actual posterior Dirichlet draws per row and requires `word_model.theta_sampler: dirichlet`. Importance sampling with averaging is rejected. / 正の整数。`1` は選択したθ抽選方式を維持し、2以上は各事後Dirichlet行から実際に指定数を生成して平均します。`dirichlet` が必須で、importance方式との併用はエラーです。 |
 | `inference_theta` | `rescaled` | `rescaled` uses the ordinary `word_theta()`; `raw` passes stored, uncorrected theta only to training `z` and `F`. / `rescaled` は通常の `word_theta()`、`raw` は保存された補正前θを学習時の `z` と `F` だけに渡します。 |
 | `gaussian_mean_samples` | `1` | Positive integer: for each occupied category, draw Sigma once, then average this many actual conditional Normal draws of mu. Applies to all four attributes, not empty categories. / 占有カテゴリでΣを1回生成後、そのΣを条件とするNormalから指定数のμを実際に生成して平均します。全4属性が対象で、空カテゴリには適用しません。 |
@@ -172,10 +172,10 @@ raw `word_theta()` behavior.
 
 `execution_profile: current` では、`theta_mean_samples > 1` のときθ平均化と組にして
 `z -> pi -> Gaussian -> F -> theta` 順で更新します。`theta_mean_samples: 1`
-なら従来どおりimportanceは `F -> theta`、直接Dirichletは `theta -> F` です。
+ならimportanceは `F -> theta`、直接Dirichletは `theta -> F` です。
 後者で `inference_theta: raw` を指定すると、`z` は更新前、`F` は更新後の
 補正前θを使います。`rescaled` は `word_model.rescaling` を尊重するため、
-`none` と `empirical_unigram` の通常の `word_theta()` は従来どおり未補正です。
+`none` と `empirical_unigram` の通常の `word_theta()` は未補正です。
 
 In the `current` profile, these four options change learning only. Initialization
 still uses one prior theta
@@ -245,7 +245,7 @@ importance sampling, and other interaction and attribute modes.
 このプロファイルでは以下の**全設定**に加え、語長4と
 `hyperparameters.gmm.kmeans_n_init: 10` が必要です。INTERの通信は
 `interaction: mh` に限定します。不整合は設定エラーとし、自動で値を変更しません。
-`current` では従来のfreeze・importance方式・他の通信方式・属性抽選も選択できます。
+`current` ではfreeze・importance方式・他の通信方式・属性抽選も選択できます。
 
 ```yaml
 word_model:
@@ -277,25 +277,25 @@ current, agent-specific normalization as the more reasonable preprocessing.
 INTERでは元のlegacy datadumpが必要です。原典readerの挙動に合わせ、
 **A/B両方の動作先頭3列をBの最小値・最大値で正規化**します。
 compact `agentA.npz` / `agentB.npz` だけでは復元できないためエラーとします。
-両形式がある場合、`original` はlegacy入力、`current` は従来どおりNPZを優先します。
+両形式がある場合、`original` はlegacy入力、`current` はNPZを優先します。
 データ検証・学習・解析・予測で同じ前処理を使います。これは比較のための歴史的挙動で、
 著者は現行の主体別正規化の方が合理的と考えています。
 
-For SINGLE, the user relayed the author's assurance that INTER reused SINGLE
-and should share its heuristics. We therefore apply the common initialization
-and learning procedures verified in INTER to one agent U. **The dedicated
-SINGLE Python 2 source is unavailable**, so this is not an independently
-verified reproduction of the complete SINGLE original. U's observed words
+The SINGLE original profile applies INTER's verified initialization and
+learning procedures to one agent U, based on the author's account that the
+original implementations shared these procedures. **The dedicated SINGLE
+Python 2 source is unavailable**, so equivalence to the complete SINGLE
+original has not been independently verified. U's observed words
 remain fixed, vocabulary size 14 and per-category learning concentration 1.0
 are retained in its example, and its existing preprocessing (including tactile
 features and compact input support) remains in use. SINGLE preprocessing is
 outside the original-reader equivalence guarantee; B-based normalization and
 communication do not apply.
 
-SINGLEについては、ユーザーを通じて「INTERはSINGLEの使い回しで、ヒューリスティクス等は
-共通のはず」という著者の説明を得ています。これを根拠に、INTERで確認した共通の
-初期化・学習処理をUへ適用します。**SINGLE専用のPython 2原典は未入手**なので、
-SINGLE原典全体との独立照合済み実装とは位置付けません。Uの観測語を固定し、
+SINGLEの原典プロファイルは、原典の初期化・学習処理が両モデルで共通していたという
+著者情報に基づき、INTERで検証した処理をエージェントUへ適用します。
+**SINGLE専用のPython 2原典がないため、SINGLE原典全体との独立照合は未実施です。**
+Uの観測語を固定し、
 設定例の語彙14・学習時のカテゴリ当たり集中度1.0と、触覚を含む既存の前処理・
 compact入力対応を維持します。SINGLEの前処理は原典readerとの同一性の保証対象外で、
 Bの値域による正規化や通信は導入しません。
@@ -501,30 +501,33 @@ csl analyze --config examples/inter.yaml
 Choose the ordinary or original-profile example for either model. Both
 CSL-PGM examples keep vocabulary size 14 and per-category mixture concentration
 1.0; both Inter-CSL-PGM examples use vocabulary size 13 and concentration 0.1.
-The ordinary `single.yaml` and `inter.yaml` are unchanged. The two
-`*_original_heuristics.yaml` files now select `execution_profile: original`,
-changing their initialization, RNG, and (for INTER) preprocessing and
-communication as well as enabling all four heuristics. INTER's original
+The ordinary `single.yaml` and `inter.yaml` select the `current` profile with
+the four heuristics disabled. The two `*_original_heuristics.yaml` files select
+`execution_profile: original`, enabling all four heuristics together with
+original initialization, RNG, and (for INTER) preprocessing and communication.
+INTER's original
 example needs the legacy datadump, rather than the compact quick-start fixture.
 
 各モデルで通常版と原典プロファイル版を選べます。SINGLEの両設定は語彙14・
 カテゴリ当たり混合集中度1.0、INTERの両設定は語彙13・集中度0.1を維持します。
-通常の `single.yaml` と `inter.yaml` は変更しません。
-今回から2つの `*_original_heuristics.yaml` は `execution_profile: original` を選び、
-4機能に加え初期化・乱数と、INTERの前処理・通信も変わります。
+通常の `single.yaml` と `inter.yaml` は、4ヒューリスティクスを無効にした
+`current` プロファイルを使います。2つの `*_original_heuristics.yaml` は
+`execution_profile: original` を使い、4ヒューリスティクスに加えて初期化・乱数と、
+INTERの前処理・通信を原典方式に揃えます。
 INTERの原典設定にはcompactのクイックスタートfixtureではなくlegacy datadumpが必要です。
 
-To recover the previous four-heuristic behavior, set `execution_profile:
-current` in either original example (or omit that key), leaving the four
-heuristic settings intact. Earlier experiment reports remain results for
-their recorded commits and configurations, not results of the new profile.
-The [earlier specification](docs-for-developper/original_heuristics_spec.md)
-describes the four heuristics under `current`.
+To combine the four heuristics with ordinary initialization, preprocessing,
+RNG, and communication, set `execution_profile: current` in either original
+example (or omit that key), retaining the other four settings. The
+[heuristic specification](docs-for-developper/original_heuristics_spec.md)
+describes this combination. Experimental reports identify the commits and
+configurations used for their results.
 
-以前の4機能だけの動作へ戻す場合は、原典設定例の `execution_profile` を `current` にするか
-そのキーを省略し、他の4キーは維持してください。以前の実験報告は記載されたコミット・
-設定での結果として保持し、新しいプロファイルの結果とは読み替えません。
-[従来仕様](docs-for-developper/original_heuristics_spec.md)は `current` での4機能の説明です。
+通常版の初期化・前処理・乱数・通信のまま4ヒューリスティクスを使うには、
+原典設定例の `execution_profile` を `current` にするか、そのキーを省略し、
+他の4キーを維持してください。この組合せは
+[ヒューリスティクスの仕様](docs-for-developper/original_heuristics_spec.md)に記載しています。
+各実験報告の結果は、その報告に明記されたコミットと設定に対応します。
 
 | Model / モデル | Ordinary / 通常版 | Original profile / 原典プロファイル版 |
 |---|---|---|
@@ -883,38 +886,42 @@ convention; the original OS-derived seeds and paper random streams are unknown.
 入力・設定・依存版に加え、数値計算ランタイムとスレッド環境も揃える必要があります。
 独立照合は数値計算のスレッド数を1に固定しています。本番は上記6個の環境変数と
 実際の読込済みランタイムのスレッド数を記録し、値を変更しません。
-明示seedは今回の検証規約で、原典のOS由来seedや論文実験の乱数列を復元したものではありません。
+明示seedは再現可能な実行のための規約です。原典のOS由来seedや論文実験の乱数列は不明です。
 
 <a id="author-note"></a>
 
 ## Author's note: mathematical consistency and heuristics / 著者NOTE：数理との整合性とヒューリスティクス
 
-The following is the repository author's account and research judgment.
-The ordinary implementation removes the original sample-averaging and empty-
-component placement heuristics in favor of model-based posterior draws.
-Original-profile reproduction establishes agreement with a fixed modernized
-reference, rather than mathematical correctness of every inference step.
-Combined original settings improved color and shape ARI in the reported
-comparison; this does not isolate individual heuristics or establish improvement
-for every attribute. Later studies should state and justify their choices.
+The original implementation includes inference heuristics beyond the stated
+probabilistic model. The ordinary profile (`execution_profile: current`, with
+the four heuristics disabled) uses single posterior draws without uniform
+empty-component relocation. Choosing between these procedures requires a
+distinction between reproducing historical experiments and evaluating an
+inference method's mathematical consistency.
 
-以下は著者からの補足と研究上の見解です。ここでの「現行実装」は通常版
-（`execution_profile: current`、追加ヒューリスティクスなし）を指します。
-個々の実装差は[比較資料](docs/original_implementation_differences.md)を参照してください。
+原典実装には、確率モデルの数式とは別に扱うべき推論上のヒューリスティクスが
+含まれます。通常版（`execution_profile: current`、4ヒューリスティクス無効）は、
+標本平均や空カテゴリの一様再配置を用いず、事後分布からの単一標本による更新を
+基本とします。後続研究で実装方式を選ぶ際は、原典の実験結果の再現と、推論方法の
+数理的な整合性を区別する必要があります。
 
-通常の現行実装は、原典に含まれる平均化や空カテゴリの特別処理を外し、
-確率モデルに沿った事後更新を行う方針で整理しています。原典の実験実装には、
-モデルの数式とは区別して扱うべきヒューリスティクスが含まれます。
+著者によれば、本論文は改訂・出版が完了しないまま筆頭著者の絶筆となりました。
+Dr. Hagiwaraとの間で検討されていたθ更新と論文記述の整合性を含め、
+実装上の詳細や検討事項の一部はarXiv公開原稿に反映されていません。
 
-本論文はarXiv版として公開され、改訂・出版が完了しないまま絶筆となった経緯があり、
-実装の詳細や、その後に議論された修正事項が本文に十分反映されていません。
-この経緯は著者による説明であり、以下の実装照合の結果とは区別します。
+The [ten-trial comparison](docs-for-developper/experiments/inter_original_execution_reviewed/report.md)
+found higher color and shape ARI with the original profile than with the
+ordinary profile using all four heuristics. Initialization, RNG, communication,
+and preprocessing also differ between these configurations, so the comparison
+does not identify individual heuristic effects or improvement in every
+attribute. Studies adopting these heuristics should document their rationale.
 
-今回の比較では、原典方式を組み合わせた構成で、従来の4機能版に比べて色・形状の
-ARI向上が観測されました。これらの処理の採用を一概に否定するものではありません。
-ただし、初期化・乱数・通信等も変えた比較なので、個々のヒューリスティクスの
-寄与や全属性での改善を確定するものではありません。後続研究では、モデルに基づく
-推論と経験的な工夫を区別し、採用の是非を研究上の判断として明示する必要があります。
+[10試行の比較](docs-for-developper/experiments/inter_original_execution_reviewed/report.md)では、
+通常プロファイルで4ヒューリスティクスを有効にした構成より、原典プロファイルで
+色・形状のARIが高くなりました。両構成は初期化・乱数・通信・前処理も異なるため、
+個々のヒューリスティクスの寄与や全属性での改善は、この比較からは特定できません。
+後続研究では、採用する処理とその根拠を明記することが求められます。
+各処理の違いは[比較資料](docs/original_implementation_differences.md)を参照してください。
 
 ### Theta rescaling and posterior updates / θのリスケーリングと事後更新
 
@@ -925,21 +932,15 @@ including theta-dependent row normalizers, has not been established. It should
 not be described as an exact Gibbs update. This concerns the posterior, not a
 rescaling of the Dirichlet prior itself.
 
-原典は発話生成・MH受理に補正後のθを使う一方、θ自体は通常のDirichlet事後から
-更新しています。補正後の語生成分布をモデルの尤度として採用するなら、その補正は
-θの事後分布にも反映する必要があります。θの事前分布自体を変更するという意味では
-ありません。
+公開原稿の[式(11)](https://arxiv.org/html/2306.15837v1#S2.E11)は、語生成分布の
+リスケーリングを定義しています。原典実装は発話生成・MH受理に補正後のθを使う一方、
+θ自体は通常のDirichlet事後から更新します。補正後の語生成分布を尤度とする場合、
+その補正はθの事後分布にも反映する必要があります。
 
-現行の重要度サンプリングは、この整合性を考慮する方向の実装です。ただし、
-有限候補による近似であり、補正後の行正規化係数もθに依存します。
-この係数まで含む厳密な事後分布との一致は別途検討が必要であり、現コードが
-厳密なGibbs更新を実装しているとは断定しません。
-
-この点は筆頭著者のDr. Hagiwaraとも議論し、論文記述の修正を検討していましたが、
-改訂・出版まで完了しませんでした。公開arXivの履歴はv1のみで、その
-[式(11)](https://arxiv.org/html/2306.15837v1#S2.E11)にも補正が記載されています。
-したがって、[公開版の履歴](https://arxiv.org/abs/2306.15837)と、その後の議論・修正方針は
-区別し、「原典は第1版に忠実、現行は公開最新版に忠実」とは整理していません。
+通常版の `legacy_importance` は、列和による補正を重要度に取り入れた有限候補近似です。
+ただし、補正後の行正規化係数もθに依存し、この係数を含む完全条件付き分布との
+一致は未確認です。このため、厳密なGibbs更新としての位置付けには追加の検討が
+必要です。この論点はθの事後更新に関するもので、Dirichlet事前自体の変更ではありません。
 
 ### Averaging theta and mu samples / θ・μの100標本平均
 
@@ -952,9 +953,9 @@ hyperparameter or prior design. Studies adopting averaging should document it.
 本来の条件付き分布から得た単一標本とは分布が異なり、通常の単一標本による
 Gibbs更新とは区別すべき処理です。
 
-実装上の工夫として採用する余地はありますが、著者としては、まずモデルに従う
-抽選を維持したうえでハイパーパラメータ等を調整することが望ましいと考えます。
-平均化を採用する場合は、更新分布を変えるヒューリスティクスとして明記されたいです。
+著者の推奨方針は、モデルに従う抽選を維持したうえでハイパーパラメータ等を調整する
+方法をまず検討することです。平均化を採用する場合は、更新分布を変更する
+ヒューリスティクスとして、その方法と採用理由を明記する必要があります。
 
 ### Empty-component means / 空カテゴリのμの一様配置
 
@@ -967,6 +968,6 @@ choice; otherwise, the relocation heuristic should be stated explicitly.
 一致します。通常の現行実装は、この分布に従ってμ・Σを生成します。
 原典のμの一様配置は、この事後更新を変更する処理です。
 
-こちらも、ハイパーパラメータや事前分布の設計による対応をまず検討することが
-望ましいと考えます。採用する場合は、空カテゴリを再配置する明確な
-ヒューリスティクスとして記述する必要があります。
+著者の推奨方針は、ハイパーパラメータや事前分布の設計による対応をまず検討する
+ことです。一様配置を採用する場合は、空カテゴリを再配置するヒューリスティクスとして、
+配置範囲・適用条件・採用理由を明記する必要があります。
